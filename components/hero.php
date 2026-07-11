@@ -5,7 +5,7 @@
 
 $slides = [
     [
-        'image' => 'https://ministryofnuts.in/cdn/shop/files/MAKHANA_BANNER_1920PX_X_650PX_2100x.jpg?v=1779176267',
+        'image' => 'assets/images/hero-banner/hero-banners-1.png',
         'alt'   => 'UrbanNutMix Roasted Makhana Banner'
     ],
     [
