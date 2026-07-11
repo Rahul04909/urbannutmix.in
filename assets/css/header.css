@@ -52,7 +52,8 @@ img, video, iframe {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    z-index: 1000;
+    position: relative;
+    z-index: 900;
 }
 
 .unm-header-wrapper *, 
@@ -79,6 +80,7 @@ img, video, iframe {
     background-color: var(--bg-color);
     border-bottom: 1px solid var(--border-color);
     position: relative;
+    z-index: 1000;          /* always above page content */
     transition: all var(--transition-speed) var(--transition-ease);
 }
 
@@ -87,6 +89,7 @@ img, video, iframe {
     top: 0;
     left: 0;
     right: 0;
+    z-index: 1000;          /* explicit z-index on fixed element */
     box-shadow: var(--shadow-md);
     animation: slideDown 0.4s var(--transition-ease);
 }

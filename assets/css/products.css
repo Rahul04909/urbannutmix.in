@@ -18,6 +18,18 @@
     width: 100%;
 }
 
+/* Alternate section backgrounds for visual separation */
+.unm-products-section--alt {
+    background: #f8fafc;
+}
+
+/* Ensure product cards never escape below the header z-index */
+.unm-product-card {
+    isolation: isolate;
+    position: relative;
+    z-index: 1;
+}
+
 /* ===========================
    SECTION HEADING
    =========================== */
@@ -82,11 +94,26 @@
     box-sizing: border-box;
 }
 
-/* Per-card background colours */
+/* Per-card background colours — Panchmeva */
 .unm-product-card[data-bg="pink"]    .unm-product-img-zone { background-color: #ffd6e0; }
 .unm-product-card[data-bg="mint"]    .unm-product-img-zone { background-color: #c5f0ea; }
 .unm-product-card[data-bg="magenta"] .unm-product-img-zone { background-color: #fba6cf; }
 .unm-product-card[data-bg="lavender"].unm-product-img-zone { background-color: #dcd5f7; }
+/* Per-card background colours — Exotic */
+.unm-product-card[data-bg="golden"]  .unm-product-img-zone { background-color: #fef3c7; }
+.unm-product-card[data-bg="coral"]   .unm-product-img-zone { background-color: #fee2e2; }
+.unm-product-card[data-bg="sage"]    .unm-product-img-zone { background-color: #d1fae5; }
+.unm-product-card[data-bg="sky"]     .unm-product-img-zone { background-color: #dbeafe; }
+/* Per-card background colours — Classic */
+.unm-product-card[data-bg="cream"]   .unm-product-img-zone { background-color: #fef9ee; }
+.unm-product-card[data-bg="linen"]   .unm-product-img-zone { background-color: #f5f0e8; }
+.unm-product-card[data-bg="fern"]    .unm-product-img-zone { background-color: #ecfdf5; }
+.unm-product-card[data-bg="blush"]   .unm-product-img-zone { background-color: #fdf2f8; }
+/* Per-card background colours — Flavored */
+.unm-product-card[data-bg="chilli"]  .unm-product-img-zone { background-color: #fff1f2; }
+.unm-product-card[data-bg="violet"]  .unm-product-img-zone { background-color: #ede9fe; }
+.unm-product-card[data-bg="peach"]   .unm-product-img-zone { background-color: #ffedd5; }
+.unm-product-card[data-bg="rose"]    .unm-product-img-zone { background-color: #fce7f3; }
 
 .unm-product-img {
     width: 100%;
