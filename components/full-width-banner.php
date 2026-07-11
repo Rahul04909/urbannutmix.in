@@ -13,7 +13,7 @@ if (!defined('BASE_URL')) {
 <div class="unm-full-banner-section">
     <a href="<?php echo BASE_URL; ?>shop.php" class="unm-full-banner-wrap" aria-label="Shop Honey Dry Fruits">
         <img 
-            src="https://ministryofnuts.in/cdn/shop/files/Honey_dry_fruits_200gm_2100x.jpg?v=1744192456" 
+            src="https://www.jewelfarmer.com/cdn/shop/files/JF-NUTS.png?v=1773119189&width=2400" 
             alt="Premium Honey Dry Fruits 200g Promo Banner" 
             class="unm-full-banner-img"
             loading="lazy"
