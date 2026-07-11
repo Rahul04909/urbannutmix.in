@@ -60,7 +60,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="unm-container">
             <!-- LOGO -->
             <a href="<?php echo BASE_URL; ?>index.php" class="unm-logo-link" aria-label="UrbanNutMix Home">
-                <img src="<?php echo BASE_URL; ?>assets/images/logo.png" alt="UrbanNutMix Logo" class="unm-logo-img">
+                <img src="<?php echo BASE_URL; ?>assets/images/logo-bg.jpg" alt="UrbanNutMix Logo" class="unm-logo-img">
             </a>
 
             <!-- DESKTOP NAVIGATION -->

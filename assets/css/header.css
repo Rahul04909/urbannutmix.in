@@ -1,15 +1,22 @@
 /* UrbanNutMix Header Stylesheet */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
+/* Global Reset to eliminate browser margins on top, left, right, and bottom */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
 :root {
-    --primary-color: #d97706; /* Rich Amber Orange */
-    --primary-hover: #b45309;
+    --primary-color: #cf6e0c; /* Matches reference warm brand orange */
+    --primary-hover: #a85604;
     --text-color: #1e293b;
     --text-light: #64748b;
     --bg-color: #ffffff;
     --bg-alt: #f8fafc;
     --border-color: #e2e8f0;
-    --topbar-bg: #d97706;
+    --topbar-bg: #cf6e0c;
     --topbar-text: #ffffff;
     --font-family: 'Outfit', sans-serif;
     --transition-speed: 0.3s;
@@ -254,11 +261,11 @@
 
 .unm-cart-badge {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: -2px;
+    right: -2px;
     background-color: var(--primary-color);
     color: white;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     height: 18px;
     width: 18px;
@@ -266,7 +273,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--bg-color);
+    border: 1.5px solid var(--bg-color);
+    line-height: 1;
 }
 
 /* --- HAMBURGER MENU --- */
