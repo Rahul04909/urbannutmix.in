@@ -5,7 +5,7 @@
 
 $slides = [
     [
-        'image' => 'assets/images/hero-banners/hero-banners-1.png',
+        'image' => 'assets/images/hero-banners/hero-banner-1.png',
         'alt'   => 'UrbanNutMix Roasted Makhana Banner'
     ],
     [
