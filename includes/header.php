@@ -50,6 +50,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/categories.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/products.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/grid-banners.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/full-width-banner.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/about.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/footer.css">
 </head>
 <body>

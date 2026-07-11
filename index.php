@@ -21,6 +21,12 @@ include_once 'components/grid-banners.php';
 // Include the featured products component
 include_once 'components/products.php';
 
+// Include the full width banner component
+include_once 'components/full-width-banner.php';
+
+// Include the About component
+include_once 'components/about.php';
+
 // Include the global footer
 include_once 'includes/footer.php';
 ?>
