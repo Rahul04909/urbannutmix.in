@@ -4,15 +4,18 @@
     position: relative;
     width: 100%;
     overflow: hidden;
-    background-color: #f1f5f9;
+    background-color: #e8ecf0;
     user-select: none;
     -webkit-user-drag: none;
+    /* Prevent this element from ever causing horizontal scroll */
+    max-width: 100vw;
 }
 
 .unm-hero-slider {
     position: relative;
     width: 100%;
-    aspect-ratio: 1920 / 650; /* Elegant widescreen format for desktop */
+    /* Desktop: widescreen banner ratio */
+    aspect-ratio: 1920 / 650;
     overflow: hidden;
 }
 
@@ -36,29 +39,26 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
-    pointer-events: none; /* Prevents default image drag interference with swipe gesture */
+    /* Keep top of banner visible on mobile – important for widescreen images */
+    object-position: center top;
+    pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
+    display: block;
 }
 
-/* Grab cursor for dragging interactivity */
-.unm-hero-slider-container.grabbing {
-    cursor: grabbing;
-}
+/* Grab cursor on desktop */
+.unm-hero-slider-container.grabbing { cursor: grabbing; }
+.unm-hero-slider-container.grab    { cursor: grab; }
 
-.unm-hero-slider-container.grab {
-    cursor: grab;
-}
-
-/* Prev/Next arrows (Visible on desktop hover only, clean and minimalistic) */
+/* ── Prev/Next Arrows ─────────────────────────────────────────────── */
 .unm-slider-arrow {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     width: 48px;
     height: 48px;
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(255, 255, 255, 0.88);
     border: none;
     border-radius: 50%;
     display: flex;
@@ -70,22 +70,17 @@
     visibility: hidden;
     transition: all 0.3s ease;
     z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .unm-slider-arrow:hover {
     background-color: #ffffff;
-    color: var(--primary-color, #cf6e0c);
-    transform: translateY(-50%) scale(1.1);
+    color: #cf6e0c;
+    transform: translateY(-50%) scale(1.08);
 }
 
-.unm-slider-arrow-prev {
-    left: 24px;
-}
-
-.unm-slider-arrow-next {
-    right: 24px;
-}
+.unm-slider-arrow-prev { left: 20px; }
+.unm-slider-arrow-next { right: 20px; }
 
 .unm-slider-arrow-icon {
     width: 20px;
@@ -97,7 +92,7 @@
     stroke-linejoin: round;
 }
 
-/* Show arrows on slider container hover (Desktop only) */
+/* Show arrows on hover (desktop only) */
 @media (hover: hover) {
     .unm-hero-slider-container:hover .unm-slider-arrow {
         opacity: 1;
@@ -105,7 +100,9 @@
     }
 }
 
-/* Responsive aspect ratios for clean visual rendering across devices */
+/* ── RESPONSIVE ───────────────────────────────────────────────────── */
+
+/* Tablet landscape */
 @media (max-width: 1024px) {
     .unm-hero-slider {
         aspect-ratio: 16 / 7;
@@ -113,29 +110,38 @@
     .unm-slider-arrow {
         width: 40px;
         height: 40px;
-        background-color: rgba(255, 255, 255, 0.95);
-    }
-    .unm-slider-arrow-prev {
-        left: 16px;
-    }
-    .unm-slider-arrow-next {
-        right: 16px;
     }
 }
 
+/* Tablet portrait */
 @media (max-width: 768px) {
     .unm-hero-slider {
         aspect-ratio: 16 / 8;
     }
-    /* Hide arrows on mobile touch devices as they navigate by swiping */
+    /* Arrows hidden on touch – users swipe */
     .unm-slider-arrow {
         display: none;
     }
 }
 
-@media (max-width: 480px) {
+/* Large phone */
+@media (max-width: 580px) {
     .unm-hero-slider {
-        aspect-ratio: 16 / 9;
-        height: 210px; /* Force minimum height for thin mobile layout readable graphics */
+        /* Taller ratio so the banner content is readable, not squished */
+        aspect-ratio: 4 / 3;
+        /* Absolute min so it never collapses */
+        min-height: 220px;
+    }
+    .unm-slide-img {
+        /* Center-focus keeps the key imagery centered on narrow screens */
+        object-position: center center;
+    }
+}
+
+/* Small phone */
+@media (max-width: 400px) {
+    .unm-hero-slider {
+        aspect-ratio: 3 / 2;
+        min-height: 200px;
     }
 }

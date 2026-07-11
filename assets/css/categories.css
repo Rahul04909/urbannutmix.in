@@ -5,8 +5,10 @@
     width: 100%;
     padding: 36px 0 32px;
     background-color: #ffffff;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: visible;
     position: relative;
+    box-sizing: border-box;
 }
 
 /* === SECTION HEADING === */

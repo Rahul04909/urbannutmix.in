@@ -23,6 +23,8 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* ===========================
@@ -31,7 +33,7 @@
 .unm-footer-newsletter {
     background-color: var(--footer-top-bg);
     border-bottom: 1px solid var(--footer-border);
-    padding: 28px 40px;
+    padding: 28px clamp(16px, 4vw, 40px);
 }
 
 .unm-footer-newsletter-inner {
@@ -104,7 +106,7 @@
    =========================== */
 .unm-footer-top {
     border-bottom: 1px solid var(--footer-border);
-    padding: 32px 40px;
+    padding: 32px clamp(16px, 4vw, 40px);
 }
 
 .unm-footer-top-inner {
@@ -202,7 +204,7 @@
    MAIN LINKS GRID
    =========================== */
 .unm-footer-links {
-    padding: 36px 40px;
+    padding: 36px clamp(16px, 4vw, 40px);
     border-bottom: 1px solid var(--footer-border);
 }
 
@@ -250,7 +252,7 @@
    SOCIAL + BOTTOM BAR
    =========================== */
 .unm-footer-social-bar {
-    padding: 20px 40px;
+    padding: 20px clamp(16px, 4vw, 40px);
     border-bottom: 1px solid var(--footer-border);
     background-color: var(--footer-bottom-bg);
 }
@@ -306,7 +308,7 @@
    =========================== */
 .unm-footer-copyright {
     background-color: var(--footer-bottom-bg);
-    padding: 18px 40px;
+    padding: 18px clamp(16px, 4vw, 40px);
     text-align: center;
 }
 
