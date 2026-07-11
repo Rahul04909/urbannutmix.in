@@ -3,7 +3,7 @@
 /* === SECTION WRAPPER === */
 .unm-categories-section {
     width: 100%;
-    padding: 60px 0 50px;
+    padding: 36px 0 32px;
     background-color: #ffffff;
     overflow: hidden;
     position: relative;
@@ -12,17 +12,17 @@
 /* === SECTION HEADING === */
 .unm-categories-heading {
     text-align: center;
-    margin: 0 0 48px;
+    margin: 0 0 28px;
     padding: 0 24px;
 }
 
 .unm-categories-heading h2 {
     font-family: 'Montserrat', sans-serif;
-    font-size: clamp(1.75rem, 4vw, 2.4rem);
-    font-weight: 600;
+    font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+    font-weight: 700;
     color: #1e293b;
     margin: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     line-height: 1.2;
 }
 
@@ -31,84 +31,98 @@
     position: relative;
     display: flex;
     align-items: center;
-    padding: 0 60px; /* space for arrows */
+    padding: 0 56px; /* Reserve room for arrow buttons */
+    max-width: 1360px;
+    margin: 0 auto;
 }
 
-/* === TRACK (scrollable list) === */
+/* === TRACK (clips overflowing items) === */
 .unm-categories-track {
-    display: flex;
-    gap: 0;
-    overflow: hidden; /* hidden — JS translates the inner list */
+    overflow: hidden;
     width: 100%;
 }
 
+/* === ITEM LIST === */
 .unm-categories-list {
     display: flex;
-    gap: 0;
-    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
-    will-change: transform;
-    list-style: none;
     margin: 0;
     padding: 0;
+    list-style: none;
+    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
 }
 
-/* === EACH CATEGORY ITEM === */
+/* li must also participate in flex sizing */
+.unm-categories-list li {
+    flex: 0 0 calc(100% / 7); /* All 7 visible on large desktop */
+    display: flex;
+    align-items: stretch;
+}
+
+/* === EACH CATEGORY LINK (anchor) === */
 .unm-category-item {
-    flex: 0 0 calc(100% / 6); /* 6 visible on desktop */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 8px;                /* tight gap matching reference */
     cursor: pointer;
-    padding: 10px 8px;
+    padding: 6px 4px 10px;
     text-decoration: none;
     transition: transform 0.3s ease;
+    width: 100%;
 }
 
 .unm-category-item:hover {
-    transform: translateY(-6px);
+    transform: translateY(-5px);
 }
 
-/* === CIRCULAR IMAGE CONTAINER === */
+/* === CIRCULAR IMAGE WRAP === */
 .unm-category-img-wrap {
-    position: relative;
-    width: 130px;
-    height: 130px;
+    width: 110px;
+    height: 110px;
     flex-shrink: 0;
-    border-radius: 50%;
-    overflow: visible; /* botanical illustration can bleed outside */
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: visible;
 }
 
 .unm-category-img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* show full illustration */
-    transition: transform 0.4s ease;
+    object-fit: contain;
+    transition: transform 0.35s ease;
     display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .unm-category-item:hover .unm-category-img {
-    transform: scale(1.08);
+    transform: scale(1.07);
 }
 
 /* === LABEL === */
 .unm-category-label {
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 500;
-    color: #64748b;
+    color: #94a3b8;          /* Default grey, matches reference non-active items */
     text-align: center;
     letter-spacing: 0.01em;
     transition: color 0.3s ease;
     white-space: nowrap;
+    line-height: 1.4;
 }
 
-.unm-category-item:hover .unm-category-label,
+.unm-category-item:hover .unm-category-label {
+    color: #cf6e0c;
+}
+
+/* Active (first item / selected) shows orange label */
 .unm-category-item.active .unm-category-label {
     color: #cf6e0c;
+    font-weight: 600;
 }
 
 /* === NAV ARROWS === */
@@ -116,10 +130,10 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
     background: #ffffff;
-    border: 1.5px solid #e2e8f0;
+    border: 1.5px solid #cbd5e1;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -127,27 +141,28 @@
     cursor: pointer;
     z-index: 10;
     transition: all 0.25s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
     flex-shrink: 0;
-    color: #334155;
+    color: #475569;
+    padding: 0;
 }
 
 .unm-cat-arrow:hover {
     background: #cf6e0c;
     border-color: #cf6e0c;
     color: #ffffff;
-    box-shadow: 0 4px 16px rgba(207,110,12,0.3);
+    box-shadow: 0 4px 14px rgba(207,110,12,0.28);
 }
 
 .unm-cat-arrow:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: default;
     pointer-events: none;
 }
 
 .unm-cat-arrow-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2.5;
@@ -155,92 +170,93 @@
     stroke-linejoin: round;
 }
 
-.unm-cat-arrow-prev {
-    left: 8px;
+.unm-cat-arrow-prev { left: 8px; }
+.unm-cat-arrow-next { right: 8px; }
+
+/* ===================================
+   RESPONSIVE BREAKPOINTS
+   =================================== */
+
+/* 6 visible (one scrolled off-screen) */
+@media (max-width: 1280px) {
+    .unm-categories-list li {
+        flex: 0 0 calc(100% / 6);
+    }
 }
 
-.unm-cat-arrow-next {
-    right: 8px;
-}
-
-/* ============================
-   RESPONSIVE
-   ============================ */
-
-/* 5 columns */
-@media (max-width: 1200px) {
-    .unm-category-item {
+/* 5 visible */
+@media (max-width: 1024px) {
+    .unm-categories-list li {
         flex: 0 0 calc(100% / 5);
     }
     .unm-category-img-wrap {
-        width: 115px;
-        height: 115px;
+        width: 100px;
+        height: 100px;
     }
 }
 
-/* 4 columns */
-@media (max-width: 900px) {
+/* 4 visible */
+@media (max-width: 800px) {
     .unm-categories-slider-wrapper {
         padding: 0 48px;
     }
-    .unm-category-item {
+    .unm-categories-list li {
         flex: 0 0 calc(100% / 4);
     }
     .unm-category-img-wrap {
-        width: 105px;
-        height: 105px;
+        width: 88px;
+        height: 88px;
     }
     .unm-categories-heading h2 {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
     }
 }
 
-/* 3 columns */
-@media (max-width: 640px) {
+/* 3 visible */
+@media (max-width: 580px) {
     .unm-categories-section {
-        padding: 40px 0 36px;
+        padding: 28px 0 24px;
     }
     .unm-categories-heading {
-        margin-bottom: 32px;
+        margin-bottom: 20px;
     }
     .unm-categories-slider-wrapper {
-        padding: 0 44px;
+        padding: 0 42px;
     }
-    .unm-category-item {
+    .unm-categories-list li {
         flex: 0 0 calc(100% / 3);
-        gap: 10px;
-    }
-    .unm-category-img-wrap {
-        width: 90px;
-        height: 90px;
-    }
-    .unm-category-label {
-        font-size: 0.73rem;
-    }
-    .unm-cat-arrow {
-        width: 36px;
-        height: 36px;
-    }
-}
-
-/* 2 columns */
-@media (max-width: 400px) {
-    .unm-categories-slider-wrapper {
-        padding: 0 38px;
-    }
-    .unm-category-item {
-        flex: 0 0 calc(100% / 2.4);
     }
     .unm-category-img-wrap {
         width: 80px;
         height: 80px;
     }
+    .unm-category-label {
+        font-size: 0.7rem;
+    }
     .unm-cat-arrow {
         width: 32px;
         height: 32px;
     }
+}
+
+/* 2.5 visible on smallest screens */
+@media (max-width: 380px) {
+    .unm-categories-slider-wrapper {
+        padding: 0 36px;
+    }
+    .unm-categories-list li {
+        flex: 0 0 calc(100% / 2.5);
+    }
+    .unm-category-img-wrap {
+        width: 72px;
+        height: 72px;
+    }
+    .unm-cat-arrow {
+        width: 28px;
+        height: 28px;
+    }
     .unm-cat-arrow-icon {
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
     }
 }

@@ -132,11 +132,12 @@ $categories = [
 
     function getVisibleCount() {
         const w = window.innerWidth;
-        if (w <= 400) return 2;
-        if (w <= 640) return 3;
-        if (w <= 900) return 4;
-        if (w <= 1200) return 5;
-        return 6;
+        if (w <= 380) return 2.5;
+        if (w <= 580) return 3;
+        if (w <= 800) return 4;
+        if (w <= 1024) return 5;
+        if (w <= 1280) return 6;
+        return 7;
     }
 
     /* ---- Render ---- */

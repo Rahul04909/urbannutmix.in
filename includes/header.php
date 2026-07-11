@@ -44,10 +44,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Favicon link -->
     <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>favicon.png">
     
-    <!-- Stylesheet -->
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/header.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/hero.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/categories.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/footer.css">
 </head>
 <body>
 

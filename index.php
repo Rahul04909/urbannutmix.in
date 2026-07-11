@@ -14,6 +14,9 @@ include_once 'components/hero.php';
 
 // Include the Shop by Dryfruits categories component
 include_once 'components/categories.php';
+
+// Include the global footer
+include_once 'includes/footer.php';
 ?>
 
 </body>
