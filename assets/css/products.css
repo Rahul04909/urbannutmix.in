@@ -1,0 +1,290 @@
+/* UrbanNutMix - Products Component CSS */
+
+/* ===========================
+   SECTION WRAPPER
+   =========================== */
+.unm-products-section {
+    width: 100%;
+    padding: 48px 40px 56px;
+    background: #ffffff;
+}
+
+.unm-products-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ===========================
+   SECTION HEADING
+   =========================== */
+.unm-products-heading {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.unm-products-heading h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+
+/* ===========================
+   GRID
+   =========================== */
+.unm-products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===========================
+   PRODUCT CARD
+   =========================== */
+.unm-product-card {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    /* Light shadow, no harsh border */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.unm-product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.07);
+}
+
+/* ===========================
+   IMAGE ZONE (colored bg)
+   =========================== */
+.unm-product-img-zone {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 0.72; /* Landscape ratio matching reference */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 14px;
+    box-sizing: border-box;
+}
+
+/* Per-card background colours */
+.unm-product-card[data-bg="pink"]    .unm-product-img-zone { background-color: #ffd6e0; }
+.unm-product-card[data-bg="mint"]    .unm-product-img-zone { background-color: #c5f0ea; }
+.unm-product-card[data-bg="magenta"] .unm-product-img-zone { background-color: #fba6cf; }
+.unm-product-card[data-bg="lavender"].unm-product-img-zone { background-color: #dcd5f7; }
+
+.unm-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.4s ease;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.unm-product-card:hover .unm-product-img {
+    transform: scale(1.05);
+}
+
+/* ===========================
+   WEIGHT BADGE (750 G)
+   =========================== */
+.unm-product-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 38px;
+    height: 38px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    line-height: 1.1;
+}
+
+.unm-product-badge-num {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: block;
+}
+
+.unm-product-badge-unit {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 500;
+    color: #475569;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* ===========================
+   CARD BODY (text + button)
+   =========================== */
+.unm-product-body {
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 6px;
+}
+
+.unm-product-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #334155;
+    line-height: 1.45;
+    margin: 0;
+    /* Clamp to 3 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.unm-product-price-wrap {
+    margin-top: 4px;
+}
+
+.unm-product-price {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.unm-product-tax {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    line-height: 1.3;
+}
+
+/* Spacer to push button to bottom */
+.unm-product-spacer { flex: 1; }
+
+/* ===========================
+   ADD TO CART BUTTON
+   =========================== */
+.unm-product-btn {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px 10px;
+    background: #f7c90b;
+    color: #1e293b;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+    box-shadow: 0 2px 6px rgba(247,201,11,0.3);
+}
+
+.unm-product-btn:hover {
+    background: #e5b800;
+    box-shadow: 0 6px 18px rgba(247,201,11,0.45);
+    transform: translateY(-1px);
+}
+
+.unm-product-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+
+/* 3 columns */
+@media (max-width: 1100px) {
+    .unm-products-section {
+        padding: 40px 24px 48px;
+    }
+}
+
+/* 2 columns */
+@media (max-width: 820px) {
+    .unm-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+    .unm-products-section {
+        padding: 36px 16px 44px;
+    }
+    .unm-products-heading h2 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Mobile — keep 2×2 but tighter */
+@media (max-width: 480px) {
+    .unm-products-section {
+        padding: 28px 12px 36px;
+    }
+    .unm-products-grid {
+        gap: 10px;
+    }
+    .unm-products-heading {
+        margin-bottom: 24px;
+    }
+    .unm-product-body {
+        padding: 10px 10px 12px;
+    }
+    .unm-product-name {
+        font-size: 0.72rem;
+        -webkit-line-clamp: 4;
+    }
+    .unm-product-price {
+        font-size: 0.82rem;
+    }
+    .unm-product-tax {
+        font-size: 0.68rem;
+    }
+    .unm-product-btn {
+        font-size: 0.65rem;
+        padding: 9px 6px;
+        margin-top: 10px;
+    }
+    .unm-product-badge {
+        width: 32px;
+        height: 32px;
+        top: 7px;
+        right: 7px;
+    }
+    .unm-product-badge-num {
+        font-size: 0.6rem;
+    }
+    .unm-product-badge-unit {
+        font-size: 0.44rem;
+    }
+}
