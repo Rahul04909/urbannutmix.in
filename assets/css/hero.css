@@ -1,0 +1,141 @@
+/* UrbanNutMix - Premium Hero Slider CSS */
+
+.unm-hero-slider-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background-color: #f1f5f9;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.unm-hero-slider {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1920 / 650; /* Elegant widescreen format for desktop */
+    overflow: hidden;
+}
+
+.unm-slider-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+.unm-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.unm-slide-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    pointer-events: none; /* Prevents default image drag interference with swipe gesture */
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Grab cursor for dragging interactivity */
+.unm-hero-slider-container.grabbing {
+    cursor: grabbing;
+}
+
+.unm-hero-slider-container.grab {
+    cursor: grab;
+}
+
+/* Prev/Next arrows (Visible on desktop hover only, clean and minimalistic) */
+.unm-slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e293b;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.unm-slider-arrow:hover {
+    background-color: #ffffff;
+    color: var(--primary-color, #cf6e0c);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.unm-slider-arrow-prev {
+    left: 24px;
+}
+
+.unm-slider-arrow-next {
+    right: 24px;
+}
+
+.unm-slider-arrow-icon {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Show arrows on slider container hover (Desktop only) */
+@media (hover: hover) {
+    .unm-hero-slider-container:hover .unm-slider-arrow {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* Responsive aspect ratios for clean visual rendering across devices */
+@media (max-width: 1024px) {
+    .unm-hero-slider {
+        aspect-ratio: 16 / 7;
+    }
+    .unm-slider-arrow {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+    .unm-slider-arrow-prev {
+        left: 16px;
+    }
+    .unm-slider-arrow-next {
+        right: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .unm-hero-slider {
+        aspect-ratio: 16 / 8;
+    }
+    /* Hide arrows on mobile touch devices as they navigate by swiping */
+    .unm-slider-arrow {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .unm-hero-slider {
+        aspect-ratio: 16 / 9;
+        height: 210px; /* Force minimum height for thin mobile layout readable graphics */
+    }
+}

@@ -46,6 +46,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     
     <!-- Stylesheet -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/header.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/hero.css">
 </head>
 <body>
 
@@ -70,22 +71,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <a href="<?php echo BASE_URL; ?>index.php" class="unm-nav-link <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">Home</a>
                     </li>
                     <li class="unm-nav-item">
-                        <a href="#" class="unm-nav-link <?php echo ($current_page == 'shop.php') ? 'active' : ''; ?>">
-                            Shop
-                            <!-- Down Arrow SVG -->
-                            <svg class="unm-nav-arrow" viewBox="0 0 24 24">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </a>
-                        <!-- Dropdown Menu -->
-                        <ul class="unm-dropdown">
-                            <li class="unm-dropdown-item"><a href="<?php echo BASE_URL; ?>shop.php?category=almonds">Premium Almonds</a></li>
-                            <li class="unm-dropdown-item"><a href="<?php echo BASE_URL; ?>shop.php?category=cashews">Crunchy Cashews</a></li>
-                            <li class="unm-dropdown-item"><a href="<?php echo BASE_URL; ?>shop.php?category=pistachios">Salted Pistachios</a></li>
-                            <li class="unm-dropdown-item"><a href="<?php echo BASE_URL; ?>shop.php?category=raisins">Sweet Raisins</a></li>
-                            <li class="unm-dropdown-item"><a href="<?php echo BASE_URL; ?>shop.php?category=mixed-nuts">Nut Mixes & Berries</a></li>
-                            <li class="unm-dropdown-item"><a href="<?php echo BASE_URL; ?>shop.php?category=gift-hampers">Festive Gift Hampers</a></li>
-                        </ul>
+                        <a href="<?php echo BASE_URL; ?>shop.php" class="unm-nav-link <?php echo ($current_page == 'shop.php') ? 'active' : ''; ?>">Shop</a>
                     </li>
                     <li class="unm-nav-item">
                         <a href="<?php echo BASE_URL; ?>partner.php" class="unm-nav-link <?php echo ($current_page == 'partner.php') ? 'active' : ''; ?>">Become a Partner</a>
@@ -145,21 +131,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <a href="<?php echo BASE_URL; ?>index.php" class="unm-mobile-link <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">Home</a>
             </li>
             <li class="unm-mobile-item">
-                <a href="#" class="unm-mobile-link" id="unmMobileShopToggle">
-                    Shop
-                    <!-- Down Arrow SVG -->
-                    <svg class="unm-nav-arrow" viewBox="0 0 24 24">
-                        <path d="M6 9l6 6 6-6" />
-                    </svg>
-                </a>
-                <ul class="unm-mobile-dropdown" id="unmMobileDropdownMenu">
-                    <li><a href="<?php echo BASE_URL; ?>shop.php?category=almonds" class="unm-mobile-dropdown-link">Premium Almonds</a></li>
-                    <li><a href="<?php echo BASE_URL; ?>shop.php?category=cashews" class="unm-mobile-dropdown-link">Crunchy Cashews</a></li>
-                    <li><a href="<?php echo BASE_URL; ?>shop.php?category=pistachios" class="unm-mobile-dropdown-link">Salted Pistachios</a></li>
-                    <li><a href="<?php echo BASE_URL; ?>shop.php?category=raisins" class="unm-mobile-dropdown-link">Sweet Raisins</a></li>
-                    <li><a href="<?php echo BASE_URL; ?>shop.php?category=mixed-nuts" class="unm-mobile-dropdown-link">Nut Mixes & Berries</a></li>
-                    <li><a href="<?php echo BASE_URL; ?>shop.php?category=gift-hampers" class="unm-mobile-dropdown-link">Festive Gift Hampers</a></li>
-                </ul>
+                <a href="<?php echo BASE_URL; ?>shop.php" class="unm-mobile-link <?php echo ($current_page == 'shop.php') ? 'active' : ''; ?>">Shop</a>
             </li>
             <li class="unm-mobile-item">
                 <a href="<?php echo BASE_URL; ?>partner.php" class="unm-mobile-link <?php echo ($current_page == 'partner.php') ? 'active' : ''; ?>">Become a Partner</a>
