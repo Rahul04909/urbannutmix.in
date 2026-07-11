@@ -53,7 +53,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <div class="unm-header-wrapper">
     <!-- TOPBAR -->
     <div class="unm-topbar">
-        Powered By-SELLPRO COMMERCE PRIVATE LIMITED
+        A Website Powerd By Mineib Creative Technology
     </div>
 
     <!-- MAIN HEADER -->
