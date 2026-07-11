@@ -1,0 +1,155 @@
+/* UrbanNutMix - Popular Searches FAQ Component CSS */
+
+.unm-popular-searches-section {
+    width: 100%;
+    padding: 40px clamp(12px, 3vw, 40px);
+    background-color: #ffffff;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.unm-popular-searches-inner {
+    max-width: 1280px; /* Aligns perfectly with the grid banners and product components */
+    margin: 0 auto;
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 36px 40px 42px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02);
+    background-color: #ffffff;
+    box-sizing: border-box;
+}
+
+.unm-popular-searches-heading {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.unm-popular-searches-heading h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(1.4rem, 3.2vw, 2.1rem);
+    font-weight: 700;
+    color: #991b1b; /* Burgundy color matching reference image */
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* Accordion List Layout */
+.unm-popular-searches-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.unm-popular-search-item {
+    border-bottom: 1.5px solid #f1f5f9;
+    padding: 22px 0;
+}
+
+.unm-popular-search-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.unm-popular-search-item:first-child {
+    padding-top: 0;
+}
+
+.unm-popular-search-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+}
+
+.unm-popular-search-question {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #991b1b; /* Burgundy question text */
+    margin: 0;
+    line-height: 1.4;
+    transition: opacity 0.2s ease;
+}
+
+.unm-popular-search-header:hover .unm-popular-search-question {
+    opacity: 0.85;
+}
+
+.unm-popular-search-toggle-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: #991b1b;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+.unm-popular-search-item.active .unm-popular-search-toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Accordion body smooth collapse transition */
+.unm-popular-search-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.unm-popular-search-answer {
+    padding: 12px 0 2px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    color: #475569; /* Slate-600 */
+    line-height: 1.75;
+    margin: 0;
+}
+
+.unm-popular-search-answer strong {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* ===================================
+   RESPONSIVE OVERRIDES
+   =================================== */
+
+@media (max-width: 768px) {
+    .unm-popular-searches-inner {
+        padding: 24px 20px 28px;
+        border-radius: 8px;
+    }
+    .unm-popular-search-question {
+        font-size: 0.85rem;
+    }
+    .unm-popular-search-answer {
+        font-size: 0.78rem;
+        line-height: 1.65;
+    }
+    .unm-popular-search-toggle-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .unm-popular-searches-section {
+        padding: 28px 12px;
+    }
+    .unm-popular-searches-inner {
+        padding: 20px 14px 24px;
+    }
+    .unm-popular-search-item {
+        padding: 16px 0;
+    }
+}

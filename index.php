@@ -27,6 +27,9 @@ include_once 'components/full-width-banner.php';
 // Include the About component
 include_once 'components/about.php';
 
+// Include the Popular Searches FAQ component
+include_once 'components/popular-searches.php';
+
 // Include the global footer
 include_once 'includes/footer.php';
 ?>
