@@ -1,0 +1,540 @@
+/* UrbanNutMix Header Stylesheet */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #d97706; /* Rich Amber Orange */
+    --primary-hover: #b45309;
+    --text-color: #1e293b;
+    --text-light: #64748b;
+    --bg-color: #ffffff;
+    --bg-alt: #f8fafc;
+    --border-color: #e2e8f0;
+    --topbar-bg: #d97706;
+    --topbar-text: #ffffff;
+    --font-family: 'Outfit', sans-serif;
+    --transition-speed: 0.3s;
+    --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Base resets for header */
+.unm-header-wrapper {
+    font-family: var(--font-family);
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+.unm-header-wrapper *, 
+.unm-header-wrapper *::before, 
+.unm-header-wrapper *::after {
+    box-sizing: inherit;
+}
+
+/* --- TOPBAR --- */
+.unm-topbar {
+    background-color: var(--topbar-bg);
+    color: var(--topbar-text);
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 10px 15px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    animation: fadeInDown 0.5s ease;
+}
+
+/* --- MAIN HEADER --- */
+.unm-main-header {
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    transition: all var(--transition-speed) var(--transition-ease);
+}
+
+.unm-header-sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    box-shadow: var(--shadow-md);
+    animation: slideDown 0.4s var(--transition-ease);
+}
+
+.unm-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 80px;
+}
+
+/* --- LOGO --- */
+.unm-logo-link {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    text-decoration: none;
+}
+
+.unm-logo-img {
+    height: 52px;
+    width: auto;
+    object-fit: contain;
+    transition: transform var(--transition-speed) var(--transition-ease);
+}
+
+.unm-logo-img:hover {
+    transform: scale(1.05);
+}
+
+/* --- DESKTOP NAVIGATION --- */
+.unm-nav-menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.unm-nav-item {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.unm-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0 20px;
+    height: 100%;
+    letter-spacing: 0.03em;
+    position: relative;
+    transition: color var(--transition-speed) var(--transition-ease);
+}
+
+.unm-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    right: 20px;
+    height: 3px;
+    background-color: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform var(--transition-speed) var(--transition-ease);
+}
+
+.unm-nav-link:hover {
+    color: var(--primary-color);
+}
+
+.unm-nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+.unm-nav-link.active {
+    color: var(--primary-color);
+}
+
+.unm-nav-link.active::after {
+    transform: scaleX(1);
+}
+
+.unm-nav-arrow {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    fill: none;
+    transition: transform var(--transition-speed) var(--transition-ease);
+}
+
+.unm-nav-item:hover .unm-nav-arrow {
+    transform: rotate(180deg);
+}
+
+/* --- DROPDOWN MENU --- */
+.unm-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--bg-color);
+    min-width: 230px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all var(--transition-speed) var(--transition-ease);
+    list-style: none;
+    padding: 12px 0;
+    margin: 0;
+    z-index: 1001;
+}
+
+.unm-nav-item:hover .unm-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.unm-dropdown-item a {
+    display: block;
+    padding: 10px 24px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-speed) var(--transition-ease);
+}
+
+.unm-dropdown-item a:hover {
+    background-color: var(--bg-alt);
+    color: var(--primary-color);
+    padding-left: 30px;
+}
+
+/* --- HEADER ACTIONS --- */
+.unm-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.unm-action-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    color: var(--text-color);
+    cursor: pointer;
+    position: relative;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed) var(--transition-ease);
+    text-decoration: none;
+}
+
+.unm-action-btn:hover {
+    background-color: var(--bg-alt);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.unm-action-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.unm-cart-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-color);
+}
+
+/* --- HAMBURGER MENU --- */
+.unm-hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1010;
+}
+
+.unm-hamburger span {
+    width: 100%;
+    height: 2px;
+    background-color: var(--text-color);
+    border-radius: 2px;
+    transition: all var(--transition-speed) var(--transition-ease);
+}
+
+/* Hamburger Active State */
+.unm-hamburger.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.unm-hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.unm-hamburger.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* --- MOBILE DRAWER --- */
+.unm-mobile-drawer {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 320px;
+    height: 100vh;
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow-lg);
+    z-index: 1005;
+    display: flex;
+    flex-direction: column;
+    transition: right var(--transition-speed) var(--transition-ease);
+    padding: 80px 24px 24px 24px;
+}
+
+.unm-mobile-drawer.active {
+    right: 0;
+}
+
+.unm-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 1004;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-speed) var(--transition-ease);
+}
+
+.unm-drawer-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.unm-mobile-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.unm-mobile-item {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.unm-mobile-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.unm-mobile-link.active {
+    color: var(--primary-color);
+}
+
+.unm-mobile-dropdown {
+    list-style: none;
+    padding-left: 16px;
+    margin-top: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    animation: slideDown 0.3s var(--transition-ease);
+}
+
+.unm-mobile-dropdown.active {
+    display: flex;
+}
+
+.unm-mobile-dropdown-link {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: block;
+}
+
+.unm-mobile-dropdown-link:hover {
+    color: var(--primary-color);
+}
+
+.unm-mobile-drawer-footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+    margin-top: auto;
+}
+
+.unm-mobile-contact {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.unm-mobile-contact a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* --- SEARCH BAR OVERLAY --- */
+.unm-search-overlay {
+    position: fixed;
+    top: -120px;
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow-md);
+    z-index: 1009;
+    padding: 20px 24px;
+    transition: top var(--transition-speed) var(--transition-ease);
+}
+
+.unm-search-overlay.active {
+    top: 0;
+}
+
+.unm-search-container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.unm-search-input {
+    flex-grow: 1;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color var(--transition-speed) var(--transition-ease);
+}
+
+.unm-search-input:focus {
+    border-color: var(--primary-color);
+}
+
+.unm-search-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-speed) var(--transition-ease);
+}
+
+.unm-search-close:hover {
+    background-color: var(--bg-alt);
+    color: var(--primary-color);
+}
+
+/* --- KEYFRAME ANIMATIONS --- */
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 1024px) {
+    .unm-nav-menu {
+        display: none;
+    }
+    
+    .unm-hamburger {
+        display: flex;
+    }
+    
+    .unm-container {
+        height: 70px;
+    }
+    
+    .unm-logo-img {
+        height: 44px;
+    }
+}
+
+@media (max-width: 640px) {
+    .unm-topbar {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+    }
+    
+    .unm-container {
+        padding: 0 16px;
+    }
+    
+    .unm-header-actions {
+        gap: 8px;
+    }
+    
+    .unm-mobile-drawer {
+        width: 100%;
+        right: -100%;
+    }
+}
