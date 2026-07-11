@@ -127,21 +127,19 @@
 /* Large phone */
 @media (max-width: 580px) {
     .unm-hero-slider {
-        /* Taller ratio so the banner content is readable, not squished */
-        aspect-ratio: 4 / 3;
-        /* Absolute min so it never collapses */
-        min-height: 220px;
+        aspect-ratio: 1920 / 650;
+        min-height: auto; /* Remove minimum height floor to prevent cropping */
     }
     .unm-slide-img {
-        /* Center-focus keeps the key imagery centered on narrow screens */
-        object-position: center center;
+        object-fit: contain; /* Render complete image */
+        object-position: center;
     }
 }
 
 /* Small phone */
 @media (max-width: 400px) {
     .unm-hero-slider {
-        aspect-ratio: 3 / 2;
-        min-height: 200px;
+        aspect-ratio: 1920 / 650;
+        min-height: auto;
     }
 }

@@ -67,6 +67,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <img src="<?php echo BASE_URL; ?>assets/images/logo-bg.jpg" alt="UrbanNutMix Logo" class="unm-logo-img">
             </a>
 
+            <!-- MOBILE INLINE SEARCH BAR (Always visible in mobile header) -->
+            <div class="unm-header-search-bar-inline">
+                <form action="<?php echo BASE_URL; ?>shop.php" method="GET" class="unm-search-form-inline">
+                    <input type="text" name="search" placeholder="Search dry fruits, nuts..." class="unm-search-input-field-inline" autocomplete="off">
+                    <button type="submit" class="unm-search-submit-btn-inline" aria-label="Search">
+                        <svg class="unm-search-submit-icon-inline" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
             <!-- DESKTOP NAVIGATION -->
             <nav class="unm-desktop-nav" aria-label="Main Desktop Navigation">
                 <ul class="unm-nav-menu">
@@ -90,7 +103,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- HEADER ACTIONS -->
             <div class="unm-header-actions">
-                <!-- Search Trigger -->
+                <!-- Search Trigger (Desktop Only, hidden on mobile) -->
                 <button class="unm-action-btn" id="unmSearchBtn" aria-label="Open Search">
                     <svg class="unm-action-icon" viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -126,37 +139,118 @@ $current_page = basename($_SERVER['PHP_SELF']);
         </div>
     </header>
 
-    <!-- MOBILE DRAWER -->
+    <!-- MOBILE DRAWER (Premium Left Slider Layout) -->
     <div class="unm-drawer-overlay" id="unmDrawerOverlay"></div>
     <aside class="unm-mobile-drawer" id="unmMobileDrawer">
+        <!-- Sidebar Header with welcome message -->
+        <div class="unm-drawer-header">
+            <div class="unm-drawer-user">
+                <div class="unm-drawer-avatar">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="unm-drawer-user-info">
+                    <span class="unm-user-welcome">Welcome to</span>
+                    <span class="unm-user-brand">UrbanNutMix</span>
+                </div>
+            </div>
+            <button class="unm-drawer-close" id="unmDrawerClose" aria-label="Close Menu">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body Navigation Links -->
         <ul class="unm-mobile-nav">
             <li class="unm-mobile-item">
-                <a href="<?php echo BASE_URL; ?>index.php" class="unm-mobile-link <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">Home</a>
+                <a href="<?php echo BASE_URL; ?>index.php" class="unm-mobile-link <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">
+                    <span class="unm-mobile-link-content">
+                        <svg class="unm-drawer-icon" viewBox="0 0 24 24">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        Home
+                    </span>
+                </a>
             </li>
             <li class="unm-mobile-item">
-                <a href="<?php echo BASE_URL; ?>shop.php" class="unm-mobile-link <?php echo ($current_page == 'shop.php') ? 'active' : ''; ?>">Shop</a>
+                <a href="<?php echo BASE_URL; ?>shop.php" class="unm-mobile-link <?php echo ($current_page == 'shop.php') ? 'active' : ''; ?>">
+                    <span class="unm-mobile-link-content">
+                        <svg class="unm-drawer-icon" viewBox="0 0 24 24">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        Shop All
+                    </span>
+                </a>
             </li>
             <li class="unm-mobile-item">
-                <a href="<?php echo BASE_URL; ?>partner.php" class="unm-mobile-link <?php echo ($current_page == 'partner.php') ? 'active' : ''; ?>">Become a Partner</a>
+                <a href="<?php echo BASE_URL; ?>partner.php" class="unm-mobile-link <?php echo ($current_page == 'partner.php') ? 'active' : ''; ?>">
+                    <span class="unm-mobile-link-content">
+                        <svg class="unm-drawer-icon" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Become a Partner
+                    </span>
+                </a>
             </li>
             <li class="unm-mobile-item">
-                <a href="<?php echo BASE_URL; ?>blogs.php" class="unm-mobile-link <?php echo ($current_page == 'blogs.php') ? 'active' : ''; ?>">Blogs</a>
+                <a href="<?php echo BASE_URL; ?>blogs.php" class="unm-mobile-link <?php echo ($current_page == 'blogs.php') ? 'active' : ''; ?>">
+                    <span class="unm-mobile-link-content">
+                        <svg class="unm-drawer-icon" viewBox="0 0 24 24">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Blogs &amp; Articles
+                    </span>
+                </a>
             </li>
             <li class="unm-mobile-item">
-                <a href="<?php echo BASE_URL; ?>diwali-gifting.php" class="unm-mobile-link <?php echo ($current_page == 'diwali-gifting.php') ? 'active' : ''; ?>">Diwali Gifting</a>
+                <a href="<?php echo BASE_URL; ?>diwali-gifting.php" class="unm-mobile-link <?php echo ($current_page == 'diwali-gifting.php') ? 'active' : ''; ?>">
+                    <span class="unm-mobile-link-content">
+                        <svg class="unm-drawer-icon" viewBox="0 0 24 24">
+                            <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                            <rect x="2" y="7" width="20" height="5"></rect>
+                            <line x1="12" y1="22" x2="12" y2="7"></line>
+                            <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                        </svg>
+                        Diwali Gifting
+                    </span>
+                </a>
             </li>
         </ul>
 
+        <!-- Drawer Footer Area -->
         <div class="unm-mobile-drawer-footer">
             <div class="unm-mobile-contact">
-                <span>Customer Support:</span>
-                <a href="tel:+919876543210">+91 98765 43210</a>
-                <a href="mailto:support@urbannutmix.in">support@urbannutmix.in</a>
+                <span class="unm-contact-label-title">Need Assistance?</span>
+                <a href="tel:+919876543210" class="unm-contact-item-link">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 5.72 5.72l.92-.93a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    +91 98765 43210
+                </a>
+                <a href="mailto:support@urbannutmix.in" class="unm-contact-item-link">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    support@urbannutmix.in
+                </a>
             </div>
         </div>
     </aside>
 
-    <!-- SEARCH OVERLAY -->
+    <!-- SEARCH OVERLAY (For desktop search interaction) -->
     <div class="unm-search-overlay" id="unmSearchOverlay">
         <div class="unm-search-container">
             <form action="<?php echo BASE_URL; ?>shop.php" method="GET" style="display: flex; flex-grow: 1; gap: 12px; align-items: center;">
@@ -183,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const hamburgerBtn = document.getElementById('unmHamburger');
     const mobileDrawer = document.getElementById('unmMobileDrawer');
     const drawerOverlay = document.getElementById('unmDrawerOverlay');
+    const closeDrawerBtn = document.getElementById('unmDrawerClose');
     const searchBtn = document.getElementById('unmSearchBtn');
     const searchOverlay = document.getElementById('unmSearchOverlay');
     const searchClose = document.getElementById('unmSearchClose');
@@ -210,6 +305,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     hamburgerBtn.addEventListener('click', toggleDrawer);
     drawerOverlay.addEventListener('click', toggleDrawer);
+    if (closeDrawerBtn) {
+        closeDrawerBtn.addEventListener('click', toggleDrawer);
+    }
 
     // --- Mobile Dropdown Accordion ---
     if (mobileShopToggle) {

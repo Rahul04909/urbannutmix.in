@@ -277,24 +277,24 @@ img, video, iframe {
     transform: translateY(-8px) rotate(-45deg);
 }
 
-/* --- MOBILE DRAWER --- */
+/* --- MOBILE DRAWER (Premium Left Slider) --- */
 .unm-mobile-drawer {
     position: fixed;
     top: 0;
-    right: -320px;
-    width: 320px;
+    left: -300px;
+    width: 300px;
     height: 100vh;
     background-color: var(--bg-color);
     box-shadow: var(--shadow-lg);
     z-index: 1005;
     display: flex;
     flex-direction: column;
-    transition: right var(--transition-speed) var(--transition-ease);
-    padding: 80px 24px 24px 24px;
+    transition: left var(--transition-speed) var(--transition-ease);
+    padding: 0; /* Remove top/side paddings for layout alignment */
 }
 
 .unm-mobile-drawer.active {
-    right: 0;
+    left: 0;
 }
 
 .unm-drawer-overlay {
@@ -316,82 +316,174 @@ img, video, iframe {
     visibility: visible;
 }
 
+/* Sidebar header area styling */
+.unm-drawer-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: #ffffff;
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.unm-drawer-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.unm-drawer-avatar {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unm-drawer-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.unm-user-welcome {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.unm-user-brand {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.unm-drawer-close {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.25s ease;
+}
+
+.unm-drawer-close:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Sidebar navigation links */
 .unm-mobile-nav {
     list-style: none;
-    padding: 0;
+    padding: 16px 0;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
     overflow-y: auto;
     flex-grow: 1;
 }
 
 .unm-mobile-item {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 12px;
+    margin: 0;
+    padding: 0;
 }
 
 .unm-mobile-link {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: 1.1rem;
+    font-size: 0.92rem;
     font-weight: 600;
-    text-transform: uppercase;
+    border-left: 4px solid transparent;
+    transition: all 0.25s ease;
+}
+
+.unm-mobile-link-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.unm-drawer-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--text-light);
+    stroke-width: 2;
+    transition: stroke 0.25s ease;
+}
+
+.unm-mobile-link:hover {
+    background-color: var(--bg-alt);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+}
+
+.unm-mobile-link:hover .unm-drawer-icon {
+    stroke: var(--primary-color);
 }
 
 .unm-mobile-link.active {
+    background-color: rgba(207, 110, 12, 0.08);
     color: var(--primary-color);
+    border-left-color: var(--primary-color);
 }
 
-.unm-mobile-dropdown {
-    list-style: none;
-    padding-left: 16px;
-    margin-top: 10px;
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-    animation: slideDown 0.3s var(--transition-ease);
-}
-
-.unm-mobile-dropdown.active {
-    display: flex;
-}
-
-.unm-mobile-dropdown-link {
-    color: var(--text-light);
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 500;
-    display: block;
-}
-
-.unm-mobile-dropdown-link:hover {
-    color: var(--primary-color);
+.unm-mobile-link.active .unm-drawer-icon {
+    stroke: var(--primary-color);
 }
 
 .unm-mobile-drawer-footer {
     border-top: 1px solid var(--border-color);
-    padding-top: 20px;
+    padding: 20px;
+    background-color: var(--bg-alt);
     margin-top: auto;
 }
 
 .unm-mobile-contact {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin-bottom: 15px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
 }
 
-.unm-mobile-contact a {
-    color: var(--primary-color);
+.unm-contact-label-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.unm-contact-item-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-color);
     text-decoration: none;
+    font-size: 0.85rem;
     font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.unm-contact-item-link svg {
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.unm-contact-item-link:hover {
+    color: var(--primary-color);
 }
 
 /* --- SEARCH BAR OVERLAY --- */
@@ -473,6 +565,11 @@ img, video, iframe {
     }
 }
 
+/* --- MOBILE INLINE SEARCH BAR (Default hidden) --- */
+.unm-header-search-bar-inline {
+    display: none;
+}
+
 /* --- RESPONSIVE MEDIA QUERIES --- */
 @media (max-width: 1024px) {
     .unm-nav-menu {
@@ -485,29 +582,145 @@ img, video, iframe {
     
     .unm-container {
         height: 70px;
+        padding: 0 16px;
     }
     
     .unm-logo-img {
-        height: 44px;
+        height: 38px;
+    }
+
+    /* Hide desktop search button and show inline search bar */
+    #unmSearchBtn {
+        display: none !important;
+    }
+
+    .unm-header-search-bar-inline {
+        display: block;
+        flex: 1;
+        margin: 0 12px;
+        max-width: 320px;
+    }
+
+    .unm-search-form-inline {
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .unm-search-input-field-inline {
+        width: 100%;
+        height: 36px;
+        background-color: #f1f5f9;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 0 12px 0 34px;
+        font-size: 0.78rem;
+        font-family: inherit;
+        color: var(--text-color);
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .unm-search-input-field-inline:focus {
+        background-color: #ffffff;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(207, 110, 12, 0.12);
+    }
+
+    .unm-search-submit-btn-inline {
+        position: absolute;
+        left: 12px;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+    }
+
+    .unm-search-submit-icon-inline {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.5;
+    }
+
+    .unm-search-input-field-inline:focus + .unm-search-submit-btn-inline {
+        color: var(--primary-color);
     }
 }
 
 @media (max-width: 640px) {
     .unm-topbar {
-        font-size: 0.75rem;
-        padding: 8px 12px;
+        font-size: 0.72rem;
+        padding: 6px 12px;
+        letter-spacing: 0.03em;
     }
     
     .unm-container {
-        padding: 0 16px;
+        padding: 0 10px;
+        height: 60px;
+    }
+
+    .unm-logo-img {
+        height: 32px;
     }
     
     .unm-header-actions {
-        gap: 8px;
+        gap: 6px;
     }
-    
+
+    .unm-action-btn {
+        padding: 6px;
+    }
+
+    .unm-action-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .unm-cart-badge {
+        height: 16px;
+        width: 16px;
+        font-size: 0.6rem;
+        top: -1px;
+        right: -1px;
+    }
+
+    .unm-header-search-bar-inline {
+        margin: 0 8px;
+        max-width: 200px;
+    }
+
+    .unm-search-input-field-inline {
+        height: 32px;
+        padding-left: 28px;
+        font-size: 0.72rem;
+    }
+
+    .unm-search-submit-btn-inline {
+        left: 10px;
+    }
+
     .unm-mobile-drawer {
-        width: 100%;
-        right: -100%;
+        width: 280px;
+        left: -280px;
+    }
+
+    .unm-mobile-drawer.active {
+        left: 0;
+    }
+}
+
+@media (max-width: 360px) {
+    .unm-header-search-bar-inline {
+        max-width: 150px;
+    }
+    .unm-logo-img {
+        height: 28px;
     }
 }

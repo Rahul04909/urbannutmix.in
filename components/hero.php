@@ -5,15 +5,15 @@
 
 $slides = [
     [
-        'image' => 'assets/images/hero-banners/hero-banner-1.png',
+        'image' => 'https://ministryofnuts.in/cdn/shop/files/MAKHANA_BANNER_1920PX_X_650PX_2100x.jpg?v=1779176267',
         'alt'   => 'UrbanNutMix Roasted Makhana Banner'
     ],
     [
-        'image' => 'assets/images/hero-banners/hero-banner-1.png',
+        'image' => 'https://ministryofnuts.in/cdn/shop/files/SAVE_20251029_184601_45461320-5bb3-4b4c-a685-e097c25510ce_2100x.jpg?v=1761743999',
         'alt'   => 'UrbanNutMix Special Offers Banner'
     ],
     [
-        'image' => 'assets/images/hero-banners/hero-banner-1.png',
+        'image' => 'https://ministryofnuts.in/cdn/shop/files/27-3-2025_website_banner_2100x.jpg?v=1743419467',
         'alt'   => 'UrbanNutMix Premium Nuts Assortment'
     ]
 ];
