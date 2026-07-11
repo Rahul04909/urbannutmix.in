@@ -1,0 +1,246 @@
+/* UrbanNutMix - Shop by Dryfruits Categories CSS */
+
+/* === SECTION WRAPPER === */
+.unm-categories-section {
+    width: 100%;
+    padding: 60px 0 50px;
+    background-color: #ffffff;
+    overflow: hidden;
+    position: relative;
+}
+
+/* === SECTION HEADING === */
+.unm-categories-heading {
+    text-align: center;
+    margin: 0 0 48px;
+    padding: 0 24px;
+}
+
+.unm-categories-heading h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(1.75rem, 4vw, 2.4rem);
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+/* === SLIDER OUTER WRAPPER (holds arrows + track) === */
+.unm-categories-slider-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 60px; /* space for arrows */
+}
+
+/* === TRACK (scrollable list) === */
+.unm-categories-track {
+    display: flex;
+    gap: 0;
+    overflow: hidden; /* hidden — JS translates the inner list */
+    width: 100%;
+}
+
+.unm-categories-list {
+    display: flex;
+    gap: 0;
+    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* === EACH CATEGORY ITEM === */
+.unm-category-item {
+    flex: 0 0 calc(100% / 6); /* 6 visible on desktop */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    padding: 10px 8px;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.unm-category-item:hover {
+    transform: translateY(-6px);
+}
+
+/* === CIRCULAR IMAGE CONTAINER === */
+.unm-category-img-wrap {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: visible; /* botanical illustration can bleed outside */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unm-category-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* show full illustration */
+    transition: transform 0.4s ease;
+    display: block;
+}
+
+.unm-category-item:hover .unm-category-img {
+    transform: scale(1.08);
+}
+
+/* === LABEL === */
+.unm-category-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #64748b;
+    text-align: center;
+    letter-spacing: 0.01em;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+
+.unm-category-item:hover .unm-category-label,
+.unm-category-item.active .unm-category-label {
+    color: #cf6e0c;
+}
+
+/* === NAV ARROWS === */
+.unm-cat-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+    color: #334155;
+}
+
+.unm-cat-arrow:hover {
+    background: #cf6e0c;
+    border-color: #cf6e0c;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(207,110,12,0.3);
+}
+
+.unm-cat-arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+.unm-cat-arrow-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.unm-cat-arrow-prev {
+    left: 8px;
+}
+
+.unm-cat-arrow-next {
+    right: 8px;
+}
+
+/* ============================
+   RESPONSIVE
+   ============================ */
+
+/* 5 columns */
+@media (max-width: 1200px) {
+    .unm-category-item {
+        flex: 0 0 calc(100% / 5);
+    }
+    .unm-category-img-wrap {
+        width: 115px;
+        height: 115px;
+    }
+}
+
+/* 4 columns */
+@media (max-width: 900px) {
+    .unm-categories-slider-wrapper {
+        padding: 0 48px;
+    }
+    .unm-category-item {
+        flex: 0 0 calc(100% / 4);
+    }
+    .unm-category-img-wrap {
+        width: 105px;
+        height: 105px;
+    }
+    .unm-categories-heading h2 {
+        font-size: 1.6rem;
+    }
+}
+
+/* 3 columns */
+@media (max-width: 640px) {
+    .unm-categories-section {
+        padding: 40px 0 36px;
+    }
+    .unm-categories-heading {
+        margin-bottom: 32px;
+    }
+    .unm-categories-slider-wrapper {
+        padding: 0 44px;
+    }
+    .unm-category-item {
+        flex: 0 0 calc(100% / 3);
+        gap: 10px;
+    }
+    .unm-category-img-wrap {
+        width: 90px;
+        height: 90px;
+    }
+    .unm-category-label {
+        font-size: 0.73rem;
+    }
+    .unm-cat-arrow {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* 2 columns */
+@media (max-width: 400px) {
+    .unm-categories-slider-wrapper {
+        padding: 0 38px;
+    }
+    .unm-category-item {
+        flex: 0 0 calc(100% / 2.4);
+    }
+    .unm-category-img-wrap {
+        width: 80px;
+        height: 80px;
+    }
+    .unm-cat-arrow {
+        width: 32px;
+        height: 32px;
+    }
+    .unm-cat-arrow-icon {
+        width: 14px;
+        height: 14px;
+    }
+}

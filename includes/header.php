@@ -47,6 +47,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Stylesheet -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/header.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/hero.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/categories.css">
 </head>
 <body>
 

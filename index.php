@@ -11,6 +11,9 @@ include_once 'includes/header.php';
 
 // Include the hero slider component
 include_once 'components/hero.php';
+
+// Include the Shop by Dryfruits categories component
+include_once 'components/categories.php';
 ?>
 
 </body>
