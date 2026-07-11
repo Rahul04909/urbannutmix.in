@@ -5,23 +5,15 @@
 ?>
 <footer class="unm-footer" role="contentinfo">
 
-    <!-- ── 1. NEWSLETTER BAND ───────────────────────────────── -->
+    <!-- ── 1. PAYMENT GATEWAYS BAND ─────────────────────────── -->
     <div class="unm-footer-newsletter">
-        <div class="unm-footer-newsletter-inner">
-            <p class="unm-footer-newsletter-text">
-                Subscribe to our newsletter for <span>updates and special offers!</span>
-            </p>
-            <form class="unm-footer-newsletter-form" action="#" method="POST" aria-label="Newsletter subscription">
-                <input
-                    type="email"
-                    name="newsletter_email"
-                    class="unm-footer-newsletter-input"
-                    placeholder="Enter Your Email"
-                    required
-                    aria-label="Email address"
-                >
-                <button type="submit" class="unm-footer-newsletter-btn">Subscribe</button>
-            </form>
+        <div class="unm-footer-newsletter-inner" style="justify-content: center; width: 100%;">
+            <img 
+                src="https://www.jewelfarmer.com/cdn/shop/files/Card_Wallets_UPI_Netbanking_4.png?v=1743075404&width=2250" 
+                alt="Supported Payment Options: Cards, Wallets, UPI, Netbanking" 
+                class="unm-footer-payment-img"
+                loading="lazy"
+            >
         </div>
     </div>
 

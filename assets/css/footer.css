@@ -28,12 +28,12 @@
 }
 
 /* ===========================
-   NEWSLETTER BAND
+   PAYMENT GATEWAYS BAND (reused newsletter wrapper class name)
    =========================== */
 .unm-footer-newsletter {
-    background-color: var(--footer-top-bg);
-    border-bottom: 1px solid var(--footer-border);
-    padding: 28px clamp(16px, 4vw, 40px);
+    background-color: #ffffff; /* White background matching About Us component */
+    border-bottom: 1.5px solid var(--border-color);
+    padding: 24px clamp(16px, 4vw, 40px);
 }
 
 .unm-footer-newsletter-inner {
@@ -42,63 +42,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
 }
 
-.unm-footer-newsletter-text {
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--footer-heading);
-    white-space: nowrap;
-}
-
-.unm-footer-newsletter-text span {
-    color: var(--footer-accent);
-}
-
-.unm-footer-newsletter-form {
-    display: flex;
-    gap: 0;
-    flex-grow: 1;
-    max-width: 480px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1.5px solid rgba(255,255,255,0.18);
-}
-
-.unm-footer-newsletter-input {
-    flex: 1;
-    background: rgba(255,255,255,0.06);
-    border: none;
-    outline: none;
-    padding: 12px 18px;
-    font-size: 0.82rem;
-    color: #e2e8f0;
-    font-family: inherit;
-}
-
-.unm-footer-newsletter-input::placeholder {
-    color: rgba(255,255,255,0.35);
-}
-
-.unm-footer-newsletter-btn {
-    background: var(--footer-accent);
-    color: #ffffff;
-    border: none;
-    padding: 12px 22px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    font-family: inherit;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.25s ease;
-    white-space: nowrap;
-}
-
-.unm-footer-newsletter-btn:hover {
-    background: #b45604;
+.unm-footer-payment-img {
+    max-width: 100%;
+    max-height: 38px; /* Clean standard size for payment icons */
+    height: auto;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 /* ===========================
@@ -364,15 +319,6 @@
     }
     .unm-footer-fssai {
         align-items: flex-start;
-    }
-    .unm-footer-newsletter-form {
-        max-width: 100%;
-        width: 100%;
-    }
-    .unm-footer-newsletter-inner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
     }
 }
 
