@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /includes/
+Disallow: /components/
+Disallow: /vendor/
+Disallow: /sql/
+Disallow: /storage/
+Disallow: /.env
+Disallow: /composer.json
+Disallow: /composer.lock
+
+Sitemap: https://urbannutmix.in/sitemap.xml
