@@ -8,10 +8,6 @@
 --   mysql -u root -p urbannutmix < sql/admin_users.sql
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS `urbannutmix` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE `urbannutmix`;
-
 -- -----------------------------------------------------------
 -- Table: admin_users
 -- -----------------------------------------------------------
