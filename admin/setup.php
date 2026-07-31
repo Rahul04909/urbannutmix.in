@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
     }
 }
 
-$status = Database::testConnection();
+$status = Database::healthCheck();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -123,20 +123,20 @@ $status = Database::testConnection();
             <h6 class="fw-semibold mb-3">System Status</h6>
             <table class="table table-borderless table-sm">
                 <tr>
-                    <td><span class="status-dot <?= $status['connected'] ? 'ok' : 'fail' ?>"></span> MySQL Connection</td>
-                    <td><?= $status['connected'] ? 'Connected' : 'Failed' ?></td>
+                    <td><span class="status-dot <?= $status['mysql'] ? 'ok' : 'fail' ?>"></span> MySQL Connection</td>
+                    <td><?= $status['mysql'] ? 'Connected' : 'Failed' ?></td>
                 </tr>
                 <tr>
-                    <td><span class="status-dot <?= $status['db_exists'] ? 'ok' : 'fail' ?>"></span> Database <code><?= htmlspecialchars($dbname) ?></code></td>
-                    <td><?= $status['db_exists'] ? 'Exists' : 'Not Found' ?></td>
+                    <td><span class="status-dot <?= $status['database'] ? 'ok' : 'fail' ?>"></span> Database <code><?= htmlspecialchars($dbname) ?></code></td>
+                    <td><?= $status['database'] ? 'Exists' : 'Not Found' ?></td>
                 </tr>
                 <tr>
-                    <td><span class="status-dot <?= $status['table_exists'] ? 'ok' : 'fail' ?>"></span> Table <code>admin_users</code></td>
-                    <td><?= $status['table_exists'] ? 'Exists' : 'Not Found' ?></td>
+                    <td><span class="status-dot <?= $status['table'] ? 'ok' : 'fail' ?>"></span> Table <code>admin_users</code></td>
+                    <td><?= $status['table'] ? 'Exists' : 'Not Found' ?></td>
                 </tr>
                 <tr>
-                    <td><span class="status-dot <?= $status['has_users'] ? 'ok' : ($status['table_exists'] ? 'fail' : 'fail') ?>"></span> Admin Users</td>
-                    <td><?= $status['has_users'] ? 'Found' : 'None' ?></td>
+                    <td><span class="status-dot <?= $status['users'] ? 'ok' : ($status['table'] ? 'fail' : 'fail') ?>"></span> Admin Users</td>
+                    <td><?= $status['users'] ? 'Found' : 'None' ?></td>
                 </tr>
             </table>
             <?php if ($status['error']): ?>
@@ -144,10 +144,10 @@ $status = Database::testConnection();
             <?php endif; ?>
         </div>
 
-        <?php if (!$status['has_users']): ?>
+        <?php if (!$status['users']): ?>
             <form method="POST">
                 <button type="submit" name="install" value="1" class="btn btn-success w-100 py-2 fw-semibold"
-                    <?= !$status['connected'] ? 'disabled' : '' ?>>
+                    <?= !$status['mysql'] ? 'disabled' : '' ?>>
                     Run Setup (Create Database &amp; Admin)
                 </button>
             </form>

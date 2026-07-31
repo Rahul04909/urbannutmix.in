@@ -16,6 +16,46 @@ if (Session::isAuthenticated()) {
     exit;
 }
 
+function formatLoginDbError(PDOException $e, bool $queryContext, string &$error, bool &$showSetupLink): void
+{
+    $errInfo = $e->errorInfo ?? [];
+    $driverCode = (int) ($errInfo[1] ?? 0);
+    $message = $e->getMessage();
+    $debug = (($_ENV['APP_DEBUG'] ?? 'false') === 'true');
+
+    if (in_array($driverCode, [2002, 2003]) || str_contains($message, 'Connection refused')) {
+        $error = 'Could not connect to database server. Please contact the administrator.';
+    } elseif ($driverCode === 1044) {
+        $error = 'Database user has no access to database "' . htmlspecialchars($_ENV['DB_NAME'] ?? '')
+            . '". Create the database and grant the user privileges (e.g. in cPanel MySQL Databases).';
+        $showSetupLink = true;
+    } elseif ($driverCode === 1045 || str_contains($message, 'Access denied')) {
+        $error = 'Database access denied. Please check your .env DB credentials.';
+    } elseif ($driverCode === 1049) {
+        $error = 'Database "' . htmlspecialchars($_ENV['DB_NAME'] ?? '') . '" not found. Please run setup.';
+        $showSetupLink = true;
+    } elseif ($driverCode === 1146) {
+        $error = 'Admin table not found. Please run setup.';
+        $showSetupLink = true;
+    } elseif ($driverCode === 1054) {
+        $error = 'Admin table schema is outdated. Please run setup to fix the database.';
+        $showSetupLink = true;
+    } elseif (in_array($driverCode, [2006, 2013])) {
+        $error = 'Database connection was lost during the request. Please try again.';
+    } elseif ($driverCode === 2026) {
+        $error = 'Database SSL connection could not be established. Please contact the administrator.';
+    } elseif (str_contains($message, 'could not find driver') || $driverCode === 2054) {
+        $error = 'PDO MySQL driver missing or unsupported authentication. Please contact the administrator.';
+    } elseif ($debug) {
+        $error = ($queryContext ? 'Database query error' : 'Database connection error')
+            . ' [' . $driverCode . ']: ' . $message;
+    } else {
+        $error = $queryContext
+            ? 'A database query error occurred. Please contact the administrator.'
+            : 'Database connection failed. Please contact the administrator.';
+    }
+}
+
 $error = '';
 $showSetupLink = false;
 
@@ -31,70 +71,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare(
-                'SELECT id, name, email, mobile, username, password, profile_pic, role, status
-                 FROM admin_users
-                 WHERE (username = :username OR email = :username)
-                 AND status = :status
-                 LIMIT 1'
-            );
-            $stmt->execute([
-                'username' => $username,
-                'status' => 'active',
-            ]);
-            $admin = $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log('Login DB connect error [' . ($e->errorInfo[1] ?? '?') . ']: ' . $e->getMessage());
+            formatLoginDbError($e, false, $error, $showSetupLink);
+        }
 
-            if ($admin && password_verify($password, $admin['password'])) {
-                if (password_needs_rehash($admin['password'], PASSWORD_BCRYPT, ['cost' => 12])) {
-                    $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-                    $updateStmt = $pdo->prepare('UPDATE admin_users SET password = :password WHERE id = :id');
-                    $updateStmt->execute(['password' => $newHash, 'id' => $admin['id']]);
+        if ($error === '') {
+            try {
+                $tableCheck = $pdo->query("SHOW TABLES LIKE 'admin_users'");
+                if (!$tableCheck->fetch()) {
+                    throw new RuntimeException('Admin table not found. Please run setup.');
                 }
 
-                Session::regenerate();
-
-                Session::set('admin_id', (int) $admin['id']);
-                Session::set('admin_logged_in', true);
-                Session::set('admin_user', [
-                    'id' => (int) $admin['id'],
-                    'name' => $admin['name'],
-                    'email' => $admin['email'],
-                    'mobile' => $admin['mobile'],
-                    'username' => $admin['username'],
-                    'profile_pic' => $admin['profile_pic'],
-                    'role' => $admin['role'],
-                ]);
-
-                $ip = Session::getClientIP();
-                $updateStmt = $pdo->prepare(
-                    'UPDATE admin_users SET last_login = NOW(), last_login_ip = :ip WHERE id = :id'
+                $stmt = $pdo->prepare(
+                    'SELECT id, name, email, mobile, username, password, profile_pic, role, status
+                     FROM admin_users
+                     WHERE (username = :username OR email = :username)
+                     AND status = :status
+                     LIMIT 1'
                 );
-                $updateStmt->execute(['ip' => $ip, 'id' => $admin['id']]);
+                $stmt->execute([
+                    'username' => $username,
+                    'status' => 'active',
+                ]);
+                $admin = $stmt->fetch();
 
-                $redirect = Session::get('redirect_after_login', 'index.php');
-                Session::remove('redirect_after_login');
+                if (!$admin || !password_verify($password, $admin['password'])) {
+                    $error = 'Invalid username/email or password.';
+                } else {
+                    if (password_needs_rehash($admin['password'], PASSWORD_BCRYPT, ['cost' => 12])) {
+                        $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+                        $pdo->prepare('UPDATE admin_users SET password = :password WHERE id = :id')
+                            ->execute(['password' => $newHash, 'id' => $admin['id']]);
+                    }
 
-                header('Location: ' . $redirect);
-                exit;
-            } else {
-                $error = 'Invalid username/email or password.';
-            }
-        } catch (PDOException $e) {
-            $errorMsg = $e->getMessage();
-            error_log('Login error: ' . $errorMsg);
+                    Session::regenerate();
+                    Session::set('admin_id', (int) $admin['id']);
+                    Session::set('admin_logged_in', true);
+                    Session::set('admin_user', [
+                        'id' => (int) $admin['id'],
+                        'name' => $admin['name'],
+                        'email' => $admin['email'],
+                        'mobile' => $admin['mobile'],
+                        'username' => $admin['username'],
+                        'profile_pic' => $admin['profile_pic'],
+                        'role' => $admin['role'],
+                    ]);
 
-            if (str_contains($errorMsg, 'Connection refused') || str_contains($errorMsg, 'can\'t connect') || str_contains($errorMsg, '2002')) {
-                $error = 'Database server is not reachable. Please contact the administrator.';
-            } elseif (str_contains($errorMsg, 'Unknown database') || str_contains($errorMsg, '1049')) {
-                $error = 'Database not found. Please run setup.';
+                    $ip = Session::getClientIP();
+                    $pdo->prepare('UPDATE admin_users SET last_login = NOW(), last_login_ip = :ip WHERE id = :id')
+                        ->execute(['ip' => $ip, 'id' => $admin['id']]);
+
+                    $redirect = Session::get('redirect_after_login', 'index.php');
+                    Session::remove('redirect_after_login');
+
+                    header('Location: ' . $redirect);
+                    exit;
+                }
+            } catch (RuntimeException $e) {
+                $error = $e->getMessage();
                 $showSetupLink = true;
-            } elseif (str_contains($errorMsg, 'Access denied') || str_contains($errorMsg, '1045')) {
-                $error = 'Database credentials are incorrect. Please check your .env configuration.';
-            } elseif (str_contains($errorMsg, 'Base table or view not found') || str_contains($errorMsg, '1146')) {
-                $error = 'Admin table not found. Please run setup.';
-                $showSetupLink = true;
-            } else {
-                $error = 'An internal error occurred. Please try again later.';
+            } catch (PDOException $e) {
+                error_log('Login query error [' . ($e->errorInfo[1] ?? '?') . ']: ' . $e->getMessage());
+                formatLoginDbError($e, true, $error, $showSetupLink);
             }
         }
     }
@@ -113,11 +152,7 @@ Session::set('csrf_token', $csrf_token);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -139,7 +174,6 @@ Session::set('csrf_token', $csrf_token);
             overflow: hidden;
         }
 
-        /* Left Image Panel */
         .login-image-panel {
             flex: 0 0 50%;
             position: relative;
@@ -206,7 +240,6 @@ Session::set('csrf_token', $csrf_token);
             margin-bottom: 20px;
         }
 
-        /* Right Form Panel */
         .login-form-panel {
             flex: 0 0 50%;
             display: flex;
@@ -311,9 +344,7 @@ Session::set('csrf_token', $csrf_token);
             color: #22c55e;
         }
 
-        .form-control::placeholder {
-            color: #9ca3af;
-        }
+        .form-control::placeholder { color: #9ca3af; }
 
         .toggle-password {
             position: absolute;
@@ -330,9 +361,7 @@ Session::set('csrf_token', $csrf_token);
             line-height: 1;
         }
 
-        .toggle-password:hover {
-            color: #374151;
-        }
+        .toggle-password:hover { color: #374151; }
 
         .btn-login {
             width: 100%;
@@ -349,19 +378,9 @@ Session::set('csrf_token', $csrf_token);
             margin-top: 4px;
         }
 
-        .btn-login:hover {
-            background: #16a34a;
-        }
-
-        .btn-login:active {
-            transform: scale(0.98);
-        }
-
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-login:hover { background: #16a34a; }
+        .btn-login:active { transform: scale(0.98); }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         .btn-login .spinner {
             display: none;
@@ -395,10 +414,7 @@ Session::set('csrf_token', $csrf_token);
             border: 1px solid #fecaca;
         }
 
-        .alert-danger i {
-            font-size: 15px;
-            flex-shrink: 0;
-        }
+        .alert-danger i { font-size: 15px; flex-shrink: 0; }
 
         .login-footer {
             text-align: center;
@@ -407,61 +423,26 @@ Session::set('csrf_token', $csrf_token);
             border-top: 1px solid #f3f4f6;
         }
 
-        .login-footer p {
-            font-size: 12px;
-            color: #9ca3af;
-        }
+        .login-footer p { font-size: 12px; color: #9ca3af; }
+        .login-footer a { color: #22c55e; text-decoration: none; font-weight: 500; }
+        .login-footer a:hover { text-decoration: underline; }
 
-        .login-footer a {
-            color: #22c55e;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        .setup-link {
-            text-align: center;
-            margin-top: 12px;
-        }
-
-        .setup-link a {
-            font-size: 12px;
-            color: #6b7280;
-            text-decoration: none;
-        }
-
-        .setup-link a:hover {
-            color: #22c55e;
-        }
+        .setup-link { text-align: center; margin-top: 12px; }
+        .setup-link a { font-size: 12px; color: #6b7280; text-decoration: none; }
+        .setup-link a:hover { color: #22c55e; }
 
         @media (max-width: 768px) {
-            .login-wrapper {
-                flex-direction: column;
-                max-width: 420px;
-            }
-            .login-image-panel {
-                flex: 0 0 200px;
-                min-height: 200px;
-            }
-            .login-image-panel img {
-                position: relative;
-            }
-            .login-form-panel {
-                padding: 32px 28px;
-            }
-            .login-image-text h2 {
-                font-size: 22px;
-            }
+            .login-wrapper { flex-direction: column; max-width: 420px; }
+            .login-image-panel { flex: 0 0 200px; min-height: 200px; }
+            .login-image-panel img { position: relative; }
+            .login-form-panel { padding: 32px 28px; }
+            .login-image-text h2 { font-size: 22px; }
         }
     </style>
 </head>
 <body>
 
 <div class="login-wrapper">
-    <!-- Left: Image Panel -->
     <div class="login-image-panel">
         <img
             src="https://ministryofnuts.in/cdn/shop/files/About-Us-GIF_ec327cb1-9e10-4610-af1e-186cbba04482_900x.gif?v=1654513490"
@@ -476,7 +457,6 @@ Session::set('csrf_token', $csrf_token);
         </div>
     </div>
 
-    <!-- Right: Form Panel -->
     <div class="login-form-panel">
         <div class="logo-area">
             <img src="../favicon.ico" alt="UrbanNutMix" onerror="this.style.display='none'">
