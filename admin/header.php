@@ -9,6 +9,9 @@ $base = str_repeat('../', substr_count(dirname($_SERVER['SCRIPT_NAME']), '/') - 
 if ($currentPage === 'edit-product-category.php') {
     $currentPage = 'products/manage-category.php';
     $pageTitleOverride = 'Edit Category';
+} elseif ($currentPage === 'edit-product.php') {
+    $currentPage = 'products/manage-products.php';
+    $pageTitleOverride = 'Edit Product';
 }
 
 $menuItems = [
@@ -23,6 +26,8 @@ $menuItems = [
         "menuTitle" => "Products",
         "icon" => "fas fa-box-open",
         "pages" => [
+            ["title" => "Manage Products", "url" => "products/manage-products.php"],
+            ["title" => "Add Product", "url" => "products/add-product.php"],
             ["title" => "Manage Categories", "url" => "products/manage-category.php"],
             ["title" => "Add Category", "url" => "products/add-product-category.php"],
         ],

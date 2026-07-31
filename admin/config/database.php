@@ -60,6 +60,7 @@ class Database
             'login_query' => false,
             'profile_query' => false,
             'categories' => false,
+            'products' => false,
             'error' => '',
         ];
 
@@ -100,6 +101,9 @@ class Database
 
                 $stmt = $pdo->query("SHOW TABLES LIKE 'product_categories'");
                 $result['categories'] = (bool) $stmt->fetch();
+
+                $stmt = $pdo->query("SHOW TABLES LIKE 'products'");
+                $result['products'] = (bool) $stmt->fetch();
             }
         } catch (PDOException $e) {
             $result['error'] = $e->getMessage();

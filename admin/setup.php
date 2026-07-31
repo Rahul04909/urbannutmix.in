@@ -88,7 +88,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ensure'])) {
                 UNIQUE KEY `uk_slug` (`slug`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        $message = 'Product categories table is ready.';
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `products` (
+                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `category_id` INT UNSIGNED DEFAULT NULL,
+                `name` VARCHAR(200) NOT NULL,
+                `slug` VARCHAR(255) NOT NULL,
+                `image` VARCHAR(255) NOT NULL DEFAULT 'default.png',
+                `short_description` TEXT,
+                `description` LONGTEXT,
+                `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                `unit` VARCHAR(20) NOT NULL DEFAULT 'gram',
+                `quantity` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                `meta_title` VARCHAR(255) DEFAULT NULL,
+                `meta_description` TEXT,
+                `meta_keywords` VARCHAR(255) DEFAULT NULL,
+                `og_title` VARCHAR(255) DEFAULT NULL,
+                `og_description` TEXT,
+                `og_image` VARCHAR(255) DEFAULT NULL,
+                `schema_json` TEXT,
+                `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uk_slug` (`slug`),
+                KEY `idx_category` (`category_id`),
+                CONSTRAINT `fk_products_category` FOREIGN KEY (`category_id`)
+                    REFERENCES `product_categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `product_images` (
+                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `product_id` INT UNSIGNED NOT NULL,
+                `image` VARCHAR(255) NOT NULL,
+                `sort_order` INT NOT NULL DEFAULT 0,
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `idx_product` (`product_id`),
+                CONSTRAINT `fk_product_images_product` FOREIGN KEY (`product_id`)
+                    REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $message = 'All tables are ready (product_categories, products, product_images).';
     } catch (PDOException $e) {
         $error = 'Table setup failed: ' . $e->getMessage();
     }
@@ -190,6 +232,10 @@ $sessionData = array_filter($_SESSION ?? [], static function ($key) {
                     <td><span class="status-dot <?= $status['categories'] ? 'ok' : 'fail' ?>"></span> Table <code>product_categories</code></td>
                     <td><?= $status['categories'] ? 'Exists' : 'Not Found' ?></td>
                 </tr>
+                <tr>
+                    <td><span class="status-dot <?= $status['products'] ? 'ok' : 'fail' ?>"></span> Tables <code>products</code> &amp; <code>product_images</code></td>
+                    <td><?= $status['products'] ? 'Exists' : 'Not Found' ?></td>
+                </tr>
             </table>
             <?php if ($status['error']): ?>
                 <div class="text-danger small"><?= htmlspecialchars($status['error']) ?></div>
@@ -215,10 +261,10 @@ $sessionData = array_filter($_SESSION ?? [], static function ($key) {
             <a href="login.php" class="btn btn-success w-100 py-2 fw-semibold">Go to Login &rarr;</a>
         <?php endif; ?>
 
-        <?php if (!$status['categories'] && $status['mysql']): ?>
+        <?php if ((!$status['categories'] || !$status['products']) && $status['mysql']): ?>
             <form method="POST" class="mt-3">
                 <button type="submit" name="ensure" value="1" class="btn btn-outline-success w-100 py-2">
-                    Create Product Categories Table
+                    Create All Tables (Categories, Products, Images)
                 </button>
             </form>
         <?php endif; ?>
