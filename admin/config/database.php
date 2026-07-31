@@ -58,6 +58,7 @@ class Database
             'table' => false,
             'users' => false,
             'login_query' => false,
+            'profile_query' => false,
             'error' => '',
         ];
 
@@ -87,6 +88,13 @@ class Database
                     );
                     $stmt->execute(['username' => 'admin', 'email' => 'admin', 'status' => 'active']);
                     $result['login_query'] = true;
+
+                    $stmt = $pdo->prepare(
+                        'SELECT id, name, email, mobile, username, profile_pic, role, last_login, last_login_ip
+                         FROM admin_users WHERE id = :id LIMIT 1'
+                    );
+                    $stmt->execute(['id' => 1]);
+                    $result['profile_query'] = true;
                 }
             }
         } catch (PDOException $e) {

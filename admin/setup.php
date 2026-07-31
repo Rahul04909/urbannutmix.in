@@ -142,6 +142,10 @@ $status = Database::healthCheck();
                     <td><span class="status-dot <?= $status['login_query'] ? 'ok' : 'fail' ?>"></span> Login Query Test</td>
                     <td><?= $status['login_query'] ? 'Passed' : 'Failed' ?></td>
                 </tr>
+                <tr>
+                    <td><span class="status-dot <?= $status['profile_query'] ? 'ok' : 'fail' ?>"></span> Profile Query Test</td>
+                    <td><?= $status['profile_query'] ? 'Passed' : 'Failed' ?></td>
+                </tr>
             </table>
             <?php if ($status['error']): ?>
                 <div class="text-danger small"><?= htmlspecialchars($status['error']) ?></div>
