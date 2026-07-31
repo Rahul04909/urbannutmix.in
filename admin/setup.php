@@ -73,6 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
 }
 
 $status = Database::healthCheck();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$sessionData = array_filter($_SESSION ?? [], static function ($key) {
+    return !in_array($key, ['password'], true);
+}, ARRAY_FILTER_USE_KEY);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -151,6 +158,13 @@ $status = Database::healthCheck();
                 <div class="text-danger small"><?= htmlspecialchars($status['error']) ?></div>
             <?php endif; ?>
         </div>
+
+        <?php if (session_id() !== ''): ?>
+        <div class="mb-4">
+            <h6 class="fw-semibold mb-3">Session Inspector <small class="text-muted">(debug only)</small></h6>
+            <pre style="background:#f1f5f9;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;"><?= htmlspecialchars(json_encode($sessionData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
+        </div>
+        <?php endif; ?>
 
         <?php if (!$status['users']): ?>
             <form method="POST">

@@ -3,34 +3,49 @@
 require_once __DIR__ . '/inc/auth_check.php';
 
 $adminUser = $GLOBALS['admin_user'];
-$pdo = Database::getConnection();
 $success = '';
 $error = '';
+$admin = [
+    'id' => null,
+    'name' => '',
+    'email' => '',
+    'mobile' => '',
+    'username' => '',
+    'profile_pic' => 'default.png',
+    'role' => '',
+    'last_login' => '',
+    'last_login_ip' => '',
+];
 
 try {
+    $pdo = Database::getConnection();
+
+    $id = $adminUser['id'] ?? null;
+    $username = $adminUser['username'] ?? null;
+    $email = $adminUser['email'] ?? null;
+
     $stmt = $pdo->prepare('SELECT id, name, email, mobile, username, profile_pic, role, last_login, last_login_ip FROM admin_users WHERE id = :id LIMIT 1');
-    $stmt->execute(['id' => $adminUser['id']]);
+    $stmt->execute(['id' => $id]);
     $admin = $stmt->fetch();
+
+    if (!$admin && $username !== null && $username !== '') {
+        $stmt = $pdo->prepare('SELECT id, name, email, mobile, username, profile_pic, role, last_login, last_login_ip FROM admin_users WHERE username = :username LIMIT 1');
+        $stmt->execute(['username' => $username]);
+        $admin = $stmt->fetch();
+    }
+
+    if (!$admin && $email !== null && $email !== '') {
+        $stmt = $pdo->prepare('SELECT id, name, email, mobile, username, profile_pic, role, last_login, last_login_ip FROM admin_users WHERE email = :email LIMIT 1');
+        $stmt->execute(['email' => $email]);
+        $admin = $stmt->fetch();
+    }
+
+    if (!$admin) {
+        $error = 'Could not find your admin account. Please log out and log in again.';
+    }
 } catch (PDOException $e) {
     error_log('Profile DB error: ' . $e->getMessage());
-    $admin = [
-        'id' => null,
-        'name' => '',
-        'email' => '',
-        'mobile' => '',
-        'username' => '',
-        'profile_pic' => 'default.png',
-        'role' => '',
-        'last_login' => '',
-        'last_login_ip' => '',
-    ];
     $error = 'Database error: ' . htmlspecialchars($e->getMessage());
-}
-
-if (!$admin['id'] && $error === '') {
-    Session::destroy();
-    header('Location: login.php');
-    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
