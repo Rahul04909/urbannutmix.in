@@ -32,7 +32,7 @@ class Database
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_EMULATE_PREPARES => true,
                 PDO::ATTR_STRINGIFY_FETCHES => false,
             ];
             self::$instance = new PDO($dsn, $config['username'], $config['password'], $options);
@@ -57,6 +57,7 @@ class Database
             'database' => false,
             'table' => false,
             'users' => false,
+            'login_query' => false,
             'error' => '',
         ];
 
@@ -77,6 +78,15 @@ class Database
                     $stmt = $pdo->query("SELECT COUNT(*) as cnt FROM admin_users");
                     $row = $stmt->fetch();
                     $result['users'] = ((int)$row['cnt']) > 0;
+
+                    $stmt = $pdo->prepare(
+                        'SELECT id, username FROM admin_users
+                         WHERE (username = :username OR email = :email)
+                         AND status = :status
+                         LIMIT 1'
+                    );
+                    $stmt->execute(['username' => 'admin', 'email' => 'admin', 'status' => 'active']);
+                    $result['login_query'] = true;
                 }
             }
         } catch (PDOException $e) {

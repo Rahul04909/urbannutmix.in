@@ -138,6 +138,10 @@ $status = Database::healthCheck();
                     <td><span class="status-dot <?= $status['users'] ? 'ok' : ($status['table'] ? 'fail' : 'fail') ?>"></span> Admin Users</td>
                     <td><?= $status['users'] ? 'Found' : 'None' ?></td>
                 </tr>
+                <tr>
+                    <td><span class="status-dot <?= $status['login_query'] ? 'ok' : 'fail' ?>"></span> Login Query Test</td>
+                    <td><?= $status['login_query'] ? 'Passed' : 'Failed' ?></td>
+                </tr>
             </table>
             <?php if ($status['error']): ?>
                 <div class="text-danger small"><?= htmlspecialchars($status['error']) ?></div>
