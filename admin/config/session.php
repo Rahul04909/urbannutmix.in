@@ -78,6 +78,21 @@ class Session
         session_regenerate_id(true);
     }
 
+    public static function csrfToken(string $form = 'default'): string
+    {
+        $tokens = $_SESSION['csrf_tokens'] ?? [];
+        $token = bin2hex(random_bytes(32));
+        $tokens[$form] = $token;
+        $_SESSION['csrf_tokens'] = $tokens;
+        return $token;
+    }
+
+    public static function csrfVerify(string $form, string $token): bool
+    {
+        $tokens = $_SESSION['csrf_tokens'] ?? [];
+        return isset($tokens[$form]) && hash_equals($tokens[$form], $token);
+    }
+
     public static function isAuthenticated(): bool
     {
         return self::has('admin_id') && self::has('admin_logged_in') && self::get('admin_logged_in') === true;

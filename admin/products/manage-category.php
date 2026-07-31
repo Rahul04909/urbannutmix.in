@@ -12,7 +12,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $csrf = $_POST['csrf_token'] ?? '';
-        if (!hash_equals((string) Session::get('csrf_token', ''), (string) $csrf)) {
+        if (!Session::csrfVerify('delete_category', $csrf)) {
             $error = 'Invalid request. Please try again.';
         } else {
             $id = (int) ($_POST['id'] ?? 0);
@@ -44,8 +44,7 @@ try {
     $error = 'Database error: ' . htmlspecialchars($e->getMessage());
 }
 
-$csrf_token = bin2hex(random_bytes(32));
-Session::set('csrf_token', $csrf_token);
+$csrf_token = Session::csrfToken('delete_category');
 
 include __DIR__ . '/../header.php';
 ?>

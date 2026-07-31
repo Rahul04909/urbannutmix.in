@@ -10,7 +10,7 @@ $status = 'active';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
-    if (!hash_equals((string) Session::get('csrf_token', ''), (string) $csrf)) {
+    if (!Session::csrfVerify('add_category', $csrf)) {
         $error = 'Invalid request. Please try again.';
     } else {
         $name = trim($_POST['name'] ?? '');
@@ -82,8 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$csrf_token = bin2hex(random_bytes(32));
-Session::set('csrf_token', $csrf_token);
+$csrf_token = Session::csrfToken('add_category');
 
 include __DIR__ . '/../header.php';
 ?>

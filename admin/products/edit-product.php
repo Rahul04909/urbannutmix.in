@@ -32,7 +32,7 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
-    if (!hash_equals((string) Session::get('csrf_token', ''), (string) $csrf)) {
+    if (!Session::csrfVerify('edit_product', $csrf)) {
         $error = 'Invalid request. Please try again.';
     } else {
         $action = $_POST['action'] ?? 'update_product';
@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'short_description' => trim($_POST['short_description'] ?? ''),
                     'description' => trim($_POST['description'] ?? ''),
                     'price' => trim($_POST['price'] ?? ''),
+                    'mrp' => trim($_POST['mrp'] ?? ''),
                     'unit' => in_array($_POST['unit'] ?? '', ['gram', 'kg', 'piece', 'packet', 'box'], true) ? $_POST['unit'] : 'gram',
                     'quantity' => trim($_POST['quantity'] ?? ''),
                     'status' => ($_POST['status'] ?? 'active') === 'inactive' ? 'inactive' : 'active',
@@ -88,6 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Product name is required and must be under 200 characters.';
                 } elseif (!is_numeric($form['price']) || (float) $form['price'] < 0 || (float) $form['price'] > 99999999) {
                     $error = 'Please enter a valid price (INR).';
+                } elseif ($form['mrp'] !== '' && (!is_numeric($form['mrp']) || (float) $form['mrp'] < 0 || (float) $form['mrp'] > 99999999)) {
+                    $error = 'Please enter a valid MRP (INR).';
                 } elseif ($form['quantity'] === '' || !is_numeric($form['quantity']) || (float) $form['quantity'] < 0) {
                     $error = 'Please enter a valid quantity.';
                 } else {
@@ -139,6 +142,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         if ($error === '') {
                             $categoryId = $form['category_id'] > 0 ? $form['category_id'] : null;
+                            $mrp = is_numeric($form['mrp']) ? (float) $form['mrp'] : 0.0;
+                            if ($mrp < (float) $form['price']) {
+                                $mrp = 0.0;
+                            }
+                            $form['mrp'] = number_format($mrp, 2, '.', '');
                             $metaTitle = $form['meta_title'] !== '' ? mb_substr($form['meta_title'], 0, 60) : mb_substr($form['name'], 0, 60);
                             $metaDescription = $form['meta_description'] !== ''
                                 ? mb_substr($form['meta_description'], 0, 160)
@@ -178,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'UPDATE products SET
                                  category_id = :category_id, name = :name, slug = :slug, image = :image,
                                  short_description = :short_description, description = :description,
-                                 price = :price, unit = :unit, quantity = :quantity,
+                                 price = :price, mrp = :mrp, unit = :unit, quantity = :quantity,
                                  meta_title = :meta_title, meta_description = :meta_description, meta_keywords = :meta_keywords,
                                  og_title = :og_title, og_description = :og_description, og_image = :og_image,
                                  schema_json = :schema_json, status = :status
@@ -192,6 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'short_description' => $form['short_description'],
                                 'description' => $form['description'],
                                 'price' => number_format((float) $form['price'], 2, '.', ''),
+                                'mrp' => $form['mrp'],
                                 'unit' => $form['unit'],
                                 'quantity' => number_format((float) $form['quantity'], 2, '.', ''),
                                 'meta_title' => $metaTitle,
@@ -267,8 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$csrf_token = bin2hex(random_bytes(32));
-Session::set('csrf_token', $csrf_token);
+$csrf_token = Session::csrfToken('edit_product');
 
 $extraHeadCss = '<link rel="stylesheet" href="../src/trumbowyg/trumbowyg.min.css?v=2">';
 
@@ -337,7 +345,7 @@ include __DIR__ . '/../header.php';
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="price" class="form-label">Price (INR) <span class="text-danger">*</span></label>
                                             <div class="input-group">
@@ -347,7 +355,18 @@ include __DIR__ . '/../header.php';
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="mrp" class="form-label">MRP (INR)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">&#8377;</span>
+                                                <input type="number" class="form-control" id="mrp" name="mrp"
+                                                    step="0.01" min="0" value="<?= htmlspecialchars($product['mrp'] ?? '') ?>">
+                                            </div>
+                                            <small class="text-muted">Leave empty for no discount.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="unit" class="form-label">Unit</label>
                                             <select class="form-select" id="unit" name="unit">
@@ -357,13 +376,16 @@ include __DIR__ . '/../header.php';
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="quantity" class="form-label">Quantity / Stock <span class="text-danger">*</span></label>
                                             <input type="number" class="form-control" id="quantity" name="quantity" required
                                                 step="0.01" min="0" value="<?= htmlspecialchars($product['quantity']) ?>">
                                         </div>
                                     </div>
+                                </div>
+                                <div class="mb-3">
+                                    <span id="discountPreview" class="badge bg-success fs-6" style="display:none;"></span>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Status</label>
@@ -588,6 +610,27 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.readAsDataURL(file);
         });
     });
+
+    const priceInput = document.getElementById('price');
+    const mrpInput = document.getElementById('mrp');
+    const discountPreview = document.getElementById('discountPreview');
+
+    function updateDiscount() {
+        const price = parseFloat(priceInput.value);
+        const mrp = parseFloat(mrpInput.value);
+        if (isNaN(price) || isNaN(mrp) || mrp <= 0 || mrp <= price) {
+            discountPreview.style.display = 'none';
+            return;
+        }
+        const percent = Math.round((mrp - price) / mrp * 100);
+        const youSave = (mrp - price).toFixed(2);
+        discountPreview.textContent = percent + '% OFF - Save Rs. ' + youSave;
+        discountPreview.style.display = 'inline-block';
+    }
+
+    priceInput.addEventListener('input', updateDiscount);
+    mrpInput.addEventListener('input', updateDiscount);
+    updateDiscount();
 
     document.querySelectorAll('.delete-gallery-form').forEach(function(form) {
         form.addEventListener('submit', function(e) {

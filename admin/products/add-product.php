@@ -34,7 +34,7 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
-    if (!hash_equals((string) Session::get('csrf_token', ''), (string) $csrf)) {
+    if (!Session::csrfVerify('add_product', $csrf)) {
         $error = 'Invalid request. Please try again.';
     } else {
         $form = [
@@ -42,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'category_id' => (int) ($_POST['category_id'] ?? 0),
             'short_description' => trim($_POST['short_description'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
-            'price' => trim($_POST['price'] ?? ''),
-            'unit' => in_array($_POST['unit'] ?? '', ['gram', 'kg', 'piece', 'packet', 'box'], true) ? $_POST['unit'] : 'gram',
+    'price' => trim($_POST['price'] ?? ''),
+    'mrp' => trim($_POST['mrp'] ?? ''),
+    'unit' => in_array($_POST['unit'] ?? '', ['gram', 'kg', 'piece', 'packet', 'box'], true) ? $_POST['unit'] : 'gram',
             'quantity' => trim($_POST['quantity'] ?? ''),
             'status' => ($_POST['status'] ?? 'active') === 'inactive' ? 'inactive' : 'active',
             'meta_title' => trim($_POST['meta_title'] ?? ''),
@@ -62,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Product name is required and must be under 200 characters.';
             } elseif (!is_numeric($form['price']) || (float) $form['price'] < 0 || (float) $form['price'] > 99999999) {
                 $error = 'Please enter a valid price (INR).';
+            } elseif ($form['mrp'] !== '' && (!is_numeric($form['mrp']) || (float) $form['mrp'] < 0 || (float) $form['mrp'] > 99999999)) {
+                $error = 'Please enter a valid MRP (INR).';
             } elseif ($form['quantity'] === '' || !is_numeric($form['quantity']) || (float) $form['quantity'] < 0) {
                 $error = 'Please enter a valid quantity.';
             } else {
@@ -105,6 +108,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($error === '') {
                         $categoryId = $form['category_id'] > 0 ? $form['category_id'] : null;
+                        $mrp = is_numeric($form['mrp']) ? (float) $form['mrp'] : 0.0;
+                        if ($mrp < (float) $form['price']) {
+                            $mrp = 0.0;
+                        }
+                        $form['mrp'] = number_format($mrp, 2, '.', '');
                         $metaTitle = $form['meta_title'] !== '' ? mb_substr($form['meta_title'], 0, 60) : mb_substr($form['name'], 0, 60);
                         $metaDescription = $form['meta_description'] !== ''
                             ? mb_substr($form['meta_description'], 0, 160)
@@ -142,10 +150,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         $stmt = $pdo->prepare(
                             'INSERT INTO products
-                             (category_id, name, slug, image, short_description, description, price, unit, quantity,
+                             (category_id, name, slug, image, short_description, description, price, mrp, unit, quantity,
                               meta_title, meta_description, meta_keywords, og_title, og_description, og_image, schema_json, status)
                              VALUES
-                             (:category_id, :name, :slug, :image, :short_description, :description, :price, :unit, :quantity,
+                             (:category_id, :name, :slug, :image, :short_description, :description, :price, :mrp, :unit, :quantity,
                               :meta_title, :meta_description, :meta_keywords, :og_title, :og_description, :og_image, :schema_json, :status)'
                         );
                         $stmt->execute([
@@ -156,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'short_description' => $form['short_description'],
                             'description' => $form['description'],
                             'price' => number_format((float) $form['price'], 2, '.', ''),
+                            'mrp' => $form['mrp'],
                             'unit' => $form['unit'],
                             'quantity' => number_format((float) $form['quantity'], 2, '.', ''),
                             'meta_title' => $metaTitle,
@@ -230,8 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$csrf_token = bin2hex(random_bytes(32));
-Session::set('csrf_token', $csrf_token);
+$csrf_token = Session::csrfToken('add_product');
 
 $extraHeadCss = '<link rel="stylesheet" href="../src/trumbowyg/trumbowyg.min.css?v=2">';
 
@@ -283,7 +291,7 @@ include __DIR__ . '/../header.php';
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="mb-3">
                                         <label for="price" class="form-label">Price (INR) <span class="text-danger">*</span></label>
                                         <div class="input-group">
@@ -293,7 +301,18 @@ include __DIR__ . '/../header.php';
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="mrp" class="form-label">MRP (INR)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">&#8377;</span>
+                                            <input type="number" class="form-control" id="mrp" name="mrp"
+                                                step="0.01" min="0" value="<?= htmlspecialchars($form['mrp']) ?>" placeholder="249.00">
+                                        </div>
+                                        <small class="text-muted">Leave empty for no discount.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="mb-3">
                                         <label for="unit" class="form-label">Unit</label>
                                         <select class="form-select" id="unit" name="unit">
@@ -303,7 +322,7 @@ include __DIR__ . '/../header.php';
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="mb-3">
                                         <label for="quantity" class="form-label">Quantity / Stock <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control" id="quantity" name="quantity" required
@@ -311,6 +330,9 @@ include __DIR__ . '/../header.php';
                                         <small class="text-muted">Stock quantity for the selected unit (e.g. 500 gram, 2 kg).</small>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="mb-3">
+                                <span id="discountPreview" class="badge bg-success fs-6" style="display:none;"></span>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Status</label>
@@ -472,8 +494,7 @@ window.addEventListener('load', function() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    const imageInput = document.getElementById('image');
-    const imagePreview = document.getElementById('imagePreview');
+    const imageInput = document.getElementById('image');    const imagePreview = document.getElementById('imagePreview');
     imageInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -537,6 +558,27 @@ document.addEventListener('DOMContentLoaded', function() {
             ogDesc.value = metaDesc.value;
         }
     }
+
+    const priceInput = document.getElementById('price');
+    const mrpInput = document.getElementById('mrp');
+    const discountPreview = document.getElementById('discountPreview');
+
+    function updateDiscount() {
+        const price = parseFloat(priceInput.value);
+        const mrp = parseFloat(mrpInput.value);
+        if (isNaN(price) || isNaN(mrp) || mrp <= 0 || mrp <= price) {
+            discountPreview.style.display = 'none';
+            return;
+        }
+        const percent = Math.round((mrp - price) / mrp * 100);
+        const youSave = (mrp - price).toFixed(2);
+        discountPreview.textContent = percent + '% OFF - Save Rs. ' + youSave;
+        discountPreview.style.display = 'inline-block';
+    }
+
+    priceInput.addEventListener('input', updateDiscount);
+    mrpInput.addEventListener('input', updateDiscount);
+    updateDiscount();
 
     nameInput.addEventListener('input', autoFill);
     shortDescInput.addEventListener('input', autoFill);

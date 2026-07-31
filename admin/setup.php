@@ -130,6 +130,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ensure'])) {
                     REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+
+        $cols = $pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = " . $pdo->quote($dbname) . " AND TABLE_NAME = 'products'")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('mrp', $cols, true)) {
+            $pdo->exec("ALTER TABLE `products` ADD COLUMN `mrp` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'MRP in INR' AFTER `price`");
+        }
         $message = 'All tables are ready (product_categories, products, product_images).';
     } catch (PDOException $e) {
         $error = 'Table setup failed: ' . $e->getMessage();

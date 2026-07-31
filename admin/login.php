@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $csrf_token = $_POST['csrf_token'] ?? '';
 
-    if (!hash_equals(Session::get('csrf_token', ''), $csrf_token)) {
+    if (!Session::csrfVerify('login', $csrf_token)) {
         $error = 'Invalid request. Please try again.';
     } elseif ($username === '' || $password === '') {
         $error = 'Please enter both username and password.';
@@ -142,8 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$csrf_token = bin2hex(random_bytes(32));
-Session::set('csrf_token', $csrf_token);
+$csrf_token = Session::csrfToken('login');
 ?>
 <!DOCTYPE html>
 <html lang="en">

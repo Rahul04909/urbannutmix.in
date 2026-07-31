@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS `products` (
     `image` VARCHAR(255) NOT NULL DEFAULT 'default.png' COMMENT 'Main image, relative to admin/src/images/products/',
     `short_description` TEXT COMMENT 'Quick summary shown on cards/listings',
     `description` LONGTEXT COMMENT 'Full description (Trumbowyg editor)',
-    `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Price in INR',
+    `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Selling price in INR',
+    `mrp` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'MRP in INR; discount = (mrp - price)/mrp * 100, 0 = no discount',
     `unit` VARCHAR(20) NOT NULL DEFAULT 'gram' COMMENT 'gram | kg | piece | packet | box',
     `quantity` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Stock quantity for the selected unit',
     `meta_title` VARCHAR(255) DEFAULT NULL COMMENT 'SEO; empty = auto from product name',
@@ -41,7 +42,9 @@ CREATE TABLE IF NOT EXISTS `products` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
--- Table: product_images (gallery/media)
+-- For databases created BEFORE the mrp column existed, run:
+--   ALTER TABLE `products` ADD COLUMN `mrp` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'MRP in INR' AFTER `price`;
+-- (admin/setup.php also adds this automatically when missing)
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `product_images` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
