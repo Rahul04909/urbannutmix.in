@@ -270,6 +270,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $csrf_token = bin2hex(random_bytes(32));
 Session::set('csrf_token', $csrf_token);
 
+$extraHeadCss = '<link rel="stylesheet" href="../src/trumbowyg/trumbowyg.min.css?v=2">';
+
 include __DIR__ . '/../header.php';
 ?>
 
@@ -454,7 +456,9 @@ include __DIR__ . '/../header.php';
                                     <small class="text-muted">Max 300 characters.</small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="description" class="form-label">Full Description</label>
+                                    <label for="description" class="form-label">Full Description
+                                        <span id="editorStatus" class="badge bg-secondary">Editor loading...</span>
+                                    </label>
                                     <textarea class="form-control" id="description" name="description" rows="8"><?= htmlspecialchars($product['description']) ?></textarea>
                                 </div>
                             </div>
@@ -529,31 +533,30 @@ include __DIR__ . '/../header.php';
 </div>
 
 <link rel="stylesheet" href="../src/trumbowyg/trumbowyg.min.css">
-<script src="../src/trumbowyg/trumbowyg.min.js"></script>
+<script src="../src/trumbowyg/trumbowyg.min.js?v=2"></script>
 <style>
     .trumbowyg-box { margin: 0; }
     .trumbowyg-editor { min-height: 220px; }
 </style>
 <script>
+window.addEventListener('load', function() {
+    var status = document.getElementById('editorStatus');
+    var $desc = $('#description');
+
+    if (typeof $.fn.trumbowyg === 'function') {
+        $desc.trumbowyg({
+            autogrow: true
+        });
+        status.textContent = 'Editor loaded';
+        status.className = 'badge bg-success';
+    } else {
+        status.textContent = 'Editor failed to load - hard refresh (Ctrl+Shift+R)';
+        status.className = 'badge bg-danger';
+    }
+});
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    $('#description').trumbowyg({
-        lang: 'en',
-        btns: [
-            ['viewHTML'],
-            ['undo', 'redo'],
-            ['formatting'],
-            ['strong', 'em', 'del'],
-            ['superscript', 'subscript'],
-            ['link'],
-            ['insertImage'],
-            ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
-            ['unorderedList', 'orderedList'],
-            ['horizontalRule'],
-            ['removeformat'],
-            ['fullscreen']
-        ],
-        autogrow: true
-    });
 
     const imageInput = document.getElementById('image');
     const imagePreview = document.getElementById('imagePreview');
