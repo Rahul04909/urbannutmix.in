@@ -441,8 +441,12 @@ include __DIR__ . '/../header.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/ui/trumbowyg.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/trumbowyg.min.js"></script>
+<link rel="stylesheet" href="../src/trumbowyg/trumbowyg.min.css">
+<script src="../src/trumbowyg/trumbowyg.min.js"></script>
+<style>
+    .trumbowyg-box { margin: 0; }
+    .trumbowyg-editor { min-height: 220px; }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     $('#description').trumbowyg({
