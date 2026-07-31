@@ -9,6 +9,7 @@ $productId = (int) ($_GET['id'] ?? 0);
 $product = null;
 $categories = [];
 $gallery = [];
+$serverDebug = ['post' => false];
 
 try {
     $pdo = Database::getConnection();
@@ -32,10 +33,13 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $serverDebug['post'] = true;
     $csrf = $_POST['csrf_token'] ?? '';
     if (!Session::csrfVerify('edit_product', $csrf)) {
+        $serverDebug['csrf_ok'] = false;
         $error = 'Invalid request - session token expired, please click submit once more.';
     } else {
+        $serverDebug['csrf_ok'] = true;
         $action = $_POST['action'] ?? 'update_product';
 
         try {
@@ -214,6 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'status' => $form['status'],
                                 'id' => $product['id'],
                             ]);
+                            $serverDebug['update_rows'] = $stmt->rowCount();
+                            $serverDebug['product_id'] = $product['id'];
 
                             $galleryDir = __DIR__ . '/../src/images/products/';
                             if (!is_dir($galleryDir)) {
@@ -558,6 +564,15 @@ include __DIR__ . '/../header.php';
         </div>
     </div>
 </div>
+
+<?php
+$serverDebug['error'] = $error;
+$serverDebug['success'] = $success;
+if ($_SERVER['REQUEST_METHOD'] === 'POST'):
+?>
+<pre style="background:#f8f9fa;border:1px dashed #dee2e6;padding:10px;font-size:12px;white-space:pre-wrap;">SERVER DEBUG:
+<?= htmlspecialchars(json_encode($serverDebug, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
+<?php endif; ?>
 
 <link rel="stylesheet" href="../src/trumbowyg/trumbowyg.min.css">
 <script src="../src/trumbowyg/trumbowyg.min.js?v=2"></script>
