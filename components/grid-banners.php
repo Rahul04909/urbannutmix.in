@@ -11,7 +11,7 @@ if (!defined('BASE_URL')) {
 
 $banners = [
     [
-        'image' => 'https://www.jewelfarmer.com/cdn/shop/files/Berries-Category-Banner.webp?v=1781759387&width=1950',
+        'image' => 'assets/images/grid-banners/f4b266e0-a5a2-42f6-be6b-1e75587137af.jpg',
         'alt'   => 'Premium Berries',
         'link'  => BASE_URL . 'shop.php?category=berries',
     ],
