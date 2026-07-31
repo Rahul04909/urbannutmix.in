@@ -5,7 +5,7 @@ require_once __DIR__ . '/../inc/auth_check.php';
 
 $success = '';
 $error = '';
-$productId = (int) ($_GET['id'] ?? 0);
+$productId = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $product = null;
 $categories = [];
 $gallery = [];
@@ -235,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $sort = (int) $stmt->fetch()['mx'] + 1;
 
                                 foreach ($galleryFiles['name'] as $i => $fileName) {
-                                    if ($galleryFiles['error'][$i] !== UPLOAD_ERR_OK) {
+                                    if (empty($fileName) || $galleryFiles['error'][$i] !== UPLOAD_ERR_OK) {
                                         continue;
                                     }
                                     if (!in_array($galleryFiles['type'][$i], $allowedTypes, true)) {
@@ -296,9 +296,7 @@ include __DIR__ . '/../header.php';
     <div class="col-md-10">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-edit"></i> Edit Product
-                    <span class="badge bg-primary align-middle">v3.1</span>
-                </h3>
+                <h3 class="card-title"><i class="fas fa-edit"></i> Edit Product</h3>
             </div>
             <div class="card-body">
                 <?php if ($success !== ''): ?>
@@ -323,11 +321,12 @@ include __DIR__ . '/../header.php';
                         </a>
                     </div>
                 <?php else: ?>
-                    <form method="POST" enctype="multipart/form-data" id="productForm" onsubmit="return validateProductForm(event);">
+                    <form method="POST" action="edit-product.php?id=<?= (int)$product['id'] ?>" enctype="multipart/form-data" id="productForm" onsubmit="return validateProductForm(event);">
                         <div id="formDebug" class="d-none"></div>
-                    <!-- UNM-CSRF-V2 -->
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                        <!-- UNM-CSRF-V2 -->
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                         <input type="hidden" name="action" value="update_product">
+                        <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
 
                         <!-- General Information -->
                         <div class="card card-outline card-primary mb-3">
@@ -465,14 +464,11 @@ include __DIR__ . '/../header.php';
                                             <div class="position-relative border rounded p-1 bg-white">
                                                 <img src="../src/images/products/<?= htmlspecialchars($gImage['image']) ?>"
                                                     alt="Gallery image" style="width:100px;height:100px;object-fit:cover;border-radius:6px;">
-                                                <form method="POST" style="position:absolute;top:4px;right:4px;" class="delete-gallery-form">
-                                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-                                                    <input type="hidden" name="action" value="delete_image">
-                                                    <input type="hidden" name="image_id" value="<?= (int) $gImage['id'] ?>">
-                                                    <button type="submit" class="btn btn-danger btn-xs" style="padding:2px 6px;font-size:11px;" title="Delete image">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-danger btn-xs delete-gallery-btn"
+                                                    style="position:absolute;top:4px;right:4px;padding:2px 6px;font-size:11px;"
+                                                    data-image-id="<?= (int) $gImage['id'] ?>" title="Delete image">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -561,6 +557,14 @@ include __DIR__ . '/../header.php';
                             <i class="fas fa-arrow-left"></i> Back to Products
                         </a>
                     </form>
+
+                    <!-- Standalone Delete Gallery Image Form -->
+                    <form id="deleteGalleryForm" method="POST" action="edit-product.php?id=<?= (int)$product['id'] ?>" class="d-none">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                        <input type="hidden" name="action" value="delete_image">
+                        <input type="hidden" name="image_id" id="delete_image_id" value="0">
+                        <input type="hidden" name="id" value="<?= (int)$product['id'] ?>">
+                    </form>
                 <?php endif; ?>
             </div>
         </div>
@@ -602,6 +606,9 @@ window.addEventListener('load', function() {
 </script>
 <script>
 window.validateProductForm = function(event) {
+    if (typeof $.fn.trumbowyg === 'function' && $('#description').data('trumbowyg')) {
+        $('#description').trumbowyg('updateHtml');
+    }
     const debug = document.getElementById('formDebug');
     const name = document.getElementById('name');
     const price = document.getElementById('price');
@@ -626,39 +633,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const imageInput = document.getElementById('image');
     const imagePreview = document.getElementById('imagePreview');
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                imagePreview.src = ev.target.result;
-                imagePreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (imageInput && imagePreview) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    imagePreview.src = ev.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
     const galleryInput = document.getElementById('gallery');
     const galleryPreview = document.getElementById('galleryPreview');
-    galleryInput.addEventListener('change', function(e) {
-        galleryPreview.innerHTML = '';
-        Array.from(e.target.files).forEach(function(file) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const img = document.createElement('img');
-                img.src = ev.target.result;
-                img.style.cssText = 'width:90px;height:90px;object-fit:cover;border:2px solid #dee2e6;border-radius:8px;';
-                galleryPreview.appendChild(img);
-            };
-            reader.readAsDataURL(file);
+    if (galleryInput && galleryPreview) {
+        galleryInput.addEventListener('change', function(e) {
+            galleryPreview.innerHTML = '';
+            Array.from(e.target.files).forEach(function(file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.style.cssText = 'width:90px;height:90px;object-fit:cover;border:2px solid #dee2e6;border-radius:8px;';
+                    galleryPreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
         });
-    });
+    }
 
     const priceInput = document.getElementById('price');
     const mrpInput = document.getElementById('mrp');
     const discountPreview = document.getElementById('discountPreview');
 
     function updateDiscount() {
+        if (!priceInput || !mrpInput || !discountPreview) return;
         const price = parseFloat(priceInput.value);
         const mrp = parseFloat(mrpInput.value);
         if (isNaN(price) || isNaN(mrp) || mrp <= 0 || mrp <= price) {
@@ -671,26 +683,37 @@ document.addEventListener('DOMContentLoaded', function() {
         discountPreview.style.display = 'inline-block';
     }
 
-    priceInput.addEventListener('input', updateDiscount);
-    mrpInput.addEventListener('input', updateDiscount);
-    updateDiscount();
+    if (priceInput && mrpInput) {
+        priceInput.addEventListener('input', updateDiscount);
+        mrpInput.addEventListener('input', updateDiscount);
+        updateDiscount();
+    }
 
-    document.querySelectorAll('.delete-gallery-form').forEach(function(form) {
-        form.addEventListener('submit', function(e) {
+    document.querySelectorAll('.delete-gallery-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
-            Swal.fire({
-                title: 'Delete this image?',
-                text: 'The image will be permanently removed from the gallery.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, delete it!'
-            }).then(function(result) {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
+            const imageId = this.getAttribute('data-image-id');
+            const doDelete = function() {
+                document.getElementById('delete_image_id').value = imageId;
+                document.getElementById('deleteGalleryForm').submit();
+            };
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Delete this image?',
+                    text: 'The image will be permanently removed from the gallery.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        doDelete();
+                    }
+                });
+            } else if (confirm('Delete this image permanently from gallery?')) {
+                doDelete();
+            }
         });
     });
 });
