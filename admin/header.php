@@ -99,12 +99,10 @@ $active_page = $active_pageInfo['active_page'] ?? null;
             float: none !important;
             line-height: .8;
             margin: 0 !important;
-            max-height: 38px;
+            max-height: 48px;
             width: auto;
-            border-radius: 8px;
-            background: #ffffff;
-            padding: 3px 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            border-radius: 0;
+            background: transparent;
             opacity: 1;
         }
 

@@ -7,11 +7,27 @@ $pdo = Database::getConnection();
 $success = '';
 $error = '';
 
-$stmt = $pdo->prepare('SELECT id, name, email, mobile, username, profile_pic, role, last_login, last_login_ip FROM admin_users WHERE id = :id LIMIT 1');
-$stmt->execute(['id' => $adminUser['id']]);
-$admin = $stmt->fetch();
+try {
+    $stmt = $pdo->prepare('SELECT id, name, email, mobile, username, profile_pic, role, last_login, last_login_ip FROM admin_users WHERE id = :id LIMIT 1');
+    $stmt->execute(['id' => $adminUser['id']]);
+    $admin = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log('Profile DB error: ' . $e->getMessage());
+    $admin = [
+        'id' => null,
+        'name' => '',
+        'email' => '',
+        'mobile' => '',
+        'username' => '',
+        'profile_pic' => 'default.png',
+        'role' => '',
+        'last_login' => '',
+        'last_login_ip' => '',
+    ];
+    $error = 'Database error: ' . htmlspecialchars($e->getMessage());
+}
 
-if (!$admin) {
+if (!$admin['id'] && $error === '') {
     Session::destroy();
     header('Location: login.php');
     exit;
@@ -20,7 +36,8 @@ if (!$admin) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'update_profile') {
+    try {
+        if ($action === 'update_profile') {
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $mobile = trim($_POST['mobile'] ?? '');
@@ -123,6 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Please select an image to upload.';
         }
+        }
+    } catch (PDOException $e) {
+        error_log('Profile POST DB error: ' . $e->getMessage());
+        $error = 'Database error: ' . htmlspecialchars($e->getMessage());
     }
 }
 
