@@ -1,5 +1,5 @@
 <?php
-
+// admin/profile.php
 require_once __DIR__ . '/inc/auth_check.php';
 
 $adminUser = $GLOBALS['admin_user'];
