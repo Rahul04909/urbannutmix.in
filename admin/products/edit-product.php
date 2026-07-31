@@ -544,6 +544,7 @@ window.addEventListener('load', function() {
     var $desc = $('#description');
 
     if (typeof $.fn.trumbowyg === 'function') {
+        $.trumbowyg.svgPath = '../src/trumbowyg/ui/icons.svg';
         $desc.trumbowyg({
             autogrow: true
         });
