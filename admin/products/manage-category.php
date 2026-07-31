@@ -13,7 +13,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $csrf = $_POST['csrf_token'] ?? '';
         if (!Session::csrfVerify('delete_category', $csrf)) {
-            $error = 'Invalid request. Please try again.';
+            $error = 'Invalid request - session token expired, please click submit once more.';
         } else {
             $id = (int) ($_POST['id'] ?? 0);
             $stmt = $pdo->prepare('SELECT id, name, image FROM product_categories WHERE id = :id LIMIT 1');
@@ -127,6 +127,7 @@ include __DIR__ . '/../header.php';
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
                                     <form method="POST" style="display:inline;" class="delete-category-form">
+                                        <!-- UNM-CSRF-V2 -->
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                         <input type="hidden" name="id" value="<?= (int) $category['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-danger" title="Delete"

@@ -33,7 +33,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!Session::csrfVerify('edit_product', $csrf)) {
-        $error = 'Invalid request. Please try again.';
+        $error = 'Invalid request - session token expired, please click submit once more.';
     } else {
         $action = $_POST['action'] ?? 'update_product';
 
@@ -313,7 +313,8 @@ include __DIR__ . '/../header.php';
                     </div>
                 <?php else: ?>
                     <form method="POST" enctype="multipart/form-data" id="productForm">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                    <!-- UNM-CSRF-V2 -->
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                         <input type="hidden" name="action" value="update_product">
 
                         <!-- General Information -->

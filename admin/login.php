@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf_token = $_POST['csrf_token'] ?? '';
 
     if (!Session::csrfVerify('login', $csrf_token)) {
-        $error = 'Invalid request. Please try again.';
+        $error = 'Invalid request - session token expired, please click submit once more.';
     } elseif ($username === '' || $password === '') {
         $error = 'Please enter both username and password.';
     } else {

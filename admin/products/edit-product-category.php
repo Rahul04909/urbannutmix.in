@@ -26,7 +26,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!Session::csrfVerify('edit_category', $csrf)) {
-        $error = 'Invalid request. Please try again.';
+        $error = 'Invalid request - session token expired, please click submit once more.';
     } else {
         $name = trim($_POST['name'] ?? '');
         $status = ($_POST['status'] ?? 'active') === 'inactive' ? 'inactive' : 'active';
@@ -139,6 +139,7 @@ include __DIR__ . '/../header.php';
 
                 <?php if ($category): ?>
                     <form method="POST" enctype="multipart/form-data">
+                        <!-- UNM-CSRF-V2 -->
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
 
                         <div class="mb-3">

@@ -80,17 +80,23 @@ class Session
 
     public static function csrfToken(string $form = 'default'): string
     {
+        self::start();
         $tokens = $_SESSION['csrf_tokens'] ?? [];
-        $token = bin2hex(random_bytes(32));
-        $tokens[$form] = $token;
+        if (empty($tokens[$form]) || !is_string($tokens[$form])) {
+            $tokens[$form] = bin2hex(random_bytes(32));
+        }
         $_SESSION['csrf_tokens'] = $tokens;
-        return $token;
+        return $tokens[$form];
     }
 
     public static function csrfVerify(string $form, string $token): bool
     {
+        self::start();
+        if ($token === '') {
+            return false;
+        }
         $tokens = $_SESSION['csrf_tokens'] ?? [];
-        return isset($tokens[$form]) && hash_equals($tokens[$form], $token);
+        return isset($tokens[$form]) && is_string($tokens[$form]) && hash_equals($tokens[$form], $token);
     }
 
     public static function isAuthenticated(): bool
