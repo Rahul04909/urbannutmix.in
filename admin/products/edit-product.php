@@ -288,7 +288,9 @@ include __DIR__ . '/../header.php';
     <div class="col-md-10">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-edit"></i> Edit Product</h3>
+                <h3 class="card-title"><i class="fas fa-edit"></i> Edit Product
+                    <span class="badge bg-primary align-middle">v3.1</span>
+                </h3>
             </div>
             <div class="card-body">
                 <?php if ($success !== ''): ?>
@@ -313,7 +315,8 @@ include __DIR__ . '/../header.php';
                         </a>
                     </div>
                 <?php else: ?>
-                    <form method="POST" enctype="multipart/form-data" id="productForm">
+                    <form method="POST" enctype="multipart/form-data" id="productForm" onsubmit="return validateProductForm(event);">
+                        <div id="formDebug" class="d-none"></div>
                     <!-- UNM-CSRF-V2 -->
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                         <input type="hidden" name="action" value="update_product">
@@ -579,6 +582,27 @@ window.addEventListener('load', function() {
         status.className = 'badge bg-danger';
     }
 });
+</script>
+<script>
+window.validateProductForm = function(event) {
+    const debug = document.getElementById('formDebug');
+    const name = document.getElementById('name');
+    const price = document.getElementById('price');
+    const quantity = document.getElementById('quantity');
+    const msgs = [];
+    if (name && !name.value.trim()) { msgs.push('Name is empty'); }
+    if (price && (price.value === '' || isNaN(parseFloat(price.value)))) { msgs.push('Price invalid'); }
+    if (quantity && (quantity.value === '' || isNaN(parseFloat(quantity.value)))) { msgs.push('Quantity invalid'); }
+    const mrp = document.getElementById('mrp');
+    if (mrp && mrp.value !== '' && (isNaN(parseFloat(mrp.value)) || parseFloat(mrp.value) < 0)) { msgs.push('MRP invalid'); }
+    if (msgs.length > 0) {
+        if (debug) { debug.textContent = 'BLOCKED: ' + msgs.join(', '); debug.className = 'alert alert-danger'; }
+        event.preventDefault();
+        return false;
+    }
+    if (debug) { debug.textContent = 'SUBMITTING FORM (token: ' + (document.querySelector('#productForm [name=csrf_token]')?.value || 'none') + ')'; debug.className = 'alert alert-info'; }
+    return true;
+};
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
