@@ -59,6 +59,7 @@ class Database
             'users' => false,
             'login_query' => false,
             'profile_query' => false,
+            'categories' => false,
             'error' => '',
         ];
 
@@ -96,6 +97,9 @@ class Database
                     $stmt->execute(['id' => 1]);
                     $result['profile_query'] = true;
                 }
+
+                $stmt = $pdo->query("SHOW TABLES LIKE 'product_categories'");
+                $result['categories'] = (bool) $stmt->fetch();
             }
         } catch (PDOException $e) {
             $result['error'] = $e->getMessage();

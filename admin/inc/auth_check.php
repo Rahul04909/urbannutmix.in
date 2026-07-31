@@ -12,7 +12,8 @@ Session::start();
 
 if (!Session::isAuthenticated()) {
     Session::set('redirect_after_login', $_SERVER['REQUEST_URI']);
-    header('Location: login.php');
+    $base = str_repeat('../', substr_count(dirname($_SERVER['SCRIPT_NAME']), '/') - 1);
+    header('Location: ' . $base . 'login.php');
     exit;
 }
 

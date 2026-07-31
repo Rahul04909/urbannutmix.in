@@ -72,6 +72,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ensure'])) {
+    try {
+        $pdo = Database::getConnection();
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `product_categories` (
+                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `name` VARCHAR(100) NOT NULL,
+                `slug` VARCHAR(120) NOT NULL,
+                `image` VARCHAR(255) NOT NULL DEFAULT 'default.png',
+                `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uk_slug` (`slug`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $message = 'Product categories table is ready.';
+    } catch (PDOException $e) {
+        $error = 'Table setup failed: ' . $e->getMessage();
+    }
+}
+
 $healKey = 'urbannutmix-heal-2026';
 if (isset($_GET['heal']) && $_GET['heal'] === $healKey) {
     $target = __DIR__ . '/profile.php';
@@ -164,6 +186,10 @@ $sessionData = array_filter($_SESSION ?? [], static function ($key) {
                     <td><span class="status-dot <?= $status['profile_query'] ? 'ok' : 'fail' ?>"></span> Profile Query Test</td>
                     <td><?= $status['profile_query'] ? 'Passed' : 'Failed' ?></td>
                 </tr>
+                <tr>
+                    <td><span class="status-dot <?= $status['categories'] ? 'ok' : 'fail' ?>"></span> Table <code>product_categories</code></td>
+                    <td><?= $status['categories'] ? 'Exists' : 'Not Found' ?></td>
+                </tr>
             </table>
             <?php if ($status['error']): ?>
                 <div class="text-danger small"><?= htmlspecialchars($status['error']) ?></div>
@@ -187,6 +213,14 @@ $sessionData = array_filter($_SESSION ?? [], static function ($key) {
             <p class="text-muted small text-center mt-2">Default login: <strong>admin</strong> / <strong>Admin@123456</strong></p>
         <?php else: ?>
             <a href="login.php" class="btn btn-success w-100 py-2 fw-semibold">Go to Login &rarr;</a>
+        <?php endif; ?>
+
+        <?php if (!$status['categories'] && $status['mysql']): ?>
+            <form method="POST" class="mt-3">
+                <button type="submit" name="ensure" value="1" class="btn btn-outline-success w-100 py-2">
+                    Create Product Categories Table
+                </button>
+            </form>
         <?php endif; ?>
     </div>
 </body>

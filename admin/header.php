@@ -4,6 +4,12 @@ require_once __DIR__ . '/inc/auth_check.php';
 
 $adminUser = $GLOBALS['admin_user'];
 $currentPage = basename($_SERVER['SCRIPT_NAME']);
+$base = str_repeat('../', substr_count(dirname($_SERVER['SCRIPT_NAME']), '/') - 1);
+
+if ($currentPage === 'edit-product-category.php') {
+    $currentPage = 'products/manage-category.php';
+    $pageTitleOverride = 'Edit Category';
+}
 
 $menuItems = [
     [
@@ -11,6 +17,14 @@ $menuItems = [
         "icon" => "fas fa-home",
         "pages" => [
             ["title" => "Home", "url" => "index.php"]
+        ],
+    ],
+    [
+        "menuTitle" => "Products",
+        "icon" => "fas fa-box-open",
+        "pages" => [
+            ["title" => "Manage Categories", "url" => "products/manage-category.php"],
+            ["title" => "Add Category", "url" => "products/add-product-category.php"],
         ],
     ],
     [
@@ -25,7 +39,7 @@ $menuItems = [
 $active_pageInfo = null;
 foreach ($menuItems as $menuItem) {
     foreach ($menuItem['pages'] as $page) {
-        if ($currentPage === $page['url']) {
+        if ($currentPage === basename($page['url'])) {
             $active_pageInfo = [
                 "breadcrumb_Items" => [
                     ["title" => $menuItem['menuTitle'], "url" => "#"],
@@ -41,7 +55,7 @@ foreach ($menuItems as $menuItem) {
 }
 
 $breadcrumb_Items = $active_pageInfo['breadcrumb_Items'] ?? [];
-$page_title = $active_pageInfo['page_title'] ?? '';
+$page_title = $pageTitleOverride ?? ($active_pageInfo['page_title'] ?? '');
 $active_menu = $active_pageInfo['active_menu'] ?? null;
 $active_page = $active_pageInfo['active_page'] ?? null;
 ?>
@@ -383,13 +397,13 @@ $active_page = $active_pageInfo['active_page'] ?? null;
             </ul>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="profile.php" title="Profile">
+                    <a class="nav-link" href="<?= $base ?>profile.php" title="Profile">
                         <i class="fas fa-user-circle"></i>
                         <span class="d-none d-sm-inline">&nbsp;Profile</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="logout.php" title="Logout">
+                    <a class="nav-link" href="<?= $base ?>logout.php" title="Logout">
                         <i class="fas fa-sign-out-alt text-danger"></i>
                         <span class="d-none d-sm-inline text-danger">&nbsp;Logout</span>
                     </a>
@@ -407,7 +421,7 @@ $active_page = $active_pageInfo['active_page'] ?? null;
                         <ol class="breadcrumb float-sm-right">
                             <?php foreach ($breadcrumb_Items as $item): ?>
                                 <li class="breadcrumb-item <?= $item['url'] === '#' ? 'active' : '' ?>">
-                                    <?= $item['url'] === '#' ? $item['title'] : "<a href='{$item['url']}'>{$item['title']}</a>" ?>
+                                    <?= $item['url'] === '#' ? $item['title'] : "<a href='" . $base . htmlspecialchars($item['url']) . "'>{$item['title']}</a>" ?>
                                 </li>
                             <?php endforeach; ?>
                         </ol>
@@ -417,14 +431,14 @@ $active_page = $active_pageInfo['active_page'] ?? null;
         </div>
 
         <aside class="main-sidebar sidebar-light-primary elevation-4">
-            <a href="./" class="brand-link">
-                <img src="./src/images/logo.png" alt="UrbanNutMix Logo" class="brand-image">
+            <a href="<?= $base ?>index.php" class="brand-link">
+                <img src="<?= $base ?>src/images/logo.png" alt="UrbanNutMix Logo" class="brand-image">
             </a>
             <div class="sidebar">
                 <div class="user-panel mt-3 pb-3 mb-3">
-                    <a href="./profile.php" class="d-flex">
+                    <a href="<?= $base ?>profile.php" class="d-flex">
                         <div class="image">
-                            <?php $profilePic = !empty($adminUser['profile_pic']) && $adminUser['profile_pic'] !== 'default.png' ? './src/images/profile_picture/' . htmlspecialchars($adminUser['profile_pic']) : './src/images/user-avtar.png'; ?>
+                            <?php $profilePic = !empty($adminUser['profile_pic']) && $adminUser['profile_pic'] !== 'default.png' ? $base . 'src/images/profile_picture/' . htmlspecialchars($adminUser['profile_pic']) : $base . 'src/images/user-avtar.png'; ?>
                             <img src="<?= $profilePic ?>" class="img-circle elevation-2 bg-white" alt="User Image" style="width:38px;height:38px;object-fit:cover;">
                         </div>
                         <div class="info">
@@ -447,7 +461,7 @@ $active_page = $active_pageInfo['active_page'] ?? null;
                                     <ul class="nav nav-treeview">
                                         <?php foreach ($menuItem['pages'] as $page): ?>
                                             <li class="nav-item">
-                                                <a href="<?= $page['url'] ?>"
+                                                <a href="<?= $base ?><?= $page['url'] ?>"
                                                     class="nav-link <?= $page === $active_page ? 'active' : '' ?>">
                                                     <i class="fas fa-minus nav-icon submenu-icon"></i>
                                                     <p><?= $page['title'] ?></p>
@@ -459,7 +473,7 @@ $active_page = $active_pageInfo['active_page'] ?? null;
                             </li>
                         <?php endforeach; ?>
                         <li class="nav-item">
-                            <a href="logout.php" class="nav-link">
+                            <a href="<?= $base ?>logout.php" class="nav-link">
                                 <i class="nav-icon fas fa-sign-out-alt"></i>
                                 <p>Logout</p>
                             </a>
