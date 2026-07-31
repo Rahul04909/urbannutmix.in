@@ -145,6 +145,7 @@ Session::set('csrf_token', $csrf_token);
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- UrbanNutMix admin login v2.1 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | UrbanNutMix</title>
