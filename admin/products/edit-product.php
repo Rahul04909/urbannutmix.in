@@ -263,7 +263,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($galleryError !== '') {
                                 $error = $galleryError;
                             } else {
-                                $success = 'Product "' . htmlspecialchars($form['name']) . '" updated successfully.';
+                                Session::set('flash_success', 'Product "' . htmlspecialchars($form['name']) . '" updated successfully.');
+                                header('Location: manage-products.php');
+                                exit;
                             }
 
                             $stmt = $pdo->prepare('SELECT id, image FROM product_images WHERE product_id = :pid ORDER BY sort_order ASC, id ASC');
