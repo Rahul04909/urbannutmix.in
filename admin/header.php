@@ -99,8 +99,13 @@ $active_page = $active_pageInfo['active_page'] ?? null;
             float: none !important;
             line-height: .8;
             margin: 0 !important;
-            max-height: 40px;
+            max-height: 38px;
             width: auto;
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 3px 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            opacity: 1;
         }
 
         /* User Panel */
@@ -373,34 +378,22 @@ $active_page = $active_pageInfo['active_page'] ?? null;
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <div class="nav-link">
-                        <i class="fas fa-th-large"></i>
-                    </div>
-                </li>
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="./" class="nav-link">Home</a>
-                </li>
-            </ul>
-            <form class="form-inline ml-3">
-                <div class="input-group input-group-sm">
-                    <input class="form-control form-control-navbar" type="search" placeholder="Search" name="search">
-                    <div class="input-group-append">
-                        <button class="btn btn-navbar" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </form>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link" href="#messages">
-                        <i class="far fa-comments"></i>
-                        <span class="badge badge-danger navbar-badge">2</span>
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button" aria-label="Toggle sidebar">
+                        <i class="fas fa-bars"></i>
                     </a>
                 </li>
-                <li class="nav-item dropdown"><a class="nav-link" href="#notifications">
-                        <i class="far fa-bell"></i>
-                        <span class="badge badge-warning navbar-badge">5</span>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="profile.php" title="Profile">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="d-none d-sm-inline">&nbsp;Profile</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="logout.php" title="Logout">
+                        <i class="fas fa-sign-out-alt text-danger"></i>
+                        <span class="d-none d-sm-inline text-danger">&nbsp;Logout</span>
                     </a>
                 </li>
             </ul>
@@ -427,7 +420,7 @@ $active_page = $active_pageInfo['active_page'] ?? null;
 
         <aside class="main-sidebar sidebar-light-primary elevation-4">
             <a href="./" class="brand-link">
-                <img src="./src/images/prayag-computer-logo.png" alt="Logo" class="brand-image img-circle bg-white">
+                <img src="./src/images/logo.png" alt="UrbanNutMix Logo" class="brand-image">
             </a>
             <div class="sidebar">
                 <div class="user-panel mt-3 pb-3 mb-3">
