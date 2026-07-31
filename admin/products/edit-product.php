@@ -12,6 +12,7 @@ $gallery = [];
 
 try {
     $pdo = Database::getConnection();
+    Database::ensureProductColumns();
 
     $stmt = $pdo->prepare('SELECT * FROM products WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $productId]);

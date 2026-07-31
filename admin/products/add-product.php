@@ -26,6 +26,7 @@ $form = [
 
 try {
     $pdo = Database::getConnection();
+    Database::ensureProductColumns();
     $categories = $pdo->query("SELECT id, name FROM product_categories WHERE status = 'active' ORDER BY name ASC")->fetchAll();
 } catch (\Throwable $e) {
     error_log('Add product load error: ' . $e->getMessage());

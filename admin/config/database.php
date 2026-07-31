@@ -50,6 +50,28 @@ class Database
         ]);
     }
 
+    public static function ensureProductColumns(): void
+    {
+        try {
+            $pdo = self::getConnection();
+            $dbname = $_ENV['DB_NAME'] ?? 'urbannutmix';
+            $stmt = $pdo->query(
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = " . $pdo->quote($dbname) . " AND TABLE_NAME = 'products'"
+            );
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!in_array('category_id', $columns, true)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `category_id` INT UNSIGNED DEFAULT NULL AFTER `id`");
+            }
+            if (!in_array('mrp', $columns, true)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `mrp` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'MRP in INR' AFTER `price`");
+            }
+        } catch (\Throwable $e) {
+            error_log('ensureProductColumns failed: ' . $e->getMessage());
+        }
+    }
+
     public static function healthCheck(): array
     {
         $result = [
