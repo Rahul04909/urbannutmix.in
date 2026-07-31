@@ -1,5 +1,6 @@
 <?php
 // admin/profile.php
+require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/inc/auth_check.php';
 
 $adminUser = $GLOBALS['admin_user'];
@@ -43,7 +44,7 @@ try {
     if (!$admin) {
         $error = 'Could not find your admin account. Please log out and log in again.';
     }
-} catch (PDOException $e) {
+} catch (\Throwable $e) {
     error_log('Profile DB error: ' . $e->getMessage());
     $error = 'Database error: ' . htmlspecialchars($e->getMessage());
 }
@@ -156,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Please select an image to upload.';
         }
         }
-    } catch (PDOException $e) {
+    } catch (\Throwable $e) {
         error_log('Profile POST DB error: ' . $e->getMessage());
         $error = 'Database error: ' . htmlspecialchars($e->getMessage());
     }
