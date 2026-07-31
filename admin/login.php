@@ -46,6 +46,8 @@ function formatLoginDbError(PDOException $e, bool $queryContext, string &$error,
         $error = 'Database SSL connection could not be established. Please contact the administrator.';
     } elseif (str_contains($message, 'could not find driver') || $driverCode === 2054) {
         $error = 'PDO MySQL driver missing or unsupported authentication. Please contact the administrator.';
+    } elseif (str_contains($message, 'HY093')) {
+        $error = 'Database prepared statement parameter error. Please contact the administrator.';
     } elseif ($debug) {
         $error = ($queryContext ? 'Database query error' : 'Database connection error')
             . ' [' . $driverCode . ']: ' . $message;
@@ -86,12 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare(
                     'SELECT id, name, email, mobile, username, password, profile_pic, role, status
                      FROM admin_users
-                     WHERE (username = :username OR email = :username)
+                     WHERE (username = :username OR email = :email)
                      AND status = :status
                      LIMIT 1'
                 );
                 $stmt->execute([
                     'username' => $username,
+                    'email' => $username,
                     'status' => 'active',
                 ]);
                 $admin = $stmt->fetch();

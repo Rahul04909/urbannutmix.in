@@ -30,11 +30,11 @@ try {
     $stmt = $pdo->prepare(
         'SELECT id, name, email, mobile, username, password, profile_pic, role, status
          FROM admin_users
-         WHERE (username = :username OR email = :username)
+         WHERE (username = :username OR email = :email)
          AND status = :status
          LIMIT 1'
     );
-    $stmt->execute(['username' => 'admin', 'status' => 'active']);
+    $stmt->execute(['username' => 'admin', 'email' => 'admin', 'status' => 'active']);
     $admin = $stmt->fetch();
     echo "3. Login SELECT: OK, row found: ", $admin ? "YES" : "NO", "\n";
 
