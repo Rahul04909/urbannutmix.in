@@ -9,7 +9,7 @@ $slides = [
         'alt'   => 'UrbanNutMix Almonds Banner'
     ],
     [
-        'image' => 'assets/images/hero-banners/chashews.png',
+        'image' => 'assets/images/hero-banners/cashews.png',
         'alt'   => 'UrbanNutMix Chashews Banner'
     ],
     [
