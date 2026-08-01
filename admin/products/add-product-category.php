@@ -36,13 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                        $maxSize = 2 * 1024 * 1024;
+                        $maxSize = 20 * 1024 * 1024;
                         $file = $_FILES['image'];
 
                         if (!in_array($file['type'], $allowedTypes, true)) {
                             $error = 'Only JPG, PNG, GIF, and WebP images are allowed.';
                         } elseif ($file['size'] > $maxSize) {
-                            $error = 'Image size must be less than 2MB.';
+                            $error = 'Image size must be less than 20MB.';
                         } else {
                             $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                             $filename = 'cat_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
@@ -124,7 +124,7 @@ include __DIR__ . '/../header.php';
                         <label for="image" class="form-label">Category Image</label>
                         <input type="file" class="form-control" id="image" name="image"
                             accept="image/jpeg,image/png,image/gif,image/webp">
-                        <small class="text-muted">JPG, PNG, GIF or WebP. Max 2MB. Optional.</small>
+                        <small class="text-muted">JPG, PNG, GIF or WebP. Max 20MB. Optional.</small>
                     </div>
 
                     <div class="mb-3">

@@ -12,11 +12,14 @@
 
 .unm-full-banner-wrap {
     width: 100%;
-    aspect-ratio: 2100 / 715; /* Exact ratio of the honey dry fruits banner image */
+    position: relative;
+    overflow: hidden;
     display: block;
+    aspect-ratio: 2100 / 715;
+    background-color: #000000;
 }
 
-.unm-full-banner-img {
+.unm-full-banner-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -43,12 +46,11 @@
     }
 }
 
-/* Flipkart-style full uncropped layout on mobile devices */
 @media (max-width: 580px) {
     .unm-full-banner-wrap {
-        aspect-ratio: 2100 / 715;
+        aspect-ratio: 16 / 9;
     }
-    .unm-full-banner-img {
-        object-fit: contain;
+    .unm-full-banner-video {
+        object-fit: cover;
     }
 }

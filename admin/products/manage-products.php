@@ -8,11 +8,15 @@ Session::remove('flash_success');
 $error = Session::get('flash_error', '');
 Session::remove('flash_error');
 $products = [];
+$categories = [];
 $totalPages = 1;
 $totalCount = 0;
 
 try {
     $pdo = Database::getConnection();
+
+    // Fetch active categories for search filter
+    $categories = $pdo->query("SELECT id, name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $csrf = $_POST['csrf_token'] ?? '';
@@ -50,15 +54,24 @@ try {
     }
 
     $q = trim($_GET['q'] ?? '');
+    $catId = (int) ($_GET['category_id'] ?? 0);
     $page = max(1, (int) ($_GET['page'] ?? 1));
-    $perPage = 10;
+    $perPage = in_array((int) ($_GET['per_page'] ?? 10), [10, 25, 50, 100], true) ? (int) $_GET['per_page'] : 10;
 
-    $where = '';
+    $whereConditions = [];
     $params = [];
+
     if ($q !== '') {
-        $where = 'WHERE p.name LIKE :q OR p.slug LIKE :q';
+        $whereConditions[] = '(p.name LIKE :q OR p.slug LIKE :q)';
         $params['q'] = '%' . $q . '%';
     }
+
+    if ($catId > 0) {
+        $whereConditions[] = 'p.category_id = :cid';
+        $params['cid'] = $catId;
+    }
+
+    $where = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
 
     $stmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM products p $where");
     $stmt->execute($params);
@@ -76,7 +89,7 @@ try {
          LIMIT $perPage OFFSET $offset"
     );
     $stmt->execute($params);
-    $products = $stmt->fetchAll();
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (\Throwable $e) {
     error_log('Manage products error: ' . $e->getMessage());
     $error = 'Database error: ' . htmlspecialchars($e->getMessage());
@@ -84,12 +97,24 @@ try {
 
 $csrf_token = Session::csrfToken('delete_product');
 
+// Helper function to build pagination URLs preserving GET query parameters
+function build_page_url(int $targetPage, string $q, int $catId, int $perPage): string {
+    $query = ['page' => $targetPage];
+    if ($q !== '') $query['q'] = $q;
+    if ($catId > 0) $query['category_id'] = $catId;
+    if ($perPage !== 10) $query['per_page'] = $perPage;
+    return 'manage-products.php?' . http_build_query($query);
+}
+
 include __DIR__ . '/../header.php';
 ?>
 
 <div class="card">
-    <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-box"></i> All Products (<?= $totalCount ?>)</h3>
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-box"></i> All Products
+            <span class="badge bg-secondary ms-2"><?= $totalCount ?></span>
+        </h3>
         <div class="card-tools">
             <a href="add-product.php" class="btn btn-success btn-sm">
                 <i class="fas fa-plus"></i> Add New Product
@@ -111,23 +136,43 @@ include __DIR__ . '/../header.php';
             </div>
         <?php endif; ?>
 
-        <form method="GET" class="row g-2 mb-3">
-            <div class="col-md-6 col-lg-4">
+        <!-- Search & Filter Controls Bar -->
+        <form method="GET" class="row g-2 mb-4 align-items-center">
+            <div class="col-md-5 col-lg-4">
                 <div class="input-group">
-                    <input type="text" name="q" class="form-control" placeholder="Search by name or slug..."
+                    <input type="text" name="q" class="form-control" placeholder="Search by product name or slug..."
                         value="<?= htmlspecialchars($q) ?>">
-                    <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
-                    <?php if ($q !== ''): ?>
-                        <a href="manage-products.php" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
-                    <?php endif; ?>
+                    <button type="submit" class="btn btn-primary" title="Search"><i class="fas fa-search"></i></button>
                 </div>
             </div>
+            <div class="col-md-4 col-lg-3">
+                <select name="category_id" class="form-select" onchange="this.form.submit()">
+                    <option value="0">-- All Categories --</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?= (int) $cat['id'] ?>" <?= $catId === (int) $cat['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <select name="per_page" class="form-select" onchange="this.form.submit()" title="Items per page">
+                    <?php foreach ([10, 25, 50, 100] as $pp): ?>
+                        <option value="<?= $pp ?>" <?= $perPage === $pp ? 'selected' : '' ?>><?= $pp ?> per page</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php if ($q !== '' || $catId > 0 || $perPage !== 10): ?>
+                <div class="col-md-2 col-lg-1">
+                    <a href="manage-products.php" class="btn btn-outline-secondary w-100" title="Reset Filters"><i class="fas fa-undo"></i> Reset</a>
+                </div>
+            <?php endif; ?>
         </form>
 
         <?php if (count($products) === 0): ?>
             <div class="text-center py-5">
                 <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No products found. Click "Add New Product" to create your first one.</p>
+                <p class="text-muted">No products found matching your search criteria.</p>
                 <a href="add-product.php" class="btn btn-success">
                     <i class="fas fa-plus"></i> Add New Product
                 </a>
@@ -135,7 +180,7 @@ include __DIR__ . '/../header.php';
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover table-bordered align-middle">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th style="width:50px;">#</th>
                             <th style="width:80px;">Image</th>
@@ -144,7 +189,7 @@ include __DIR__ . '/../header.php';
                             <th>Price</th>
                             <th>Stock</th>
                             <th>Status</th>
-                            <th style="width:160px;">Actions</th>
+                            <th style="width:140px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -155,10 +200,10 @@ include __DIR__ . '/../header.php';
                                     <?php if ($product['image'] !== 'default.png' && file_exists(__DIR__ . '/../src/images/products/' . $product['image'])): ?>
                                         <img src="../src/images/products/<?= htmlspecialchars($product['image']) ?>"
                                             alt="<?= htmlspecialchars($product['name']) ?>" class="img-thumbnail"
-                                            style="width:60px;height:60px;object-fit:cover;">
+                                            style="width:55px;height:55px;object-fit:cover;">
                                     <?php else: ?>
                                         <div class="d-flex align-items-center justify-content-center bg-light border"
-                                            style="width:60px;height:60px;">
+                                            style="width:55px;height:55px;border-radius:4px;">
                                             <i class="fas fa-image text-muted"></i>
                                         </div>
                                     <?php endif; ?>
@@ -200,6 +245,10 @@ include __DIR__ . '/../header.php';
                                         class="btn btn-sm btn-primary" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <a href="../../product.php?slug=<?= urlencode($product['slug']) ?>" target="_blank"
+                                        class="btn btn-sm btn-outline-secondary" title="View Live Product">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
                                     <form method="POST" style="display:inline;" class="delete-product-form">
                                         <!-- UNM-CSRF-V2 -->
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
@@ -216,26 +265,76 @@ include __DIR__ . '/../header.php';
                 </table>
             </div>
 
-            <?php if ($totalPages > 1): ?>
-                <nav>
-                    <ul class="pagination justify-content-center mb-0">
-                        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                            <a class="page-link"
-                                href="manage-products.php?page=<?= $page - 1 ?>&q=<?= urlencode($q) ?>">Previous</a>
-                        </li>
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-                                <a class="page-link"
-                                    href="manage-products.php?page=<?= $i ?>&q=<?= urlencode($q) ?>"><?= $i ?></a>
+            <!-- Professional Pagination Footer Bar -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3 gap-2">
+                <div class="text-muted small">
+                    Showing <span class="fw-bold text-dark"><?= min($totalCount, $offset + 1) ?></span> to
+                    <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
+                    <span class="fw-bold text-dark"><?= $totalCount ?></span> products
+                    <?php if ($q !== '' || $catId > 0): ?>
+                        <span class="badge bg-light text-dark border ms-1">Filtered</span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($totalPages > 1): ?>
+                    <nav aria-label="Products Pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- First Page -->
+                            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                <a class="page-link" href="<?= build_page_url(1, $q, $catId, $perPage) ?>" title="First Page">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
                             </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                            <a class="page-link"
-                                href="manage-products.php?page=<?= $page + 1 ?>&q=<?= urlencode($q) ?>">Next</a>
-                        </li>
-                    </ul>
-                </nav>
-            <?php endif; ?>
+
+                            <!-- Previous Page -->
+                            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                <a class="page-link" href="<?= build_page_url(max(1, $page - 1), $q, $catId, $perPage) ?>" title="Previous">
+                                    <i class="fas fa-angle-left"></i> Previous
+                                </a>
+                            </li>
+
+                            <!-- Smart Page Numbers Window -->
+                            <?php
+                            $startPage = max(1, $page - 2);
+                            $endPage   = min($totalPages, $page + 2);
+
+                            if ($startPage > 1): ?>
+                                <li class="page-item"><a class="page-link" href="<?= build_page_url(1, $q, $catId, $perPage) ?>">1</a></li>
+                                <?php if ($startPage > 2): ?>
+                                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                                <li class="page-item <?= $i === $page ? 'active' : '' ?>">
+                                    <a class="page-link" href="<?= build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+
+                            <?php if ($endPage < $totalPages): ?>
+                                <?php if ($endPage < $totalPages - 1): ?>
+                                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                                <li class="page-item"><a class="page-link" href="<?= build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a></li>
+                            <?php endif; ?>
+
+                            <!-- Next Page -->
+                            <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                                <a class="page-link" href="<?= build_page_url(min($totalPages, $page + 1), $q, $catId, $perPage) ?>" title="Next">
+                                    Next <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+
+                            <!-- Last Page -->
+                            <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                                <a class="page-link" href="<?= build_page_url($totalPages, $q, $catId, $perPage) ?>" title="Last Page">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
     </div>
 </div>

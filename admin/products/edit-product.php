@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $image = $product['image'];
                         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                        $maxSize = 2 * 1024 * 1024;
+                        $maxSize = 20 * 1024 * 1024;
 
                         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                             $file = $_FILES['image'];
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if (!in_array($file['type'], $allowedTypes, true)) {
                                 $error = 'Only JPG, PNG, GIF, and WebP images are allowed for the main image.';
                             } elseif ($file['size'] > $maxSize) {
-                                $error = 'Main image size must be less than 2MB.';
+                                $error = 'Main image size must be less than 20MB.';
                             } else {
                                 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                                 $filename = 'prod_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
@@ -243,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         break;
                                     }
                                     if ($galleryFiles['size'][$i] > $maxSize) {
-                                        $galleryError = 'Each gallery image must be less than 2MB.';
+                                        $galleryError = 'Each gallery image must be less than 20MB.';
                                         break;
                                     }
 
@@ -441,7 +441,7 @@ include __DIR__ . '/../header.php';
                                                 <img id="imagePreview" src="#" alt="New image preview"
                                                     style="display:none;width:150px;height:150px;object-fit:cover;border:2px solid #dee2e6;border-radius:8px;">
                                             </div>
-                                            <small class="text-muted">Upload a new image to replace the current one. JPG, PNG, GIF or WebP. Max 2MB.</small>
+                                            <small class="text-muted">Upload a new image to replace the current one. JPG, PNG, GIF or WebP. Max 20MB.</small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
