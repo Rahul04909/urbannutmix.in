@@ -11,24 +11,24 @@ if (!defined('BASE_URL')) {
 
 $banners = [
     [
-        'image' => 'assets/images/grid-banners/f4b266e0-a5a2-42f6-be6b-1e75587137af.jpg',
-        'alt'   => 'Premium Berries',
-        'link'  => BASE_URL . 'shop.php?category=berries',
+        'image' => 'assets/images/hero-banners/banner-4.png',
+        'alt'   => 'UrbanNutMix Specialty Healthy Nuts Banner',
+        'link'  => BASE_URL . 'shop.php?category=healthy-nuts',
     ],
     [
-        'image' => 'https://www.jewelfarmer.com/cdn/shop/files/cat01_4bc4ac30-8d8c-453d-aaf4-dcdc4173968d.png?v=1778742022&width=1950',
-        'alt'   => 'Khajoor Burfi',
-        'link'  => BASE_URL . 'shop.php?category=khajoor-burfi',
+        'image' => 'assets/images/hero-banners/banner-5.png',
+        'alt'   => 'UrbanNutMix Premium Seeds & Mixes Banner',
+        'link'  => BASE_URL . 'shop.php?category=seeds-mixes',
     ],
     [
-        'image' => 'https://www.jewelfarmer.com/cdn/shop/files/Seeds-Category-Banner.webp?v=1781759464&width=1950',
-        'alt'   => 'Premium Seeds',
-        'link'  => BASE_URL . 'shop.php?category=seeds',
+        'image' => 'assets/images/hero-banners/banner-6.png',
+        'alt'   => 'UrbanNutMix Exclusive Festive Hampers Banner',
+        'link'  => BASE_URL . 'shop.php?category=festive-hampers',
     ],
     [
-        'image' => 'https://www.jewelfarmer.com/cdn/shop/files/Nuts-_-Dry-Fruits-Category-Banner.webp?v=1781759422&width=1950',
-        'alt'   => 'Nuts & Dry Fruit',
-        'link'  => BASE_URL . 'shop.php?category=nuts-dry-fruits',
+        'image' => 'assets/images/hero-banners/banner-7.png',
+        'alt'   => 'UrbanNutMix Exotic Berries & Dates Banner',
+        'link'  => BASE_URL . 'shop.php?category=exotic-berries',
     ],
 ];
 ?>

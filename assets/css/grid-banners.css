@@ -27,7 +27,7 @@
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    aspect-ratio: 2.2 / 1; /* Desktop rectangle aspect ratio matching reference */
+    aspect-ratio: 2.45 / 1; /* Widescreen banner ratio matching 2038x771 / 1876x838 banners */
     display: block;
     text-decoration: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -58,14 +58,14 @@
 /* Shop Now Button overlay styling */
 .unm-grid-banner-btn {
     position: absolute;
-    bottom: 24px;
-    left: 24px;
-    background-color: #4b8a08; /* Premium green background matching reference image */
+    bottom: 20px;
+    left: 20px;
+    background-color: #4b8a08; /* Premium green background matching design system */
     color: #ffffff;
     font-family: 'Montserrat', sans-serif;
     font-size: 0.72rem;
     font-weight: 700;
-    padding: 10px 18px;
+    padding: 9px 16px;
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -90,49 +90,54 @@
 
 @media (max-width: 900px) {
     .unm-grid-banners-layout {
-        gap: 16px;
+        gap: 14px;
+    }
+    .unm-grid-banner-card {
+        aspect-ratio: 2.35 / 1;
     }
     .unm-grid-banner-btn {
-        bottom: 16px;
-        left: 16px;
+        bottom: 14px;
+        left: 14px;
         font-size: 0.68rem;
-        padding: 8px 14px;
+        padding: 7px 13px;
     }
 }
 
-/* Mobile view: 2x2 layout with almost square cards */
+/* Mobile view: 2x2 grid preserving wide banner ratio for perfect fit */
 @media (max-width: 640px) {
     .unm-grid-banners-section {
-        padding: 24px 12px;
+        padding: 20px 12px;
     }
     .unm-grid-banners-layout {
         gap: 10px;
     }
     .unm-grid-banner-card {
-        aspect-ratio: 1 / 1.05; /* Matches square-portrait mobile layout in reference image */
+        aspect-ratio: 2.35 / 1;
         border-radius: 8px;
-    }
-    .unm-grid-banner-btn {
-        bottom: 12px;
-        left: 12px;
-        font-size: 0.6rem;
-        padding: 7px 12px;
-        border-radius: 4px;
-        gap: 4px;
-    }
-}
-
-@media (max-width: 380px) {
-    .unm-grid-banners-layout {
-        gap: 8px;
-    }
-    .unm-grid-banner-card {
-        aspect-ratio: 1 / 1.1;
     }
     .unm-grid-banner-btn {
         bottom: 10px;
         left: 10px;
-        font-size: 0.55rem;
-        padding: 6px 10px;
+        font-size: 0.58rem;
+        padding: 5px 10px;
+        border-radius: 4px;
+        gap: 3px;
     }
 }
+
+@media (max-width: 480px) {
+    .unm-grid-banners-layout {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .unm-grid-banner-card {
+        aspect-ratio: 2.3 / 1;
+    }
+    .unm-grid-banner-btn {
+        bottom: 8px;
+        left: 8px;
+        font-size: 0.52rem;
+        padding: 4px 8px;
+    }
+}
+
