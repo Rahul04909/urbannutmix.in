@@ -15,16 +15,15 @@
     position: relative;
     overflow: hidden;
     display: block;
-    aspect-ratio: 2100 / 715;
-    background-color: #000000;
+    line-height: 0;
 }
 
 .unm-full-banner-video {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+    height: auto;
+    max-width: 100%;
     display: block;
+    object-fit: contain;
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
@@ -34,23 +33,8 @@
    RESPONSIVE OVERRIDES
    =================================== */
 
-@media (max-width: 1024px) {
-    .unm-full-banner-wrap {
-        aspect-ratio: 16 / 6.5;
-    }
-}
-
 @media (max-width: 768px) {
     .unm-full-banner-wrap {
-        aspect-ratio: 16 / 7.5;
-    }
-}
-
-@media (max-width: 580px) {
-    .unm-full-banner-wrap {
-        aspect-ratio: 16 / 9;
-    }
-    .unm-full-banner-video {
-        object-fit: cover;
+        width: 100%;
     }
 }

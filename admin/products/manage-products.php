@@ -223,8 +223,9 @@ include __DIR__ . '/../header.php';
                                     <span class="fw-semibold">&#8377;<?= number_format((float) $product['price'], 2) ?></span>
                                     <?php
                                         $mrp = (float) ($product['mrp'] ?? 0);
-                                        if ($mrp > (float) $product['price']):
-                                            $discount = (int) round(($mrp - (float) $product['price']) / $mrp * 100);
+                                        $price = (float) ($product['price'] ?? 0);
+                                        if ($mrp > 0 && $mrp > $price):
+                                            $discount = (int) round(($mrp - $price) / $mrp * 100);
                                     ?>
                                         <div>
                                             <span class="text-muted text-decoration-line-through small">&#8377;<?= number_format($mrp, 2) ?></span>
