@@ -216,41 +216,5 @@ foreach ($productSections as $secIdx => $section):
 </section>
 <?php
 endforeach;
+/* ── End of Product Sections ──── */
 
-/* ── Extra CSS for new elements (discount badge + placeholder) ──── */
-?>
-<style>
-.unm-product-discount-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: #e53935;
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 3px 7px;
-    border-radius: 4px;
-    letter-spacing: 0.5px;
-    z-index: 3;
-    pointer-events: none;
-}
-.unm-product-img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.25;
-    color: currentColor;
-}
-.unm-product-img-placeholder svg {
-    width: 48px;
-    height: 48px;
-}
-.unm-product-mrp {
-    font-size: 0.75rem;
-    color: #9e9e9e;
-    text-decoration: line-through;
-    margin-left: 6px;
-}
-</style>
