@@ -20,6 +20,9 @@
     RewriteRule ^includes/.*\.php$ - [F,L,NC]
     RewriteRule ^components/.*\.php$ - [F,L,NC]
 
+    # Product Clean URL Routing
+    RewriteRule ^product/([a-zA-Z0-9\-]+)/?$ product.php?slug=$1 [QSA,L]
+
     # Prevent directory listing
     Options -Indexes
 

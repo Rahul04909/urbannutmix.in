@@ -37,10 +37,39 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="UrbanNutMix - Premium quality dry fruits, nuts, berries, seeds, and healthy gift hampers delivered directly to your doorstep.">
-    <meta name="keywords" content="dry fruits, nuts, almonds, cashews, pistachios, healthy snacks, gifting, diwali gifting, UrbanNutMix">
-    <title><?php echo isset($page_title) ? $page_title . " | UrbanNutMix" : "UrbanNutMix | Premium Dry Fruits & Nuts"; ?></title>
     
+    <!-- Primary Meta Tags -->
+    <title><?php echo isset($page_title) ? htmlspecialchars($page_title) : "UrbanNutMix | Premium Dry Fruits & Nuts"; ?></title>
+    <meta name="description" content="<?php echo isset($meta_description) ? htmlspecialchars($meta_description) : "UrbanNutMix - Premium quality dry fruits, nuts, berries, seeds, and healthy gift hampers delivered directly to your doorstep."; ?>">
+    <meta name="keywords" content="<?php echo isset($meta_keywords) ? htmlspecialchars($meta_keywords) : "dry fruits, nuts, almonds, cashews, pistachios, healthy snacks, gifting, diwali gifting, UrbanNutMix"; ?>">
+    <meta name="robots" content="<?php echo isset($meta_robots) ? htmlspecialchars($meta_robots) : "index, follow"; ?>">
+    
+    <!-- Canonical URL -->
+    <?php if (isset($canonical_url) && !empty($canonical_url)): ?>
+    <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url); ?>">
+    <?php endif; ?>
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="<?php echo isset($og_type) ? htmlspecialchars($og_type) : 'website'; ?>">
+    <meta property="og:url" content="<?php echo isset($canonical_url) ? htmlspecialchars($canonical_url) : BASE_URL; ?>">
+    <meta property="og:title" content="<?php echo isset($og_title) ? htmlspecialchars($og_title) : (isset($page_title) ? htmlspecialchars($page_title) : "UrbanNutMix | Premium Dry Fruits & Nuts"); ?>">
+    <meta property="og:description" content="<?php echo isset($og_description) ? htmlspecialchars($og_description) : (isset($meta_description) ? htmlspecialchars($meta_description) : "UrbanNutMix - Premium quality dry fruits, nuts, berries, seeds, and healthy gift hampers."); ?>">
+    <meta property="og:image" content="<?php echo isset($og_image) && !empty($og_image) ? htmlspecialchars($og_image) : BASE_URL . "assets/images/logo-bg.jpg"; ?>">
+    <meta property="og:site_name" content="UrbanNutMix">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo isset($og_title) ? htmlspecialchars($og_title) : (isset($page_title) ? htmlspecialchars($page_title) : "UrbanNutMix | Premium Dry Fruits & Nuts"); ?>">
+    <meta name="twitter:description" content="<?php echo isset($og_description) ? htmlspecialchars($og_description) : (isset($meta_description) ? htmlspecialchars($meta_description) : "UrbanNutMix - Premium quality dry fruits, nuts, berries, seeds, and healthy gift hampers."); ?>">
+    <meta name="twitter:image" content="<?php echo isset($og_image) && !empty($og_image) ? htmlspecialchars($og_image) : BASE_URL . "assets/images/logo-bg.jpg"; ?>">
+
+    <!-- JSON-LD Structured Data Schema -->
+    <?php if (isset($schema_json) && !empty($schema_json)): ?>
+    <script type="application/ld+json">
+    <?php echo is_array($schema_json) ? json_encode($schema_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : $schema_json; ?>
+    </script>
+    <?php endif; ?>
+
     <!-- Favicon link -->
     <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>favicon.png">
     
@@ -54,6 +83,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/about.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/popular-searches.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/footer.css">
+    <?php if (isset($extra_css) && !empty($extra_css)): ?>
+    <?php foreach ((array)$extra_css as $css_file): ?>
+    <link rel="stylesheet" href="<?php echo (strpos($css_file, 'http') === 0 || strpos($css_file, '/') === 0) ? $css_file : BASE_URL . $css_file; ?>">
+    <?php endforeach; ?>
+    <?php endif; ?>
 </head>
 <body>
 

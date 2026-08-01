@@ -143,13 +143,14 @@ foreach ($productSections as $secIdx => $section):
                 $priceStr = '₹' . number_format($price, 2);
                 $mrpStr   = $hasMrp ? '₹' . number_format($mrp, 2) : '';
 
-                /* ── Alt text ── */
-                $altText = htmlspecialchars($p['name'] ?? '');
+                /* ── Product details link ── */
+                $pdpUrl = BASE_URL . 'product.php?slug=' . urlencode($p['slug'] ?? '');
             ?>
             <li class="unm-product-card" data-bg="<?php echo htmlspecialchars($bgColor); ?>">
 
                 <!-- Coloured Image Zone -->
                 <div class="unm-product-img-zone">
+                    <a href="<?php echo $pdpUrl; ?>" style="display:block; width:100%; height:100%; text-decoration:none;">
                     <?php if ($imgUrl !== ''): ?>
                     <img
                         src="<?php echo $imgUrl; ?>"
@@ -168,6 +169,7 @@ foreach ($productSections as $secIdx => $section):
                         </svg>
                     </div>
                     <?php endif; ?>
+                    </a>
 
                     <!-- Weight / Size Badge -->
                     <div class="unm-product-badge" aria-hidden="true">
@@ -185,7 +187,11 @@ foreach ($productSections as $secIdx => $section):
 
                 <!-- Card Body -->
                 <div class="unm-product-body">
-                    <p class="unm-product-name"><?php echo htmlspecialchars($p['name']); ?></p>
+                    <p class="unm-product-name">
+                        <a href="<?php echo $pdpUrl; ?>" style="color:inherit; text-decoration:none;">
+                            <?php echo htmlspecialchars($p['name']); ?>
+                        </a>
+                    </p>
 
                     <div class="unm-product-price-wrap">
                         <span class="unm-product-price"><?php echo $priceStr; ?></span>
@@ -197,8 +203,8 @@ foreach ($productSections as $secIdx => $section):
 
                     <div class="unm-product-spacer"></div>
 
-                    <a href="#" class="unm-product-btn" aria-label="Add <?php echo $altText; ?> to cart">
-                        Add to Cart
+                    <a href="<?php echo $pdpUrl; ?>" class="unm-product-btn" aria-label="View <?php echo $altText; ?> details">
+                        View Product
                     </a>
                 </div>
 

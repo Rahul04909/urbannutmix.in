@@ -35,6 +35,7 @@ $menuItems = [
             ["title" => "Add Category", "url" => "products/add-product-category.php"],
             ["title" => "Frontend Sections", "url" => "products/manage-frontend-sections.php"],
             ["title" => "Add Section", "url" => "products/add-frontend-section.php"],
+            ["title" => "Manage Reviews", "url" => "products/manage-reviews.php"],
         ],
     ],
     [
