@@ -56,7 +56,10 @@ try {
     $q = trim($_GET['q'] ?? '');
     $catId = (int) ($_GET['category_id'] ?? 0);
     $page = max(1, (int) ($_GET['page'] ?? 1));
-    $perPage = in_array((int) ($_GET['per_page'] ?? 10), [10, 25, 50, 100], true) ? (int) $_GET['per_page'] : 10;
+    $perPage = (int) ($_GET['per_page'] ?? 10);
+    if (!in_array($perPage, [10, 25, 50, 100], true)) {
+        $perPage = 10;
+    }
 
     $whereConditions = [];
     $params = [];
@@ -75,10 +78,10 @@ try {
 
     $stmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM products p $where");
     $stmt->execute($params);
-    $totalCount = (int) $stmt->fetch()['cnt'];
-    $totalPages = max(1, (int) ceil($totalCount / $perPage));
+    $totalCount = (int) ($stmt->fetch()['cnt'] ?? 0);
+    $totalPages = ($perPage > 0) ? max(1, (int) ceil($totalCount / $perPage)) : 1;
     $page = min($page, $totalPages);
-    $offset = ($page - 1) * $perPage;
+    $offset = max(0, ($page - 1) * $perPage);
 
     $stmt = $pdo->prepare(
         "SELECT p.*, c.name AS category_name
@@ -104,6 +107,14 @@ function build_page_url(int $targetPage, string $q, int $catId, int $perPage): s
     if ($catId > 0) $query['category_id'] = $catId;
     if ($perPage !== 10) $query['per_page'] = $perPage;
     return 'manage-products.php?' . http_build_query($query);
+}
+
+// Helper function to safely calculate discount percentage without division by zero
+function get_discount_percentage(float $mrp, float $price): int {
+    if ($mrp <= 0.001 || $mrp <= $price) {
+        return 0;
+    }
+    return (int) round((($mrp - $price) / $mrp) * 100);
 }
 
 include __DIR__ . '/../header.php';
@@ -220,12 +231,12 @@ include __DIR__ . '/../header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="fw-semibold">&#8377;<?= number_format((float) $product['price'], 2) ?></span>
+                                    <span class="fw-semibold">&#8377;<?= number_format((float) ($product['price'] ?? 0), 2) ?></span>
                                     <?php
                                         $mrp = (float) ($product['mrp'] ?? 0);
                                         $price = (float) ($product['price'] ?? 0);
-                                        if ($mrp > 0 && $mrp > $price):
-                                            $discount = (int) round(($mrp - $price) / $mrp * 100);
+                                        $discount = get_discount_percentage($mrp, $price);
+                                        if ($discount > 0):
                                     ?>
                                         <div>
                                             <span class="text-muted text-decoration-line-through small">&#8377;<?= number_format($mrp, 2) ?></span>
@@ -233,9 +244,9 @@ include __DIR__ . '/../header.php';
                                         </div>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= rtrim(rtrim(number_format((float) $product['quantity'], 2), '0'), '.') ?> <?= htmlspecialchars($product['unit']) ?></td>
+                                <td><?= rtrim(rtrim(number_format((float) ($product['quantity'] ?? 0), 2), '0'), '.') ?> <?= htmlspecialchars($product['unit'] ?? 'gram') ?></td>
                                 <td>
-                                    <?php if ($product['status'] === 'active'): ?>
+                                    <?php if (($product['status'] ?? 'active') === 'active'): ?>
                                         <span class="badge bg-success">Active</span>
                                     <?php else: ?>
                                         <span class="badge bg-secondary">Inactive</span>
@@ -246,7 +257,7 @@ include __DIR__ . '/../header.php';
                                         class="btn btn-sm btn-primary" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="../../product.php?slug=<?= urlencode($product['slug']) ?>" target="_blank"
+                                    <a href="../../product.php?slug=<?= urlencode($product['slug'] ?? '') ?>" target="_blank"
                                         class="btn btn-sm btn-outline-secondary" title="View Live Product">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
@@ -255,7 +266,7 @@ include __DIR__ . '/../header.php';
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                         <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-danger" title="Delete"
-                                            data-product-name="<?= htmlspecialchars($product['name']) ?>">
+                                            data-product-name="<?= htmlspecialchars($product['name'] ?? '') ?>">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
