@@ -10,43 +10,116 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', $base_url);
 }
 
-$categories = [
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Pista_collection_slider.png?v=1723033847',
-        'label' => 'Buy Pistachio',
-        'link'  => BASE_URL . 'shop.php?category=pistachios',
-    ],
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Walnuts_collection_slider.png?v=1723033847',
-        'label' => 'Buy Walnut',
-        'link'  => BASE_URL . 'shop.php?category=walnuts',
-    ],
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Dried_anjeer_collection_slider.png?v=1723033847',
-        'label' => 'Buy Dried Anjeer',
-        'link'  => BASE_URL . 'shop.php?category=dried-anjeer',
-    ],
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Raisins_collection_slider.png?v=1723033847',
-        'label' => 'Buy Raisins',
-        'link'  => BASE_URL . 'shop.php?category=raisins',
-    ],
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Dates_collection_slider.png?v=1723033847',
-        'label' => 'Buy Dates',
-        'link'  => BASE_URL . 'shop.php?category=dates',
-    ],
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Almonds_collection_slider.png?v=1723033848',
-        'label' => 'Buy Almond',
-        'link'  => BASE_URL . 'shop.php?category=almonds',
-    ],
-    [
-        'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Cashews_collection_slider.png?v=1723033847',
-        'label' => 'Buy Cashew',
-        'link'  => BASE_URL . 'shop.php?category=cashews',
-    ],
+// Fallback CDN images by keyword
+$default_cdn_images = [
+    'pista'    => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Pista_collection_slider.png?v=1723033847',
+    'walnut'   => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Walnuts_collection_slider.png?v=1723033847',
+    'anjeer'   => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Dried_anjeer_collection_slider.png?v=1723033847',
+    'raisin'   => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Raisins_collection_slider.png?v=1723033847',
+    'date'     => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Dates_collection_slider.png?v=1723033847',
+    'almond'   => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Almonds_collection_slider.png?v=1723033848',
+    'cashew'   => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Cashews_collection_slider.png?v=1723033847',
 ];
+
+$categories = [];
+
+// Try to include Database class if not available
+if (!class_exists('Database')) {
+    $dbConfigPath = __DIR__ . '/../admin/config/database.php';
+    if (file_exists($dbConfigPath)) {
+        require_once $dbConfigPath;
+    }
+}
+
+if (class_exists('Database')) {
+    try {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->query("SELECT * FROM product_categories WHERE status = 'active' ORDER BY id ASC");
+        $dbCategories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($dbCategories)) {
+            foreach ($dbCategories as $cat) {
+                $imagePath = '';
+                $imageName = $cat['image'] ?? '';
+
+                if (strpos($imageName, 'http://') === 0 || strpos($imageName, 'https://') === 0) {
+                    $imagePath = $imageName;
+                } elseif ($imageName !== '' && $imageName !== 'default.png') {
+                    $localFile = __DIR__ . '/../admin/src/images/category/' . $imageName;
+                    if (file_exists($localFile)) {
+                        $imagePath = BASE_URL . 'admin/src/images/category/' . htmlspecialchars($imageName);
+                    }
+                }
+
+                if (empty($imagePath)) {
+                    $slug = strtolower($cat['slug'] ?? '');
+                    $name = strtolower($cat['name'] ?? '');
+                    foreach ($default_cdn_images as $key => $cdnUrl) {
+                        if (strpos($slug, $key) !== false || strpos($name, $key) !== false) {
+                            $imagePath = $cdnUrl;
+                            break;
+                        }
+                    }
+                    if (empty($imagePath)) {
+                        $imagePath = 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Almonds_collection_slider.png?v=1723033848';
+                    }
+                }
+
+                $rawName = trim($cat['name']);
+                $label = (stripos($rawName, 'buy ') === 0) ? $rawName : 'Buy ' . $rawName;
+
+                $categories[] = [
+                    'image' => $imagePath,
+                    'label' => $label,
+                    'link'  => BASE_URL . 'shop.php?category=' . urlencode($cat['slug']),
+                ];
+            }
+        }
+    } catch (\Throwable $e) {
+        error_log('Categories component database error: ' . $e->getMessage());
+    }
+}
+
+// Fallback to static items if DB yields no active categories
+if (empty($categories)) {
+    $categories = [
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Pista_collection_slider.png?v=1723033847',
+            'label' => 'Buy Pistachio',
+            'link'  => BASE_URL . 'shop.php?category=pistachios',
+        ],
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Walnuts_collection_slider.png?v=1723033847',
+            'label' => 'Buy Walnut',
+            'link'  => BASE_URL . 'shop.php?category=walnuts',
+        ],
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Dried_anjeer_collection_slider.png?v=1723033847',
+            'label' => 'Buy Dried Anjeer',
+            'link'  => BASE_URL . 'shop.php?category=dried-anjeer',
+        ],
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Raisins_collection_slider.png?v=1723033847',
+            'label' => 'Buy Raisins',
+            'link'  => BASE_URL . 'shop.php?category=raisins',
+        ],
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Dates_collection_slider.png?v=1723033847',
+            'label' => 'Buy Dates',
+            'link'  => BASE_URL . 'shop.php?category=dates',
+        ],
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Almonds_collection_slider.png?v=1723033848',
+            'label' => 'Buy Almond',
+            'link'  => BASE_URL . 'shop.php?category=almonds',
+        ],
+        [
+            'image' => 'https://cdn.shopify.com/s/files/1/0585/4376/7652/files/Cashews_collection_slider.png?v=1723033847',
+            'label' => 'Buy Cashew',
+            'link'  => BASE_URL . 'shop.php?category=cashews',
+        ],
+    ];
+}
 ?>
 
 <section class="unm-categories-section" aria-label="Shop by Dryfruits">
