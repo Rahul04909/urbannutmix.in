@@ -14,8 +14,8 @@
 .unm-hero-slider {
     position: relative;
     width: 100%;
-    /* Desktop: widescreen banner ratio */
-    aspect-ratio: 1920 / 650;
+    /* Widescreen banner ratio matching 1877x838 banners */
+    aspect-ratio: 1877 / 838;
     overflow: hidden;
 }
 
@@ -39,8 +39,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* Keep top of banner visible on mobile – important for widescreen images */
-    object-position: center top;
+    object-position: center;
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
@@ -105,7 +104,7 @@
 /* Tablet landscape */
 @media (max-width: 1024px) {
     .unm-hero-slider {
-        aspect-ratio: 16 / 7;
+        aspect-ratio: 1877 / 838;
     }
     .unm-slider-arrow {
         width: 40px;
@@ -116,7 +115,7 @@
 /* Tablet portrait */
 @media (max-width: 768px) {
     .unm-hero-slider {
-        aspect-ratio: 16 / 8;
+        aspect-ratio: 1877 / 838;
     }
     /* Arrows hidden on touch – users swipe */
     .unm-slider-arrow {
@@ -127,11 +126,11 @@
 /* Large phone */
 @media (max-width: 580px) {
     .unm-hero-slider {
-        aspect-ratio: 1920 / 650;
-        min-height: auto; /* Remove minimum height floor to prevent cropping */
+        aspect-ratio: 1877 / 838;
+        min-height: auto;
     }
     .unm-slide-img {
-        object-fit: contain; /* Render complete image */
+        object-fit: cover;
         object-position: center;
     }
 }
@@ -139,7 +138,8 @@
 /* Small phone */
 @media (max-width: 400px) {
     .unm-hero-slider {
-        aspect-ratio: 1920 / 650;
+        aspect-ratio: 1877 / 838;
         min-height: auto;
     }
 }
+
