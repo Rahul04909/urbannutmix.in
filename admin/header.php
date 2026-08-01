@@ -12,6 +12,9 @@ if ($currentPage === 'edit-product-category.php') {
 } elseif ($currentPage === 'edit-product.php') {
     $currentPage = 'products/manage-products.php';
     $pageTitleOverride = 'Edit Product';
+} elseif ($currentPage === 'edit-frontend-section.php') {
+    $currentPage = 'products/manage-frontend-sections.php';
+    // $pageTitleOverride set by the page itself
 }
 
 $menuItems = [
@@ -30,6 +33,8 @@ $menuItems = [
             ["title" => "Add Product", "url" => "products/add-product.php"],
             ["title" => "Manage Categories", "url" => "products/manage-category.php"],
             ["title" => "Add Category", "url" => "products/add-product-category.php"],
+            ["title" => "Frontend Sections", "url" => "products/manage-frontend-sections.php"],
+            ["title" => "Add Section", "url" => "products/add-frontend-section.php"],
         ],
     ],
     [

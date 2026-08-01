@@ -1,91 +1,111 @@
 <?php
 /**
- * UrbanNutMix – Multi-Category Product Sections Component
- * Renders Panchmeva / Exotic / Classic / Flavored sections
+ * UrbanNutMix – Frontend Product Sections Component
+ *
+ * Renders homepage product sections driven entirely from the database.
+ * Admin controls: Products > Frontend Sections
+ *
+ * Flow:
+ *  1. Fetch active frontend_product_sections (ordered by sort_order)
+ *  2. For each section, fetch active products of that category
+ *  3. Render a <section> per row with product cards
  */
 
+/* ── Bootstrap / BASE_URL ─────────────────────────────────────────── */
 if (!defined('BASE_URL')) {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     define('BASE_URL', $protocol . $_SERVER['HTTP_HOST'] . '/');
 }
 
-/* ── Image CDN shortcuts ──────────────────────────────────────────── */
-$img = [
-    'family_red'  => 'https://ministryofnuts.in/cdn/shop/files/Family_pack_750G_1_78ca8d14-47de-4513-a0ed-9a7d11946de6_600x.webp?v=1766041228',
-    'family_blue' => 'https://ministryofnuts.in/cdn/shop/files/Blue_8e85bff1-8815-4132-98b2-f61b257fdec8_600x.jpg?v=1766041284',
-    'jaggery'     => 'https://ministryofnuts.in/cdn/shop/files/SugarcanejaggerypowderFront500g_600x.jpg?v=1712217016',
-    'alm_pp'      => 'https://ministryofnuts.in/cdn/shop/files/cazry-almonds-peri-peri-pdp-100-_1_600x.jpg?v=1746694439',
-    'alm_ps'      => 'https://ministryofnuts.in/cdn/shop/files/cazry-almonds-pink-salt-pdp-100g_600x.jpg?v=1746685688',
-    'almonds'     => 'https://ministryofnuts.in/cdn/shop/files/Almonds200g_600x.jpg?v=1766039372',
-    'cashews'     => 'https://ministryofnuts.in/cdn/shop/files/Cashews200g_600x.jpg?v=1766039456',
-    'pistachios'  => 'https://ministryofnuts.in/cdn/shop/files/Pistapdp200g_600x.jpg?v=1766039549',
-    'walnuts'     => 'https://ministryofnuts.in/cdn/shop/files/walnutpdp200g_600x.jpg?v=1766039645',
-    'chilli'      => 'https://ministryofnuts.in/cdn/shop/files/chilli-flavour-100_600x.jpg?v=1746694426',
-    'psbp'        => 'https://ministryofnuts.in/cdn/shop/files/pink-salt--black-pepper-pdp-100_600x.jpg?v=1746694262',
-    'ps'          => 'https://ministryofnuts.in/cdn/shop/files/pink-salt-pdp-100_600x.jpg?v=1746693762',
+/* ── DB connection ────────────────────────────────────────────────── */
+if (!class_exists('Database')) {
+    $dbConfig = __DIR__ . '/../admin/config/database.php';
+    if (file_exists($dbConfig)) {
+        require_once $dbConfig;
+    }
+}
+
+/* ── Card background colour palette (auto-cycled) ────────────────── */
+$bgPalette = [
+    'pink', 'mint', 'golden', 'coral', 'sage', 'sky',
+    'lavender', 'magenta', 'cream', 'fern', 'blush',
+    'linen', 'violet', 'peach', 'rose', 'chilli',
 ];
 
-/* ── All Category Sections ────────────────────────────────────────── */
-$sections = [
+/* ── Image URL helper ─────────────────────────────────────────────── */
+function unm_product_img_url(string $image): string
+{
+    if ($image === '' || $image === 'default.png') {
+        return '';
+    }
+    // Physical path check
+    $physPath = __DIR__ . '/../admin/src/images/products/' . $image;
+    if (file_exists($physPath)) {
+        return BASE_URL . 'admin/src/images/products/' . rawurlencode($image);
+    }
+    return '';
+}
 
-    /* ── 1. Panchmeva Pack ── */
-    [
-        'id'      => 'panchmeva',
-        'heading' => 'Panchmeva &ndash; Pack of 5 Dryfruits',
-        'alt_bg'  => false,
-        'products' => [
-            ['bg'=>'pink',    'image'=>$img['family_red'],  'alt'=>'Family Pack Red',    'badge'=>'750g', 'name'=>'Panchmeva – Family Pack Of 5 Premium Dry Fruits 750g | Red',     'price'=>'₹1,399.00'],
-            ['bg'=>'mint',    'image'=>$img['family_blue'], 'alt'=>'Family Pack Blue',   'badge'=>'750g', 'name'=>'Family Pack Of 5 Premium Dry Fruits | Blue | 750g | Combo Pack', 'price'=>'₹1,599.00'],
-            ['bg'=>'magenta', 'image'=>$img['family_red'],  'alt'=>'Family Pack Magenta','badge'=>'750g', 'name'=>'Family Pack Of 5 Premium Dry Fruits | Magenta | 750g | Dry Fruits Box','price'=>'₹1,499.00'],
-            ['bg'=>'lavender','image'=>$img['family_blue'], 'alt'=>'Family Pack Purple', 'badge'=>'750g', 'name'=>'Family Pack Of 5 Premium Dry Fruits | Purple | 750g | Gift Pack',  'price'=>'₹1,699.00'],
-        ],
-    ],
+/* ── Fetch sections + products from DB ───────────────────────────── */
+$productSections = [];
 
-    /* ── 2. Exotic Dry Fruits ── */
-    [
-        'id'      => 'exotic',
-        'heading' => 'Exotic Dry Fruits',
-        'alt_bg'  => true,
-        'products' => [
-            ['bg'=>'golden', 'image'=>$img['jaggery'],  'alt'=>'Sugarcane Jaggery Powder', 'badge'=>'500g', 'name'=>'Sugarcane Jaggery Powder – Natural &amp; Unrefined | 500g',       'price'=>'₹299.00'],
-            ['bg'=>'coral',  'image'=>$img['alm_pp'],   'alt'=>'Peri Peri Almonds',        'badge'=>'100g', 'name'=>'Cazry Almonds – Peri Peri Flavour | Roasted &amp; Seasoned | 100g','price'=>'₹249.00'],
-            ['bg'=>'sage',   'image'=>$img['walnuts'],  'alt'=>'Premium Walnuts 200g',     'badge'=>'200g', 'name'=>'Premium California Walnuts | Kernels | 200g',                    'price'=>'₹399.00'],
-            ['bg'=>'sky',    'image'=>$img['cashews'],  'alt'=>'Premium Cashews 200g',     'badge'=>'200g', 'name'=>'Premium Whole Cashews W240 Grade | 200g',                        'price'=>'₹349.00'],
-        ],
-    ],
+try {
+    if (class_exists('Database')) {
+        $pdo = Database::getConnection();
 
-    /* ── 3. Classic Dry Fruits ── */
-    [
-        'id'      => 'classic',
-        'heading' => 'Classic Dry Fruits',
-        'alt_bg'  => false,
-        'products' => [
-            ['bg'=>'cream', 'image'=>$img['almonds'],    'alt'=>'Premium Almonds 200g',    'badge'=>'200g', 'name'=>'Premium California Almonds | Raw &amp; Unprocessed | 200g', 'price'=>'₹299.00'],
-            ['bg'=>'linen', 'image'=>$img['cashews'],    'alt'=>'Premium Cashews 200g',    'badge'=>'200g', 'name'=>'Premium W240 Whole Cashews | Crunchy &amp; Fresh | 200g',   'price'=>'₹349.00'],
-            ['bg'=>'fern',  'image'=>$img['pistachios'], 'alt'=>'Premium Pistachios 200g', 'badge'=>'200g', 'name'=>'Premium Roasted Pistachios | Salted | 200g',                'price'=>'₹499.00'],
-            ['bg'=>'blush', 'image'=>$img['walnuts'],    'alt'=>'Premium Walnuts 200g',    'badge'=>'200g', 'name'=>'Premium California Walnut Kernels | Rich &amp; Nutty | 200g','price'=>'₹399.00'],
-        ],
-    ],
+        // Fetch active frontend sections
+        $secStmt = $pdo->query(
+            "SELECT fps.id, fps.section_title, fps.category_id, fps.products_limit, fps.sort_order
+             FROM frontend_product_sections fps
+             INNER JOIN product_categories pc ON pc.id = fps.category_id AND pc.status = 'active'
+             WHERE fps.status = 'active'
+             ORDER BY fps.sort_order ASC, fps.id ASC"
+        );
+        $dbSections = $secStmt ? $secStmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
-    /* ── 4. Flavored Dry Fruits ── */
-    [
-        'id'      => 'flavored',
-        'heading' => 'Flavored Dry Fruits',
-        'alt_bg'  => true,
-        'products' => [
-            ['bg'=>'chilli', 'image'=>$img['chilli'], 'alt'=>'Chilli Flavour Cashews',          'badge'=>'100g', 'name'=>'Cazry Cashews – Chilli Flavour | Roasted &amp; Spiced | 100g',      'price'=>'₹199.00'],
-            ['bg'=>'violet', 'image'=>$img['psbp'],   'alt'=>'Pink Salt Black Pepper Cashews',  'badge'=>'100g', 'name'=>'Cazry Cashews – Pink Salt &amp; Black Pepper | 100g',               'price'=>'₹199.00'],
-            ['bg'=>'peach',  'image'=>$img['alm_ps'], 'alt'=>'Pink Salt Almonds',               'badge'=>'100g', 'name'=>'Cazry Almonds – Pink Salt | Light &amp; Crunchy | 100g',            'price'=>'₹199.00'],
-            ['bg'=>'rose',   'image'=>$img['ps'],     'alt'=>'Pink Salt Flavour Cashews',       'badge'=>'100g', 'name'=>'Cazry Cashews – Pink Salt Flavour | Premium Roasted | 100g',        'price'=>'₹199.00'],
-        ],
-    ],
+        // For each section, fetch its products
+        $prodStmt = $pdo->prepare(
+            "SELECT p.id, p.name, p.slug, p.image, p.short_description,
+                    p.price, p.mrp, p.unit, p.quantity
+             FROM products p
+             WHERE p.category_id = :cid AND p.status = 'active'
+             ORDER BY p.id ASC
+             LIMIT :lim"
+        );
 
-];
+        foreach ($dbSections as $sec) {
+            $prodStmt->bindValue(':cid', (int) $sec['category_id'], PDO::PARAM_INT);
+            $prodStmt->bindValue(':lim', (int) $sec['products_limit'], PDO::PARAM_INT);
+            $prodStmt->execute();
+            $products = $prodStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $productSections[] = [
+                'id'      => 'section-fps-' . (int) $sec['id'],
+                'heading' => htmlspecialchars($sec['section_title']),
+                'products'=> $products,
+            ];
+        }
+    }
+} catch (\Throwable $e) {
+    error_log('components/products.php DB error: ' . $e->getMessage());
+    // Fail silently on frontend
+}
+
+/* ── Nothing to render ────────────────────────────────────────────── */
+if (empty($productSections)) {
+    return; // No output — admin hasn't configured sections yet
+}
 ?>
 
-<?php foreach ($sections as $section): ?>
+<?php
+$sectionAlt = false; // Toggle alternate background
+foreach ($productSections as $secIdx => $section):
+    $sectionAlt = !$sectionAlt;
+    $products   = $section['products'];
+    if (empty($products)) { continue; } // Skip empty sections silently
+?>
 <section
-    class="unm-products-section<?php echo $section['alt_bg'] ? ' unm-products-section--alt' : ''; ?>"
+    class="unm-products-section<?php echo $sectionAlt ? ' unm-products-section--alt' : ''; ?>"
     id="<?php echo htmlspecialchars($section['id']); ?>"
     aria-label="<?php echo strip_tags($section['heading']); ?>"
 >
@@ -98,29 +118,69 @@ $sections = [
 
         <!-- Product Grid -->
         <ul class="unm-products-grid">
-            <?php foreach ($section['products'] as $p): ?>
-            <li class="unm-product-card" data-bg="<?php echo htmlspecialchars($p['bg']); ?>">
+            <?php foreach ($products as $pIdx => $p):
+                /* ── Resolve colour ── */
+                $bgColor = $bgPalette[$pIdx % count($bgPalette)];
 
-                <!-- Colored Image Zone -->
+                /* ── Resolve image ── */
+                $imgUrl  = unm_product_img_url($p['image'] ?? '');
+
+                /* ── Badge: quantity + unit ── */
+                $qty  = rtrim(rtrim(number_format((float) ($p['quantity'] ?? 0), 2), '0'), '.');
+                $unit = strtolower(trim($p['unit'] ?? 'gram'));
+                $badge = $qty . ($unit === 'gram' ? 'g' : ($unit === 'kg' ? 'kg' : $unit[0]));
+
+                /* Split badge e.g. "500g" → num="500", unit="G" */
+                preg_match('/^(\d+(?:\.\d+)?)(.*)$/', $badge, $bm);
+                $bnum  = $bm[1] ?? $badge;
+                $bunit = strtoupper($bm[2] ?? '');
+
+                /* ── Price / MRP ── */
+                $price   = (float) ($p['price'] ?? 0);
+                $mrp     = (float) ($p['mrp']   ?? 0);
+                $hasMrp  = $mrp > $price && $mrp > 0;
+                $discount= $hasMrp ? (int) round(($mrp - $price) / $mrp * 100) : 0;
+                $priceStr = '₹' . number_format($price, 2);
+                $mrpStr   = $hasMrp ? '₹' . number_format($mrp, 2) : '';
+
+                /* ── Alt text ── */
+                $altText = htmlspecialchars($p['name'] ?? '');
+            ?>
+            <li class="unm-product-card" data-bg="<?php echo htmlspecialchars($bgColor); ?>">
+
+                <!-- Coloured Image Zone -->
                 <div class="unm-product-img-zone">
+                    <?php if ($imgUrl !== ''): ?>
                     <img
-                        src="<?php echo htmlspecialchars($p['image']); ?>"
-                        alt="<?php echo htmlspecialchars($p['alt']); ?>"
+                        src="<?php echo $imgUrl; ?>"
+                        alt="<?php echo $altText; ?>"
                         class="unm-product-img"
                         loading="lazy"
                         draggable="false"
                     >
+                    <?php else: ?>
+                    <!-- Placeholder icon when no image uploaded yet -->
+                    <div class="unm-product-img-placeholder" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="56" height="56" rx="6"/>
+                            <circle cx="22" cy="22" r="6"/>
+                            <path d="M4 44 l16-16 10 10 10-14 20 20"/>
+                        </svg>
+                    </div>
+                    <?php endif; ?>
+
                     <!-- Weight / Size Badge -->
                     <div class="unm-product-badge" aria-hidden="true">
-                        <?php
-                            // Split badge like "750g" → "750" + "g"
-                            preg_match('/(\d+)(\D+)/', $p['badge'], $bm);
-                            $bnum  = $bm[1] ?? $p['badge'];
-                            $bunit = strtoupper($bm[2] ?? '');
-                        ?>
                         <span class="unm-product-badge-num"><?php echo htmlspecialchars($bnum); ?></span>
                         <span class="unm-product-badge-unit"><?php echo htmlspecialchars($bunit); ?></span>
                     </div>
+
+                    <!-- Discount Badge -->
+                    <?php if ($hasMrp && $discount >= 5): ?>
+                    <div class="unm-product-discount-badge" aria-hidden="true">
+                        <?php echo $discount; ?>% OFF
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Card Body -->
@@ -128,13 +188,16 @@ $sections = [
                     <p class="unm-product-name"><?php echo htmlspecialchars($p['name']); ?></p>
 
                     <div class="unm-product-price-wrap">
-                        <span class="unm-product-price">Price &ndash; <?php echo htmlspecialchars($p['price']); ?></span>
-                        <span class="unm-product-tax">(MRP Incl. all taxes)</span>
+                        <span class="unm-product-price"><?php echo $priceStr; ?></span>
+                        <?php if ($hasMrp): ?>
+                        <span class="unm-product-mrp"><?php echo $mrpStr; ?></span>
+                        <?php endif; ?>
+                        <span class="unm-product-tax">(Incl. all taxes)</span>
                     </div>
 
                     <div class="unm-product-spacer"></div>
 
-                    <a href="#" class="unm-product-btn" aria-label="Add <?php echo htmlspecialchars($p['alt']); ?> to cart">
+                    <a href="#" class="unm-product-btn" aria-label="Add <?php echo $altText; ?> to cart">
                         Add to Cart
                     </a>
                 </div>
@@ -145,4 +208,43 @@ $sections = [
 
     </div>
 </section>
-<?php endforeach; ?>
+<?php
+endforeach;
+
+/* ── Extra CSS for new elements (discount badge + placeholder) ──── */
+?>
+<style>
+.unm-product-discount-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #e53935;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    z-index: 3;
+    pointer-events: none;
+}
+.unm-product-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.25;
+    color: currentColor;
+}
+.unm-product-img-placeholder svg {
+    width: 48px;
+    height: 48px;
+}
+.unm-product-mrp {
+    font-size: 0.75rem;
+    color: #9e9e9e;
+    text-decoration: line-through;
+    margin-left: 6px;
+}
+</style>
