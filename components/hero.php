@@ -5,15 +5,15 @@
 
 $slides = [
     [
-        'image' => 'assets/images/hero-banners/banner-5.png',
+        'image' => 'assets/images/hero-banners/banner-1.png',
         'alt'   => 'UrbanNutMix Roasted Makhana Banner'
     ],
     [
-        'image' => 'assets/images/hero-banners/banner-6.png',
+        'image' => 'assets/images/hero-banners/banner-2.png',
         'alt'   => 'UrbanNutMix Special Offers Banner'
     ],
     [
-        'image' => 'assets/images/hero-banners/banner-7.png',
+        'image' => 'assets/images/hero-banners/banner-3.png',
         'alt'   => 'UrbanNutMix Premium Nuts Assortment'
     ]
 ];

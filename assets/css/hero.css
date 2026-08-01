@@ -14,8 +14,8 @@
 .unm-hero-slider {
     position: relative;
     width: 100%;
-    /* Widescreen banner ratio matching 1877x838 banners */
-    aspect-ratio: 1877 / 838;
+    /* Flipkart-style compact ratio matching banner-5/6/7 (2038x771) */
+    aspect-ratio: 2038 / 771;
     overflow: hidden;
 }
 
@@ -104,7 +104,7 @@
 /* Tablet landscape */
 @media (max-width: 1024px) {
     .unm-hero-slider {
-        aspect-ratio: 1877 / 838;
+        aspect-ratio: 2038 / 771;
     }
     .unm-slider-arrow {
         width: 40px;
@@ -115,7 +115,7 @@
 /* Tablet portrait */
 @media (max-width: 768px) {
     .unm-hero-slider {
-        aspect-ratio: 1877 / 838;
+        aspect-ratio: 2038 / 771;
     }
     /* Arrows hidden on touch – users swipe */
     .unm-slider-arrow {
@@ -126,7 +126,7 @@
 /* Large phone */
 @media (max-width: 580px) {
     .unm-hero-slider {
-        aspect-ratio: 1877 / 838;
+        aspect-ratio: 2038 / 771;
         min-height: auto;
     }
     .unm-slide-img {
@@ -138,7 +138,7 @@
 /* Small phone */
 @media (max-width: 400px) {
     .unm-hero-slider {
-        aspect-ratio: 1877 / 838;
+        aspect-ratio: 2038 / 771;
         min-height: auto;
     }
 }
