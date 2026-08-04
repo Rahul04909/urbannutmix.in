@@ -7,52 +7,119 @@ $success = Session::get('flash_success', '');
 Session::remove('flash_success');
 $error = Session::get('flash_error', '');
 Session::remove('flash_error');
+
 $products = [];
 $categories = [];
 $totalPages = 1;
 $totalCount = 0;
+$activeCount = 0;
+
+// Helper functions (wrapped in function_exists guards to avoid redeclaration)
+if (!function_exists('unm_build_page_url')) {
+    function unm_build_page_url(int $targetPage, string $q = '', int $catId = 0, int $perPage = 10): string {
+        $query = ['page' => max(1, $targetPage)];
+        if ($q !== '') {
+            $query['q'] = $q;
+        }
+        if ($catId > 0) {
+            $query['category_id'] = $catId;
+        }
+        if ($perPage !== 10) {
+            $query['per_page'] = $perPage;
+        }
+        return 'manage-products.php?' . http_build_query($query);
+    }
+}
+
+if (!function_exists('unm_get_product_thumbnail')) {
+    function unm_get_product_thumbnail(array $product): string {
+        $img = trim($product['image'] ?? '');
+        $name = strtolower(trim($product['name'] ?? ''));
+        $slug = strtolower(trim($product['slug'] ?? ''));
+
+        if ($img !== '' && $img !== 'default.png') {
+            $filename = basename($img);
+            if (file_exists(__DIR__ . '/../src/images/products/' . $filename)) {
+                return '../src/images/products/' . rawurlencode($filename);
+            }
+            if (file_exists(__DIR__ . '/../../src/images/products/' . $filename)) {
+                return '../../src/images/products/' . rawurlencode($filename);
+            }
+            if (file_exists(__DIR__ . '/../../assets/images/' . $filename)) {
+                return '../../assets/images/' . rawurlencode($filename);
+            }
+        }
+
+        // Smart keyword fallbacks
+        if (strpos($name, 'almond') !== false || strpos($slug, 'almond') !== false || strpos($name, 'badam') !== false) {
+            return '../../assets/images/hero-banners/almonds.png';
+        }
+        if (strpos($name, 'cashew') !== false || strpos($slug, 'cashew') !== false || strpos($name, 'kaju') !== false) {
+            return '../../assets/images/hero-banners/cashews.png';
+        }
+        if (strpos($name, 'pista') !== false || strpos($slug, 'pista') !== false || strpos($name, 'pistachio') !== false) {
+            return '../../assets/images/hero-banners/pista.png';
+        }
+        if (strpos($name, 'raisin') !== false || strpos($slug, 'raisin') !== false || strpos($name, 'kishmish') !== false) {
+            return '../../assets/images/hero-banners/raisins.png';
+        }
+
+        return '../src/images/logo.png';
+    }
+}
+
+if (!function_exists('unm_get_discount_percent')) {
+    function unm_get_discount_percent(float $mrp, float $price): int {
+        if ($mrp <= 0.001 || $mrp <= $price) {
+            return 0;
+        }
+        return (int) round((($mrp - $price) / $mrp) * 100);
+    }
+}
 
 try {
     $pdo = Database::getConnection();
 
-    // Fetch active categories for search filter
+    // Fetch active categories for dropdown
     $categories = $pdo->query("SELECT id, name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Handle Delete POST Action
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
         $csrf = $_POST['csrf_token'] ?? '';
         if (!Session::csrfVerify('delete_product', $csrf)) {
-            $error = 'Invalid request - session token expired, please click submit once more.';
+            $error = 'Security session expired. Please refresh the page and try again.';
         } else {
             $id = (int) ($_POST['id'] ?? 0);
             $stmt = $pdo->prepare('SELECT id, name, image FROM products WHERE id = :id LIMIT 1');
             $stmt->execute(['id' => $id]);
-            $product = $stmt->fetch();
+            $productToDelete = $stmt->fetch();
 
-            if (!$product) {
+            if (!$productToDelete) {
                 $error = 'Product not found or already deleted.';
             } else {
                 $stmt = $pdo->prepare('SELECT image FROM product_images WHERE product_id = :id');
                 $stmt->execute(['id' => $id]);
-                $images = $stmt->fetchAll();
+                $galleryImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $pdo->prepare('DELETE FROM products WHERE id = :id')->execute(['id' => $id]);
                 $pdo->prepare('DELETE FROM product_images WHERE product_id = :id')->execute(['id' => $id]);
 
                 $productDir = __DIR__ . '/../src/images/products/';
-                foreach (array_merge([$product['image']], array_column($images, 'image')) as $imageFile) {
+                $allImages = array_merge([$productToDelete['image']], array_column($galleryImages, 'image'));
+                foreach ($allImages as $imageFile) {
                     if ($imageFile !== '' && $imageFile !== 'default.png') {
-                        $path = $productDir . $imageFile;
-                        if (file_exists($path)) {
-                            @unlink($path);
+                        $filePath = $productDir . $imageFile;
+                        if (file_exists($filePath)) {
+                            @unlink($filePath);
                         }
                     }
                 }
-
-                $success = 'Product "' . htmlspecialchars($product['name']) . '" deleted successfully.';
+                $success = 'Product "' . htmlspecialchars($productToDelete['name']) . '" deleted successfully.';
             }
         }
     }
 
+    // Filter & Pagination parameters
     $q = trim($_GET['q'] ?? '');
     $catId = (int) ($_GET['category_id'] ?? 0);
     $page = max(1, (int) ($_GET['page'] ?? 1));
@@ -74,403 +141,414 @@ try {
         $params['cid'] = $catId;
     }
 
-    $where = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+    $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM products p $where");
-    $stmt->execute($params);
-    $totalCount = (int) ($stmt->fetch()['cnt'] ?? 0);
+    // Count totals
+    $stmtCount = $pdo->prepare("SELECT COUNT(*) AS cnt FROM products p $whereClause");
+    $stmtCount->execute($params);
+    $totalCount = (int) ($stmtCount->fetch()['cnt'] ?? 0);
+
+    $stmtActive = $pdo->query("SELECT COUNT(*) AS cnt FROM products WHERE status = 'active'");
+    $activeCount = (int) ($stmtActive->fetch()['cnt'] ?? 0);
+
     $totalPages = ($perPage > 0) ? max(1, (int) ceil($totalCount / $perPage)) : 1;
     $page = min($page, $totalPages);
     $offset = max(0, ($page - 1) * $perPage);
 
+    // Fetch paginated products
     $stmt = $pdo->prepare(
         "SELECT p.*, c.name AS category_name
          FROM products p
          LEFT JOIN product_categories c ON c.id = p.category_id
-         $where
+         $whereClause
          ORDER BY p.id DESC
          LIMIT $perPage OFFSET $offset"
     );
     $stmt->execute($params);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (\Throwable $e) {
     error_log('Manage products error: ' . $e->getMessage());
-    $error = 'Database error: ' . htmlspecialchars($e->getMessage());
+    $error = 'Database Notice: ' . htmlspecialchars($e->getMessage());
 }
 
 $csrf_token = Session::csrfToken('delete_product');
-
-// Helper function to build pagination URLs preserving GET query parameters
-if (!function_exists('build_page_url')) {
-    function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $perPage = 10): string {
-        $query = ['page' => max(1, $targetPage)];
-        if ($q !== '') {
-            $query['q'] = $q;
-        }
-        if ($catId > 0) {
-            $query['category_id'] = $catId;
-        }
-        if ($perPage !== 10) {
-            $query['per_page'] = $perPage;
-        }
-        return 'manage-products.php?' . http_build_query($query);
-    }
-}
-
-// Helper function to safely get product thumbnail URL with fallbacks (PHP 7.x/8.x compatible)
-if (!function_exists('get_product_thumbnail_url')) {
-    function get_product_thumbnail_url(array $product): string {
-        $img = trim($product['image'] ?? '');
-        $name = strtolower(trim($product['name'] ?? ''));
-        $slug = strtolower(trim($product['slug'] ?? ''));
-
-        if ($img !== '' && $img !== 'default.png') {
-            $filename = basename($img);
-
-            // 1. Check admin/src/images/products/
-            if (file_exists(__DIR__ . '/../src/images/products/' . $filename)) {
-                return '../src/images/products/' . rawurlencode($filename);
-            }
-            // 2. Check root src/images/products/
-            if (file_exists(__DIR__ . '/../../src/images/products/' . $filename)) {
-                return '../../src/images/products/' . rawurlencode($filename);
-            }
-            // 3. Check assets/images/
-            if (file_exists(__DIR__ . '/../../assets/images/' . $filename)) {
-                return '../../assets/images/' . rawurlencode($filename);
-            }
-        }
-
-        // Compatible strpos check for PHP 7.x and PHP 8.x
-        if (strpos($name, 'almond') !== false || strpos($slug, 'almond') !== false || strpos($name, 'badam') !== false) {
-            return '../../assets/images/hero-banners/almonds.png';
-        }
-        if (strpos($name, 'cashew') !== false || strpos($slug, 'cashew') !== false || strpos($name, 'kaju') !== false) {
-            return '../../assets/images/hero-banners/cashews.png';
-        }
-        if (strpos($name, 'pista') !== false || strpos($slug, 'pista') !== false || strpos($name, 'pistachio') !== false) {
-            return '../../assets/images/hero-banners/pista.png';
-        }
-        if (strpos($name, 'raisin') !== false || strpos($slug, 'raisin') !== false || strpos($name, 'kishmish') !== false) {
-            return '../../assets/images/hero-banners/raisins.png';
-        }
-
-        // Default logo thumbnail
-        return '../src/images/logo.png';
-    }
-}
-
-// Helper function to safely calculate discount percentage without division by zero
-if (!function_exists('get_discount_percentage')) {
-    function get_discount_percentage(float $mrp, float $price): int {
-        if ($mrp <= 0.001 || $mrp <= $price) {
-            return 0;
-        }
-        return (int) round((($mrp - $price) / $mrp) * 100);
-    }
-}
-
 include __DIR__ . '/../header.php';
 ?>
 
-<div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
-        <h3 class="card-title mb-0">
-            <i class="fas fa-box"></i> All Products
-            <span class="badge bg-secondary ms-2"><?= $totalCount ?></span>
-        </h3>
-        <div class="card-tools">
-            <a href="add-product.php" class="btn btn-success btn-sm">
-                <i class="fas fa-plus"></i> Add New Product
+<!-- Styling for Modern Management Table & Custom Pagination -->
+<style>
+.unm-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    overflow: hidden;
+}
+.unm-card-header {
+    background: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.25rem;
+}
+.unm-stats-badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 20px;
+}
+.unm-thumb-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    padding: 2px;
+}
+.unm-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.unm-page-item {
+    display: inline-block;
+}
+.unm-page-link {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #28a745;
+    background: #ffffff;
+    border: 1px solid #28a745;
+    border-radius: 6px;
+    text-decoration: none !important;
+    transition: all 0.2s ease-in-out;
+}
+.unm-page-link:hover {
+    color: #ffffff !important;
+    background-color: #28a745 !important;
+}
+.unm-page-item.active .unm-page-link {
+    color: #ffffff !important;
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+}
+.unm-page-item.disabled .unm-page-link {
+    color: #a0aec0 !important;
+    background-color: #f7fafc !important;
+    border-color: #e2e8f0 !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+    pointer-events: none;
+}
+</style>
+
+<div class="container-fluid py-3">
+    <!-- Header Title & Action -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-2">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="fas fa-boxes text-success me-2"></i>Product Catalog Management
+            </h2>
+            <p class="text-muted small mb-0">View, search, filter, and manage all store items and inventory.</p>
+        </div>
+        <div>
+            <a href="add-product.php" class="btn btn-success px-3 shadow-sm fw-semibold">
+                <i class="fas fa-plus-circle me-1"></i> Add New Product
             </a>
         </div>
     </div>
-    <div class="card-body">
-        <?php if ($success !== ''): ?>
-            <div class="alert alert-success alert-dismissible fade show">
-                <i class="fas fa-check-circle"></i> <?= $success ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
 
-        <?php if ($error !== ''): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="fas fa-exclamation-circle"></i> <?= $error ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+    <!-- Alert Notifications -->
+    <?php if ($success !== ''): ?>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-check-circle me-2"></i> <?= $success ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
 
-        <!-- Custom styling for .pg-bar pagination -->
-        <style>
-        .pg-bar {
-            display: inline-flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 4px;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .pg-item {
-            display: inline-block;
-            margin: 0;
-        }
-        .pg-link {
-            display: inline-block;
-            padding: 5px 11px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #28a745 !important;
-            background-color: #ffffff !important;
-            border: 1px solid #28a745 !important;
-            border-radius: 4px;
-            text-decoration: none !important;
-            transition: all 0.15s ease-in-out;
-        }
-        .pg-link:hover {
-            color: #ffffff !important;
-            background-color: #28a745 !important;
-        }
-        .pg-item.active .pg-link {
-            color: #ffffff !important;
-            background-color: #28a745 !important;
-            border-color: #28a745 !important;
-            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
-        }
-        .pg-item.disabled .pg-link {
-            color: #6c757d !important;
-            background-color: #f8f9fa !important;
-            border-color: #dee2e6 !important;
-            opacity: 0.6;
-            pointer-events: none;
-            cursor: default;
-        }
-        </style>
+    <?php if ($error !== ''): ?>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i> <?= $error ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
 
-        <!-- Search & Filter Controls Bar -->
-        <form method="GET" class="row g-2 mb-3 align-items-center">
-            <div class="col-md-5 col-lg-4">
-                <div class="input-group">
-                    <input type="text" name="q" class="form-control" placeholder="Search by product name or slug..."
-                        value="<?= htmlspecialchars($q) ?>">
-                    <button type="submit" class="btn btn-primary" title="Search"><i class="fas fa-search"></i></button>
-                </div>
+    <div class="unm-card">
+        <!-- Card Header with Stats -->
+        <div class="unm-card-header d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success unm-stats-badge">
+                    <i class="fas fa-cubes me-1"></i> Total: <?= $totalCount ?>
+                </span>
+                <span class="badge bg-primary unm-stats-badge">
+                    <i class="fas fa-check me-1"></i> Active: <?= $activeCount ?>
+                </span>
+                <?php if ($q !== '' || $catId > 0): ?>
+                    <span class="badge bg-warning text-dark unm-stats-badge">
+                        <i class="fas fa-filter me-1"></i> Filter Active
+                    </span>
+                <?php endif; ?>
             </div>
-            <div class="col-md-4 col-lg-3">
-                <select name="category_id" class="form-select" onchange="this.form.submit()">
-                    <option value="0">-- All Categories --</option>
-                    <?php foreach ($categories as $cat): ?>
-                        <option value="<?= (int) $cat['id'] ?>" <?= $catId === (int) $cat['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($cat['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="text-muted small">
+                Showing <strong><?= $offset + 1 ?></strong> - <strong><?= min($totalCount, $offset + count($products)) ?></strong> of <strong><?= $totalCount ?></strong>
             </div>
-            <div class="col-md-3 col-lg-2">
-                <select name="per_page" class="form-select" onchange="this.form.submit()" title="Items per page">
-                    <?php foreach ([10, 25, 50, 100] as $pp): ?>
-                        <option value="<?= $pp ?>" <?= $perPage === $pp ? 'selected' : '' ?>><?= $pp ?> per page</option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <?php if ($q !== '' || $catId > 0 || $perPage !== 10): ?>
-                <div class="col-md-2 col-lg-1">
-                    <a href="manage-products.php" class="btn btn-outline-secondary w-100" title="Reset Filters"><i class="fas fa-undo"></i> Reset</a>
-                </div>
-            <?php endif; ?>
-        </form>
+        </div>
 
-        <?php if (count($products) === 0): ?>
-            <div class="text-center py-5">
-                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No products found matching your search criteria.</p>
-                <a href="add-product.php" class="btn btn-success">
-                    <i class="fas fa-plus"></i> Add New Product
-                </a>
-            </div>
-        <?php else: ?>
-            <?php
-            // Calculate pagination window
-            $startPage = max(1, $page - 2);
-            $endPage   = min($totalPages, $page + 2);
-            if ($page <= 3) {
-                $endPage = min($totalPages, 5);
-            }
-            if ($page >= $totalPages - 2) {
-                $startPage = max(1, $totalPages - 4);
-            }
-            ?>
-
-            <!-- Top Pagination Bar -->
-            <?php if ($totalPages > 1): ?>
-                <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between mb-3 p-2 bg-light border rounded gap-2">
-                    <div class="text-muted small">
-                        Showing <span class="fw-bold text-dark"><?= $offset + 1 ?></span> to
-                        <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
-                        <span class="fw-bold text-dark"><?= $totalCount ?></span> products (Page <?= $page ?> of <?= $totalPages ?>)
+        <div class="card-body p-3">
+            <!-- Filter & Search Controls -->
+            <form method="GET" class="row g-2 mb-3">
+                <div class="col-md-4 col-lg-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name or slug..."
+                            value="<?= htmlspecialchars($q) ?>">
                     </div>
-                    <ul class="pg-bar">
-                        <li class="pg-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                            <a class="pg-link" href="<?= $page > 1 ? build_page_url($page - 1, $q, $catId, $perPage) : '#' ?>">&laquo; Prev</a>
-                        </li>
-                        <?php if ($startPage > 1): ?>
-                            <li class="pg-item"><a class="pg-link" href="<?= build_page_url(1, $q, $catId, $perPage) ?>">1</a></li>
-                            <?php if ($startPage > 2): ?>
-                                <li class="pg-item disabled"><span class="pg-link">&hellip;</span></li>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                            <li class="pg-item <?= $i === $page ? 'active' : '' ?>">
-                                <a class="pg-link" href="<?= build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        <?php if ($endPage < $totalPages): ?>
-                            <?php if ($endPage < $totalPages - 1): ?>
-                                <li class="pg-item disabled"><span class="pg-link">&hellip;</span></li>
-                            <?php endif; ?>
-                            <li class="pg-item"><a class="pg-link" href="<?= build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a></li>
-                        <?php endif; ?>
-                        <li class="pg-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                            <a class="pg-link" href="<?= $page < $totalPages ? build_page_url($page + 1, $q, $catId, $perPage) : '#' ?>">Next &raquo;</a>
-                        </li>
-                    </ul>
                 </div>
-            <?php endif; ?>
-
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width:50px;">#</th>
-                            <th style="width:80px;">Image</th>
-                            <th>Product Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th style="width:140px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($products as $index => $product): ?>
-                            <tr>
-                                <td><?= $offset + $index + 1 ?></td>
-                                <td>
-                                    <?php $imgSrc = get_product_thumbnail_url($product); ?>
-                                    <img src="<?= htmlspecialchars($imgSrc) ?>"
-                                        alt="<?= htmlspecialchars($product['name']) ?>" class="img-thumbnail"
-                                        style="width:55px;height:55px;object-fit:contain;background:#f8f9fa;">
-                                </td>
-                                <td class="fw-semibold">
-                                    <?= htmlspecialchars($product['name']) ?>
-                                    <div class="text-muted small"><code><?= htmlspecialchars($product['slug']) ?></code></div>
-                                </td>
-                                <td>
-                                    <?php if ($product['category_name']): ?>
-                                        <span class="badge bg-info"><?= htmlspecialchars($product['category_name']) ?></span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary">Uncategorized</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="fw-semibold">&#8377;<?= number_format((float) ($product['price'] ?? 0), 2) ?></span>
-                                    <?php
-                                        $mrp = (float) ($product['mrp'] ?? 0);
-                                        $price = (float) ($product['price'] ?? 0);
-                                        $discount = get_discount_percentage($mrp, $price);
-                                        if ($discount > 0):
-                                    ?>
-                                        <div>
-                                            <span class="text-muted text-decoration-line-through small">&#8377;<?= number_format($mrp, 2) ?></span>
-                                            <span class="badge bg-success ms-1"><?= $discount ?>% OFF</span>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= rtrim(rtrim(number_format((float) ($product['quantity'] ?? 0), 2), '0'), '.') ?> <?= htmlspecialchars($product['unit'] ?? 'gram') ?></td>
-                                <td>
-                                    <?php if (($product['status'] ?? 'active') === 'active'): ?>
-                                        <span class="badge bg-success">Active</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <a href="edit-product.php?id=<?= (int) $product['id'] ?>"
-                                        class="btn btn-sm btn-primary" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="../../product.php?slug=<?= urlencode($product['slug'] ?? '') ?>" target="_blank"
-                                        class="btn btn-sm btn-outline-secondary" title="View Live Product">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                    <form method="POST" style="display:inline;" class="delete-product-form">
-                                        <!-- UNM-CSRF-V2 -->
-                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-                                        <input type="hidden" name="id" value="<?= (int) $product['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete"
-                                            data-product-name="<?= htmlspecialchars($product['name'] ?? '') ?>">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+                <div class="col-md-4 col-lg-3">
+                    <select name="category_id" class="form-select" onchange="this.form.submit()">
+                        <option value="0">-- All Categories --</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= (int) $cat['id'] ?>" <?= $catId === (int) $cat['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($cat['name']) ?>
+                            </option>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Bottom Pagination Bar -->
-            <?php if ($totalPages > 1): ?>
-                <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between mt-3 pt-3 border-top gap-2">
-                    <div class="text-muted small">
-                        Showing <span class="fw-bold text-dark"><?= $offset + 1 ?></span> to
-                        <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
-                        <span class="fw-bold text-dark"><?= $totalCount ?></span> products
-                        <?php if ($q !== '' || $catId > 0): ?>
-                            <span class="badge bg-secondary ms-1">Filtered</span>
-                        <?php endif; ?>
-                    </div>
-                    <ul class="pg-bar">
-                        <li class="pg-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                            <a class="pg-link" href="<?= $page > 1 ? build_page_url($page - 1, $q, $catId, $perPage) : '#' ?>">&laquo; Prev</a>
-                        </li>
-                        <?php if ($startPage > 1): ?>
-                            <li class="pg-item"><a class="pg-link" href="<?= build_page_url(1, $q, $catId, $perPage) ?>">1</a></li>
-                            <?php if ($startPage > 2): ?>
-                                <li class="pg-item disabled"><span class="pg-link">&hellip;</span></li>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                            <li class="pg-item <?= $i === $page ? 'active' : '' ?>">
-                                <a class="pg-link" href="<?= build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        <?php if ($endPage < $totalPages): ?>
-                            <?php if ($endPage < $totalPages - 1): ?>
-                                <li class="pg-item disabled"><span class="pg-link">&hellip;</span></li>
-                            <?php endif; ?>
-                            <li class="pg-item"><a class="pg-link" href="<?= build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a></li>
-                        <?php endif; ?>
-                        <li class="pg-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                            <a class="pg-link" href="<?= $page < $totalPages ? build_page_url($page + 1, $q, $catId, $perPage) : '#' ?>">Next &raquo;</a>
-                        </li>
-                    </ul>
+                    </select>
                 </div>
+                <div class="col-md-2 col-lg-2">
+                    <select name="per_page" class="form-select" onchange="this.form.submit()" title="Items Per Page">
+                        <?php foreach ([10, 25, 50, 100] as $pp): ?>
+                            <option value="<?= $pp ?>" <?= $perPage === $pp ? 'selected' : '' ?>><?= $pp ?> per page</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2 col-lg-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary flex-grow-1"><i class="fas fa-filter"></i> Filter</button>
+                    <?php if ($q !== '' || $catId > 0 || $perPage !== 10): ?>
+                        <a href="manage-products.php" class="btn btn-outline-secondary" title="Reset Filters"><i class="fas fa-undo"></i></a>
+                    <?php endif; ?>
+                </div>
+            </form>
+
+            <?php if (count($products) === 0): ?>
+                <div class="text-center py-5">
+                    <div class="text-muted mb-3">
+                        <i class="fas fa-box-open fa-4x opacity-50"></i>
+                    </div>
+                    <h5 class="fw-semibold text-dark">No Products Found</h5>
+                    <p class="text-muted small">Try clearing filters or adding a new product to your inventory.</p>
+                    <a href="add-product.php" class="btn btn-success btn-sm mt-2">
+                        <i class="fas fa-plus me-1"></i> Add Product Now
+                    </a>
+                </div>
+            <?php else: ?>
+
+                <?php
+                // Pagination Window Range Calculation
+                $startPage = max(1, $page - 2);
+                $endPage   = min($totalPages, $page + 2);
+                if ($page <= 3) {
+                    $endPage = min($totalPages, 5);
+                }
+                if ($page >= $totalPages - 2) {
+                    $startPage = max(1, $totalPages - 4);
+                }
+                ?>
+
+                <!-- TOP PAGINATION BAR -->
+                <?php if ($totalPages > 1): ?>
+                    <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between p-2 mb-3 bg-light border rounded gap-2">
+                        <div class="small text-muted">
+                            Page <strong><?= $page ?></strong> of <strong><?= $totalPages ?></strong>
+                        </div>
+                        <ul class="unm-pagination">
+                            <li class="unm-page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                <a class="unm-page-link" href="<?= $page > 1 ? unm_build_page_url($page - 1, $q, $catId, $perPage) : '#' ?>">&laquo; Prev</a>
+                            </li>
+
+                            <?php if ($startPage > 1): ?>
+                                <li class="unm-page-item"><a class="unm-page-link" href="<?= unm_build_page_url(1, $q, $catId, $perPage) ?>">1</a></li>
+                                <?php if ($startPage > 2): ?>
+                                    <li class="unm-page-item disabled"><span class="unm-page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                                <li class="unm-page-item <?= $i === $page ? 'active' : '' ?>">
+                                    <a class="unm-page-link" href="<?= unm_build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+
+                            <?php if ($endPage < $totalPages): ?>
+                                <?php if ($endPage < $totalPages - 1): ?>
+                                    <li class="unm-page-item disabled"><span class="unm-page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                                <li class="unm-page-item"><a class="unm-page-link" href="<?= unm_build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a></li>
+                            <?php endif; ?>
+
+                            <li class="unm-page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                                <a class="unm-page-link" href="<?= $page < $totalPages ? unm_build_page_url($page + 1, $q, $catId, $perPage) : '#' ?>">Next &raquo;</a>
+                            </li>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <!-- PRODUCTS TABLE -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle border mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 75px;">Image</th>
+                                <th>Product Details</th>
+                                <th>Category</th>
+                                <th>Pricing</th>
+                                <th>Stock / Weight</th>
+                                <th>Status</th>
+                                <th style="width: 140px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($products as $index => $product): ?>
+                                <tr>
+                                    <td class="text-muted small"><?= $offset + $index + 1 ?></td>
+                                    <td>
+                                        <img src="<?= htmlspecialchars(unm_get_product_thumbnail($product)) ?>"
+                                            alt="<?= htmlspecialchars($product['name']) ?>" class="unm-thumb-box shadow-sm">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark"><?= htmlspecialchars($product['name']) ?></div>
+                                        <div class="text-muted small"><code><?= htmlspecialchars($product['slug']) ?></code></div>
+                                    </td>
+                                    <td>
+                                        <?php if ($product['category_name']): ?>
+                                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1">
+                                                <?= htmlspecialchars($product['category_name']) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">Uncategorized</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">&#8377;<?= number_format((float) ($product['price'] ?? 0), 2) ?></div>
+                                        <?php
+                                            $mrp = (float) ($product['mrp'] ?? 0);
+                                            $price = (float) ($product['price'] ?? 0);
+                                            $discount = unm_get_discount_percent($mrp, $price);
+                                            if ($discount > 0):
+                                        ?>
+                                            <div class="small">
+                                                <span class="text-muted text-decoration-line-through me-1">&#8377;<?= number_format($mrp, 2) ?></span>
+                                                <span class="badge bg-danger ms-1"><?= $discount ?>% OFF</span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold"><?= rtrim(rtrim(number_format((float) ($product['quantity'] ?? 0), 2), '0'), '.') ?></span>
+                                        <span class="text-muted small"><?= htmlspecialchars($product['unit'] ?? 'gram') ?></span>
+                                    </td>
+                                    <td>
+                                        <?php if (($product['status'] ?? 'active') === 'active'): ?>
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Active</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">Inactive</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="edit-product.php?id=<?= (int) $product['id'] ?>"
+                                                class="btn btn-outline-primary" title="Edit Product">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="../../product.php?slug=<?= urlencode($product['slug'] ?? '') ?>" target="_blank"
+                                                class="btn btn-outline-secondary" title="View Live Product Page">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger btn-delete-product"
+                                                data-id="<?= (int) $product['id'] ?>"
+                                                data-name="<?= htmlspecialchars($product['name'] ?? '') ?>" title="Delete Product">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- BOTTOM PAGINATION BAR -->
+                <?php if ($totalPages > 1): ?>
+                    <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between p-2 mt-3 bg-light border rounded gap-2">
+                        <div class="small text-muted">
+                            Showing <strong><?= $offset + 1 ?></strong> - <strong><?= min($totalCount, $offset + count($products)) ?></strong> of <strong><?= $totalCount ?></strong>
+                        </div>
+                        <ul class="unm-pagination">
+                            <li class="unm-page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                <a class="unm-page-link" href="<?= $page > 1 ? unm_build_page_url($page - 1, $q, $catId, $perPage) : '#' ?>">&laquo; Prev</a>
+                            </li>
+
+                            <?php if ($startPage > 1): ?>
+                                <li class="unm-page-item"><a class="unm-page-link" href="<?= unm_build_page_url(1, $q, $catId, $perPage) ?>">1</a></li>
+                                <?php if ($startPage > 2): ?>
+                                    <li class="unm-page-item disabled"><span class="unm-page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                                <li class="unm-page-item <?= $i === $page ? 'active' : '' ?>">
+                                    <a class="unm-page-link" href="<?= unm_build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+
+                            <?php if ($endPage < $totalPages): ?>
+                                <?php if ($endPage < $totalPages - 1): ?>
+                                    <li class="unm-page-item disabled"><span class="unm-page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                                <li class="unm-page-item"><a class="unm-page-link" href="<?= unm_build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a></li>
+                            <?php endif; ?>
+
+                            <li class="unm-page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                                <a class="unm-page-link" href="<?= $page < $totalPages ? unm_build_page_url($page + 1, $q, $catId, $perPage) : '#' ?>">Next &raquo;</a>
+                            </li>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
             <?php endif; ?>
-        <?php endif; ?>
+        </div>
     </div>
 </div>
 
+<!-- Hidden Delete Submission Form -->
+<form id="deleteProductForm" method="POST" style="display: none;">
+    <!-- UNM-CSRF-V2 -->
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+    <input type="hidden" name="action" value="delete">
+    <input type="hidden" name="id" id="deleteProductId" value="0">
+</form>
+
+<!-- SweetAlert2 Script -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const forms = document.querySelectorAll('.delete-product-form');
-    forms.forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = this.querySelector('button').getAttribute('data-product-name');
+    const deleteButtons = document.querySelectorAll('.btn-delete-product');
+    const deleteForm = document.getElementById('deleteProductForm');
+    const deleteInput = document.getElementById('deleteProductId');
+
+    deleteButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const name = this.getAttribute('data-name');
+
             Swal.fire({
                 title: 'Delete product?',
-                text: 'Product "' + name + '" and all its gallery images will be permanently deleted.',
+                text: 'Product "' + name + '" and all attached gallery images will be permanently removed.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
@@ -478,7 +556,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonText: 'Yes, delete it!'
             }).then(function(result) {
                 if (result.isConfirmed) {
-                    form.submit();
+                    deleteInput.value = id;
+                    deleteForm.submit();
                 }
             });
         });
