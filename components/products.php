@@ -217,4 +217,3 @@ foreach ($productSections as $secIdx => $section):
 <?php
 endforeach;
 /* ── End of Product Sections ──── */
-
