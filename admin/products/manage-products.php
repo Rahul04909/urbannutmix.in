@@ -356,15 +356,11 @@ include __DIR__ . '/../header.php';
                                         <span class="badge bg-success-subtle text-success border border-success-subtle px-1 small font-monospace mt-1"><?= $discPercent ?>% OFF</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center font-monospace text-sm">
                                     <?php if ((float)$prod['quantity'] <= 0): ?>
-                                        <span class="badge bg-danger px-2 py-1"><i class="fas fa-times-circle me-1"></i> Out of Stock</span>
-                                    <?php elseif ((float)$prod['quantity'] < 10): ?>
-                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="fas fa-exclamation-triangle me-1"></i> Low Stock</span>
-                                        <div class="small text-muted font-monospace mt-1"><?= (float)$prod['quantity'] ?> <?= htmlspecialchars($prod['unit']) ?></div>
+                                        <span class="text-danger fw-bold"><i class="fas fa-times-circle"></i> Out of Stock</span>
                                     <?php else: ?>
-                                        <span class="badge bg-success px-2 py-1"><i class="fas fa-check-circle me-1"></i> In Stock</span>
-                                        <div class="small text-muted font-monospace mt-1"><?= (float)$prod['quantity'] ?> <?= htmlspecialchars($prod['unit']) ?></div>
+                                        <?= (float)$prod['quantity'] ?> <?= htmlspecialchars($prod['unit']) ?>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center">
@@ -399,11 +395,11 @@ include __DIR__ . '/../header.php';
                 </table>
             </div>
 
-            <!-- Professional Pagination Footer Section -->
+             <!-- Professional Pagination Footer Section -->
             <div class="d-flex flex-wrap align-items-center justify-content-between mt-4 gap-2">
                 <!-- Info count indicator -->
                 <?php 
-                $startItem = $offset + 1;
+                $startItem = $totalCount > 0 ? $offset + 1 : 0;
                 $endItem = min($offset + $perPage, $totalCount);
                 ?>
                 <div class="text-sm text-muted">
@@ -413,68 +409,69 @@ include __DIR__ . '/../header.php';
                 </div>
 
                 <!-- Pagination navigation items -->
-                <?php if ($totalPages > 1): ?>
-                    <nav>
-                        <ul class="pagination pagination-sm mb-0 justify-content-center">
-                            <!-- First Page Button -->
-                            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" title="First Page">
-                                    <i class="fas fa-angle-double-left"></i>
-                                </a>
-                            </li>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0 justify-content-center">
+                        <!-- First Page Button -->
+                        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                            <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
 
-                            <!-- Previous Button -->
-                            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" title="Previous">
-                                    <i class="fas fa-angle-left"></i>
-                                </a>
-                            </li>
+                        <!-- Previous Button -->
+                        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                            <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" title="Previous">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
 
-                            <!-- Dynamic page items with window and ellipsis -->
-                            <?php 
-                            $rangeLimit = 2; // window of 2 pages around current page
-                            $paginationRange = [];
-                            for ($i = 1; $i <= $totalPages; $i++) {
-                                if ($i === 1 || $i === $totalPages || ($i >= $page - $rangeLimit && $i <= $page + $rangeLimit)) {
-                                    $paginationRange[] = $i;
-                                }
+                        <!-- Dynamic page items with window and ellipsis -->
+                        <?php 
+                        $rangeLimit = 2; // window of 2 pages around current page
+                        $paginationRange = [];
+                        for ($i = 1; $i <= $totalPages; $i++) {
+                            if ($i === 1 || $i === $totalPages || ($i >= $page - $rangeLimit && $i <= $page + $rangeLimit)) {
+                                $paginationRange[] = $i;
                             }
-                            $paginationRange = array_unique($paginationRange);
-                            sort($paginationRange);
+                        }
+                        if (empty($paginationRange)) {
+                            $paginationRange = [1];
+                        }
+                        $paginationRange = array_unique($paginationRange);
+                        sort($paginationRange);
 
-                            $prevP = 0;
-                            foreach ($paginationRange as $p):
-                                if ($prevP > 0 && $p - $prevP > 1):
-                            ?>
-                                    <li class="page-item disabled"><span class="page-link">...</span></li>
-                            <?php 
-                                endif; 
-                                $activeClass = ($p === $page) ? 'active' : '';
-                            ?>
-                                <li class="page-item <?= $activeClass ?>">
-                                    <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $p])) ?>"><?= $p ?></a>
-                                </li>
-                            <?php 
-                                $prevP = $p;
-                            endforeach; 
-                            ?>
-
-                            <!-- Next Button -->
-                            <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                                <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" title="Next">
-                                    <i class="fas fa-angle-right"></i>
-                                </a>
+                        $prevP = 0;
+                        foreach ($paginationRange as $p):
+                            if ($prevP > 0 && $p - $prevP > 1):
+                        ?>
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <?php 
+                            endif; 
+                            $activeClass = ($p === $page) ? 'active' : '';
+                        ?>
+                            <li class="page-item <?= $activeClass ?>">
+                                <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $p])) ?>"><?= $p ?></a>
                             </li>
+                        <?php 
+                            $prevP = $p;
+                        endforeach; 
+                        ?>
 
-                            <!-- Last Page Button -->
-                            <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                                <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" title="Last Page">
-                                    <i class="fas fa-angle-double-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                <?php endif; ?>
+                        <!-- Next Button -->
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                            <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" title="Next">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+
+                        <!-- Last Page Button -->
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                            <a class="page-link" href="manage-products.php?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         <?php endif; ?>
     </div>
