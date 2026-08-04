@@ -101,67 +101,73 @@ try {
 $csrf_token = Session::csrfToken('delete_product');
 
 // Helper function to build pagination URLs preserving GET query parameters
-function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $perPage = 10): string {
-    $query = ['page' => max(1, $targetPage)];
-    if ($q !== '') {
-        $query['q'] = $q;
+if (!function_exists('build_page_url')) {
+    function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $perPage = 10): string {
+        $query = ['page' => max(1, $targetPage)];
+        if ($q !== '') {
+            $query['q'] = $q;
+        }
+        if ($catId > 0) {
+            $query['category_id'] = $catId;
+        }
+        if ($perPage !== 10) {
+            $query['per_page'] = $perPage;
+        }
+        return 'manage-products.php?' . http_build_query($query);
     }
-    if ($catId > 0) {
-        $query['category_id'] = $catId;
-    }
-    if ($perPage !== 10) {
-        $query['per_page'] = $perPage;
-    }
-    return 'manage-products.php?' . http_build_query($query);
 }
 
 // Helper function to safely get product thumbnail URL with fallbacks (PHP 7.x/8.x compatible)
-function get_product_thumbnail_url(array $product): string {
-    $img = trim($product['image'] ?? '');
-    $name = strtolower(trim($product['name'] ?? ''));
-    $slug = strtolower(trim($product['slug'] ?? ''));
+if (!function_exists('get_product_thumbnail_url')) {
+    function get_product_thumbnail_url(array $product): string {
+        $img = trim($product['image'] ?? '');
+        $name = strtolower(trim($product['name'] ?? ''));
+        $slug = strtolower(trim($product['slug'] ?? ''));
 
-    if ($img !== '' && $img !== 'default.png') {
-        $filename = basename($img);
+        if ($img !== '' && $img !== 'default.png') {
+            $filename = basename($img);
 
-        // 1. Check admin/src/images/products/
-        if (file_exists(__DIR__ . '/../src/images/products/' . $filename)) {
-            return '../src/images/products/' . rawurlencode($filename);
+            // 1. Check admin/src/images/products/
+            if (file_exists(__DIR__ . '/../src/images/products/' . $filename)) {
+                return '../src/images/products/' . rawurlencode($filename);
+            }
+            // 2. Check root src/images/products/
+            if (file_exists(__DIR__ . '/../../src/images/products/' . $filename)) {
+                return '../../src/images/products/' . rawurlencode($filename);
+            }
+            // 3. Check assets/images/
+            if (file_exists(__DIR__ . '/../../assets/images/' . $filename)) {
+                return '../../assets/images/' . rawurlencode($filename);
+            }
         }
-        // 2. Check root src/images/products/
-        if (file_exists(__DIR__ . '/../../src/images/products/' . $filename)) {
-            return '../../src/images/products/' . rawurlencode($filename);
-        }
-        // 3. Check assets/images/
-        if (file_exists(__DIR__ . '/../../assets/images/' . $filename)) {
-            return '../../assets/images/' . rawurlencode($filename);
-        }
-    }
 
-    // Compatible strpos check for PHP 7.x and PHP 8.x
-    if (strpos($name, 'almond') !== false || strpos($slug, 'almond') !== false || strpos($name, 'badam') !== false) {
-        return '../../assets/images/hero-banners/almonds.png';
-    }
-    if (strpos($name, 'cashew') !== false || strpos($slug, 'cashew') !== false || strpos($name, 'kaju') !== false) {
-        return '../../assets/images/hero-banners/cashews.png';
-    }
-    if (strpos($name, 'pista') !== false || strpos($slug, 'pista') !== false || strpos($name, 'pistachio') !== false) {
-        return '../../assets/images/hero-banners/pista.png';
-    }
-    if (strpos($name, 'raisin') !== false || strpos($slug, 'raisin') !== false || strpos($name, 'kishmish') !== false) {
-        return '../../assets/images/hero-banners/raisins.png';
-    }
+        // Compatible strpos check for PHP 7.x and PHP 8.x
+        if (strpos($name, 'almond') !== false || strpos($slug, 'almond') !== false || strpos($name, 'badam') !== false) {
+            return '../../assets/images/hero-banners/almonds.png';
+        }
+        if (strpos($name, 'cashew') !== false || strpos($slug, 'cashew') !== false || strpos($name, 'kaju') !== false) {
+            return '../../assets/images/hero-banners/cashews.png';
+        }
+        if (strpos($name, 'pista') !== false || strpos($slug, 'pista') !== false || strpos($name, 'pistachio') !== false) {
+            return '../../assets/images/hero-banners/pista.png';
+        }
+        if (strpos($name, 'raisin') !== false || strpos($slug, 'raisin') !== false || strpos($name, 'kishmish') !== false) {
+            return '../../assets/images/hero-banners/raisins.png';
+        }
 
-    // Default logo thumbnail
-    return '../src/images/logo.png';
+        // Default logo thumbnail
+        return '../src/images/logo.png';
+    }
 }
 
 // Helper function to safely calculate discount percentage without division by zero
-function get_discount_percentage(float $mrp, float $price): int {
-    if ($mrp <= 0.001 || $mrp <= $price) {
-        return 0;
+if (!function_exists('get_discount_percentage')) {
+    function get_discount_percentage(float $mrp, float $price): int {
+        if ($mrp <= 0.001 || $mrp <= $price) {
+            return 0;
+        }
+        return (int) round((($mrp - $price) / $mrp) * 100);
     }
-    return (int) round((($mrp - $price) / $mrp) * 100);
 }
 
 include __DIR__ . '/../header.php';
