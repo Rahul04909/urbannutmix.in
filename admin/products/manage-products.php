@@ -281,152 +281,159 @@ include __DIR__ . '/../header.php';
                     </tbody>
                 </table>
             </div>
-
-            <!-- Professional Custom Pagination Styling -->
-            <style>
-            .pagination-custom .page-link {
-                color: #28a745;
-                background-color: #ffffff;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin: 0 2px;
-                padding: 0.35rem 0.75rem;
-                font-weight: 500;
-                font-size: 0.875rem;
-                transition: all 0.2s ease-in-out;
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-            }
-            .pagination-custom .page-link:hover {
-                color: #1e7e34;
-                background-color: #e8f5e9;
-                border-color: #c8e6c9;
-            }
-            .pagination-custom .page-item.active .page-link {
-                background-color: #28a745;
-                border-color: #28a745;
-                color: #ffffff;
-                font-weight: 600;
-                box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
-            }
-            .pagination-custom .page-item.disabled .page-link {
-                color: #6c757d;
-                background-color: #f8f9fa;
-                border-color: #e9ecef;
-                opacity: 0.65;
-            }
-            </style>
-
-            <?php
-            // Calculate visible pages window for professional pagination look
-            $visiblePages = [];
-            if ($totalPages <= 7) {
-                for ($i = 1; $i <= $totalPages; $i++) {
-                    $visiblePages[] = $i;
-                }
-            } else {
-                if ($page <= 4) {
-                    $visiblePages = [1, 2, 3, 4, 5, '...', $totalPages];
-                } elseif ($page >= $totalPages - 3) {
-                    $visiblePages = [1, '...', $totalPages - 4, $totalPages - 3, $totalPages - 2, $totalPages - 1, $totalPages];
-                } else {
-                    $visiblePages = [1, '...', $page - 1, $page, $page + 1, '...', $totalPages];
-                }
-            }
-            ?>
-
-            <!-- Professional Pagination Footer Bar -->
-            <div class="card-footer bg-white border-top py-3 mt-3">
-                <div class="row align-items-center g-3">
-                    <!-- Left: Summary Info & Per-Page Quick Select -->
-                    <div class="col-12 col-xl-4 d-flex flex-wrap align-items-center justify-content-between justify-content-xl-start gap-3">
-                        <div class="text-muted small">
-                            Showing <span class="fw-bold text-dark"><?= $totalCount > 0 ? $offset + 1 : 0 ?></span> to
-                            <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
-                            <span class="fw-bold text-dark"><?= $totalCount ?></span> products
-                            <?php if ($q !== '' || $catId > 0): ?>
-                                <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" title="Filters Applied"><i class="fas fa-filter me-1"></i>Filtered</span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="d-flex align-items-center gap-1 text-muted small">
-                            <label for="perPageSelectBottom" class="mb-0 text-nowrap">Per page:</label>
-                            <select id="perPageSelectBottom" class="form-select form-select-sm w-auto" onchange="window.location.href=this.value">
-                                <?php foreach ([10, 25, 50, 100] as $pp): ?>
-                                    <option value="<?= build_page_url(1, ['per_page' => $pp]) ?>" <?= $perPage === $pp ? 'selected' : '' ?>><?= $pp ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Middle: Page Navigation Buttons -->
-                    <div class="col-12 col-xl-5 d-flex justify-content-center">
-                        <?php if ($totalPages > 1): ?>
-                            <nav aria-label="Products Pagination">
-                                <ul class="pagination pagination-custom mb-0 flex-wrap justify-content-center">
-                                    <!-- First Page -->
-                                    <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                        <a class="page-link" href="<?= $page > 1 ? build_page_url(1) : '#' ?>" title="First Page" <?= $page <= 1 ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
-                                            <i class="fas fa-angle-double-left"></i>
-                                        </a>
-                                    </li>
-
-                                    <!-- Previous Page -->
-                                    <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                        <a class="page-link" href="<?= $page > 1 ? build_page_url($page - 1) : '#' ?>" title="Previous Page" <?= $page <= 1 ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
-                                            <i class="fas fa-angle-left"></i> Previous
-                                        </a>
-                                    </li>
-
-                                    <!-- Page Number Buttons -->
-                                    <?php foreach ($visiblePages as $p): ?>
-                                        <?php if ($p === '...'): ?>
-                                            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
-                                        <?php else: ?>
-                                            <li class="page-item <?= $p === $page ? 'active' : '' ?>">
-                                                <a class="page-link" href="<?= build_page_url((int)$p) ?>"><?= $p ?></a>
-                                            </li>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-
-                                    <!-- Next Page -->
-                                    <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                                        <a class="page-link" href="<?= $page < $totalPages ? build_page_url($page + 1) : '#' ?>" title="Next Page" <?= $page >= $totalPages ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
-                                            Next <i class="fas fa-angle-right"></i>
-                                        </a>
-                                    </li>
-
-                                    <!-- Last Page -->
-                                    <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                                        <a class="page-link" href="<?= $page < $totalPages ? build_page_url($totalPages) : '#' ?>" title="Last Page" <?= $page >= $totalPages ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
-                                            <i class="fas fa-angle-double-right"></i>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </nav>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Right: Page Jump Input Form -->
-                    <div class="col-12 col-xl-3 d-flex justify-content-center justify-content-xl-end">
-                        <?php if ($totalPages > 1): ?>
-                            <form method="GET" action="manage-products.php" class="d-flex align-items-center gap-1 text-muted small">
-                                <?php foreach ($_GET as $key => $val): ?>
-                                    <?php if ($key !== 'page'): ?>
-                                        <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars((string)$val) ?>">
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                                <label for="jumpToPage" class="mb-0 text-nowrap">Page:</label>
-                                <input type="number" id="jumpToPage" name="page" class="form-control form-control-sm text-center" min="1" max="<?= $totalPages ?>" value="<?= $page ?>" style="width: 65px;" required>
-                                <span class="text-nowrap me-1">of <?= $totalPages ?></span>
-                                <button type="submit" class="btn btn-sm btn-outline-success px-2 py-1" title="Jump to page">Go</button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
         <?php endif; ?>
     </div>
+
+    <?php if (count($products) > 0): ?>
+        <!-- Professional Custom Pagination Styling -->
+        <style>
+        .pagination-custom {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            margin-bottom: 0 !important;
+        }
+        .pagination-custom .page-item {
+            display: inline-block !important;
+        }
+        .pagination-custom .page-link {
+            color: #28a745;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin: 0 2px;
+            padding: 0.35rem 0.65rem;
+            font-weight: 500;
+            font-size: 0.85rem;
+            line-height: 1.25;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .pagination-custom .page-link:hover {
+            color: #155724;
+            background-color: #e8f5e9;
+            border-color: #c8e6c9;
+            text-decoration: none;
+        }
+        .pagination-custom .page-item.active .page-link {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.25);
+        }
+        .pagination-custom .page-item.disabled .page-link {
+            color: #6c757d !important;
+            background-color: #f8f9fa !important;
+            border-color: #dee2e6 !important;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        </style>
+
+        <?php
+        // Calculate visible pages window for professional pagination look
+        $visiblePages = [];
+        if ($totalPages <= 7) {
+            for ($i = 1; $i <= $totalPages; $i++) {
+                $visiblePages[] = $i;
+            }
+        } else {
+            if ($page <= 4) {
+                $visiblePages = [1, 2, 3, 4, 5, '...', $totalPages];
+            } elseif ($page >= $totalPages - 3) {
+                $visiblePages = [1, '...', $totalPages - 4, $totalPages - 3, $totalPages - 2, $totalPages - 1, $totalPages];
+            } else {
+                $visiblePages = [1, '...', $page - 1, $page, $page + 1, '...', $totalPages];
+            }
+        }
+        ?>
+
+        <!-- Professional Pagination Footer Bar -->
+        <div class="card-footer bg-white border-top py-3">
+            <div class="row align-items-center g-3">
+                <!-- Left: Summary Info & Per-Page Quick Select -->
+                <div class="col-lg-6 col-12 d-flex flex-wrap align-items-center justify-content-start gap-3">
+                    <div class="text-muted small">
+                        Showing <span class="fw-bold text-dark"><?= $totalCount > 0 ? $offset + 1 : 0 ?></span> to
+                        <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
+                        <span class="fw-bold text-dark"><?= $totalCount ?></span> products
+                        <?php if ($q !== '' || $catId > 0): ?>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" title="Filters Applied"><i class="fas fa-filter me-1"></i>Filtered</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 text-muted small ms-auto ms-sm-0">
+                        <label for="perPageSelectBottom" class="mb-0 text-nowrap">Show:</label>
+                        <select id="perPageSelectBottom" class="form-select form-select-sm w-auto" onchange="window.location.href=this.value">
+                            <?php foreach ([10, 25, 50, 100] as $pp): ?>
+                                <option value="<?= build_page_url(1, ['per_page' => $pp]) ?>" <?= $perPage === $pp ? 'selected' : '' ?>><?= $pp ?> / page</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Right: Pagination Buttons & Page Jump Form -->
+                <div class="col-lg-6 col-12 d-flex flex-wrap align-items-center justify-content-lg-end justify-content-start gap-2">
+                    <?php if ($totalPages > 1): ?>
+                        <nav aria-label="Products Pagination" class="overflow-auto">
+                            <ul class="pagination pagination-custom mb-0 flex-nowrap">
+                                <!-- First Page -->
+                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                    <a class="page-link" href="<?= $page > 1 ? build_page_url(1) : '#' ?>" title="First Page" <?= $page <= 1 ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+
+                                <!-- Previous Page -->
+                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                    <a class="page-link" href="<?= $page > 1 ? build_page_url($page - 1) : '#' ?>" title="Previous Page" <?= $page <= 1 ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                        <i class="fas fa-angle-left"></i> <span class="d-none d-sm-inline">Prev</span>
+                                    </a>
+                                </li>
+
+                                <!-- Page Number Buttons -->
+                                <?php foreach ($visiblePages as $p): ?>
+                                    <?php if ($p === '...'): ?>
+                                        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                    <?php else: ?>
+                                        <li class="page-item <?= $p === $page ? 'active' : '' ?>">
+                                            <a class="page-link" href="<?= build_page_url((int)$p) ?>"><?= $p ?></a>
+                                        </li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+
+                                <!-- Next Page -->
+                                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                                    <a class="page-link" href="<?= $page < $totalPages ? build_page_url($page + 1) : '#' ?>" title="Next Page" <?= $page >= $totalPages ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                        <span class="d-none d-sm-inline">Next</span> <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+
+                                <!-- Last Page -->
+                                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                                    <a class="page-link" href="<?= $page < $totalPages ? build_page_url($totalPages) : '#' ?>" title="Last Page" <?= $page >= $totalPages ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+
+                        <!-- Direct Page Jump Form -->
+                        <form method="GET" action="manage-products.php" class="d-flex align-items-center gap-1 text-muted small ms-lg-2">
+                            <?php foreach ($_GET as $key => $val): ?>
+                                <?php if ($key !== 'page'): ?>
+                                    <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars((string)$val) ?>">
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                            <input type="number" id="jumpToPage" name="page" class="form-control form-control-sm text-center" min="1" max="<?= $totalPages ?>" value="<?= $page ?>" style="width: 55px;" required title="Jump to page">
+                            <button type="submit" class="btn btn-sm btn-outline-success px-2 py-1" title="Go">Go</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <script>
