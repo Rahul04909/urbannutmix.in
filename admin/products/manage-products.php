@@ -115,6 +115,36 @@ function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $pe
     return 'manage-products.php?' . http_build_query($query);
 }
 
+// Helper function to safely get product thumbnail URL with fallbacks
+function get_product_thumbnail_url(array $product): ?string {
+    $img = trim($product['image'] ?? '');
+    if ($img === '' || $img === 'default.png') {
+        return null;
+    }
+
+    $filename = basename($img);
+
+    // 1. Check admin/src/images/products/
+    $path1 = __DIR__ . '/../src/images/products/' . $filename;
+    if (file_exists($path1)) {
+        return '../src/images/products/' . rawurlencode($filename);
+    }
+
+    // 2. Check root src/images/products/
+    $path2 = __DIR__ . '/../../src/images/products/' . $filename;
+    if (file_exists($path2)) {
+        return '../../src/images/products/' . rawurlencode($filename);
+    }
+
+    // 3. Check assets/images/
+    $path3 = __DIR__ . '/../../assets/images/' . $filename;
+    if (file_exists($path3)) {
+        return '../../assets/images/' . rawurlencode($filename);
+    }
+
+    return null;
+}
+
 // Helper function to safely calculate discount percentage without division by zero
 function get_discount_percentage(float $mrp, float $price): int {
     if ($mrp <= 0.001 || $mrp <= $price) {
@@ -214,14 +244,15 @@ include __DIR__ . '/../header.php';
                             <tr>
                                 <td><?= $offset + $index + 1 ?></td>
                                 <td>
-                                    <?php if ($product['image'] !== 'default.png' && file_exists(__DIR__ . '/../src/images/products/' . $product['image'])): ?>
-                                        <img src="../src/images/products/<?= htmlspecialchars($product['image']) ?>"
+                                    <?php $imgSrc = get_product_thumbnail_url($product); ?>
+                                    <?php if ($imgSrc !== null): ?>
+                                        <img src="<?= htmlspecialchars($imgSrc) ?>"
                                             alt="<?= htmlspecialchars($product['name']) ?>" class="img-thumbnail"
                                             style="width:55px;height:55px;object-fit:cover;">
                                     <?php else: ?>
-                                        <div class="d-flex align-items-center justify-content-center bg-light border"
-                                            style="width:55px;height:55px;border-radius:4px;">
-                                            <i class="fas fa-image text-muted"></i>
+                                        <div class="d-flex align-items-center justify-content-center bg-light border rounded text-success"
+                                            style="width:55px;height:55px;" title="Default product icon (No image uploaded)">
+                                            <i class="fas fa-box-open fa-lg"></i>
                                         </div>
                                     <?php endif; ?>
                                 </td>
@@ -300,10 +331,20 @@ include __DIR__ . '/../header.php';
             }
             </style>
 
-            <!-- Pagination Bar -->
+            <!-- Compact Pagination Bar -->
             <?php if ($totalPages > 1): ?>
-                <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 mt-3 border-top">
-                    <div class="text-muted small mb-2 mb-md-0">
+                <?php
+                $startPage = max(1, $page - 2);
+                $endPage   = min($totalPages, $page + 2);
+                if ($page <= 3) {
+                    $endPage = min($totalPages, 5);
+                }
+                if ($page >= $totalPages - 2) {
+                    $startPage = max(1, $totalPages - 4);
+                }
+                ?>
+                <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 mt-3 border-top gap-2">
+                    <div class="text-muted small">
                         Showing <span class="fw-bold text-dark"><?= $offset + 1 ?></span> to
                         <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
                         <span class="fw-bold text-dark"><?= $totalCount ?></span> products
@@ -313,18 +354,31 @@ include __DIR__ . '/../header.php';
                     </div>
 
                     <nav aria-label="Products Pagination">
-                        <ul class="pagination pagination-sm mb-0 flex-wrap">
+                        <ul class="pagination pagination-sm mb-0">
                             <!-- Previous -->
                             <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
                                 <a class="page-link" href="<?= $page > 1 ? build_page_url($page - 1, $q, $catId, $perPage) : '#' ?>">Previous</a>
                             </li>
 
-                            <!-- Page Numbers 1, 2, 3... -->
-                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <?php if ($startPage > 1): ?>
+                                <li class="page-item"><a class="page-link" href="<?= build_page_url(1, $q, $catId, $perPage) ?>">1</a></li>
+                                <?php if ($startPage > 2): ?>
+                                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
                                 <li class="page-item <?= $i === $page ? 'active' : '' ?>">
                                     <a class="page-link" href="<?= build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
                                 </li>
                             <?php endfor; ?>
+
+                            <?php if ($endPage < $totalPages): ?>
+                                <?php if ($endPage < $totalPages - 1): ?>
+                                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                <?php endif; ?>
+                                <li class="page-item"><a class="page-link" href="<?= build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a></li>
+                            <?php endif; ?>
 
                             <!-- Next -->
                             <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
