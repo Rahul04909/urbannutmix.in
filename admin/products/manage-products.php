@@ -116,33 +116,44 @@ function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $pe
 }
 
 // Helper function to safely get product thumbnail URL with fallbacks
-function get_product_thumbnail_url(array $product): ?string {
+function get_product_thumbnail_url(array $product): string {
     $img = trim($product['image'] ?? '');
-    if ($img === '' || $img === 'default.png') {
-        return null;
+    $name = strtolower(trim($product['name'] ?? ''));
+    $slug = strtolower(trim($product['slug'] ?? ''));
+
+    if ($img !== '' && $img !== 'default.png') {
+        $filename = basename($img);
+
+        // 1. Check admin/src/images/products/
+        if (file_exists(__DIR__ . '/../src/images/products/' . $filename)) {
+            return '../src/images/products/' . rawurlencode($filename);
+        }
+        // 2. Check root src/images/products/
+        if (file_exists(__DIR__ . '/../../src/images/products/' . $filename)) {
+            return '../../src/images/products/' . rawurlencode($filename);
+        }
+        // 3. Check assets/images/
+        if (file_exists(__DIR__ . '/../../assets/images/' . $filename)) {
+            return '../../assets/images/' . rawurlencode($filename);
+        }
     }
 
-    $filename = basename($img);
-
-    // 1. Check admin/src/images/products/
-    $path1 = __DIR__ . '/../src/images/products/' . $filename;
-    if (file_exists($path1)) {
-        return '../src/images/products/' . rawurlencode($filename);
+    // Smart fallback by keyword from existing hero banner images
+    if (str_contains($name, 'almond') || str_contains($slug, 'almond') || str_contains($name, 'badam')) {
+        return '../../assets/images/hero-banners/almonds.png';
+    }
+    if (str_contains($name, 'cashew') || str_contains($slug, 'cashew') || str_contains($name, 'kaju')) {
+        return '../../assets/images/hero-banners/cashews.png';
+    }
+    if (str_contains($name, 'pista') || str_contains($slug, 'pista') || str_contains($name, 'pistachio')) {
+        return '../../assets/images/hero-banners/pista.png';
+    }
+    if (str_contains($name, 'raisin') || str_contains($slug, 'raisin') || str_contains($name, 'kishmish')) {
+        return '../../assets/images/hero-banners/raisins.png';
     }
 
-    // 2. Check root src/images/products/
-    $path2 = __DIR__ . '/../../src/images/products/' . $filename;
-    if (file_exists($path2)) {
-        return '../../src/images/products/' . rawurlencode($filename);
-    }
-
-    // 3. Check assets/images/
-    $path3 = __DIR__ . '/../../assets/images/' . $filename;
-    if (file_exists($path3)) {
-        return '../../assets/images/' . rawurlencode($filename);
-    }
-
-    return null;
+    // Default logo thumbnail
+    return '../src/images/logo.png';
 }
 
 // Helper function to safely calculate discount percentage without division by zero
@@ -245,16 +256,9 @@ include __DIR__ . '/../header.php';
                                 <td><?= $offset + $index + 1 ?></td>
                                 <td>
                                     <?php $imgSrc = get_product_thumbnail_url($product); ?>
-                                    <?php if ($imgSrc !== null): ?>
-                                        <img src="<?= htmlspecialchars($imgSrc) ?>"
-                                            alt="<?= htmlspecialchars($product['name']) ?>" class="img-thumbnail"
-                                            style="width:55px;height:55px;object-fit:cover;">
-                                    <?php else: ?>
-                                        <div class="d-flex align-items-center justify-content-center bg-light border rounded text-success"
-                                            style="width:55px;height:55px;" title="Default product icon (No image uploaded)">
-                                            <i class="fas fa-box-open fa-lg"></i>
-                                        </div>
-                                    <?php endif; ?>
+                                    <img src="<?= htmlspecialchars($imgSrc) ?>"
+                                        alt="<?= htmlspecialchars($product['name']) ?>" class="img-thumbnail"
+                                        style="width:55px;height:55px;object-fit:contain;background:#f8f9fa;">
                                 </td>
                                 <td class="fw-semibold">
                                     <?= htmlspecialchars($product['name']) ?>
