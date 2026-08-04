@@ -164,7 +164,7 @@ try {
          LEFT JOIN product_categories c ON c.id = p.category_id
          $whereClause
          ORDER BY p.id DESC
-         LIMIT $perPage OFFSET $offset"
+         LIMIT $offset, $perPage"
     );
     $stmt->execute($params);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -421,11 +421,11 @@ include __DIR__ . '/../header.php';
                                     <td class="text-muted small"><?= $offset + $index + 1 ?></td>
                                     <td>
                                         <img src="<?= htmlspecialchars(unm_get_product_thumbnail($product)) ?>"
-                                            alt="<?= htmlspecialchars($product['name']) ?>" class="unm-thumb-box shadow-sm">
+                                            alt="<?= htmlspecialchars(isset($product['name']) ? (string)$product['name'] : '') ?>" class="unm-thumb-box shadow-sm">
                                     </td>
                                     <td>
-                                        <div class="fw-bold text-dark"><?= htmlspecialchars($product['name']) ?></div>
-                                        <div class="text-muted small"><code><?= htmlspecialchars($product['slug']) ?></code></div>
+                                        <div class="fw-bold text-dark"><?= htmlspecialchars(isset($product['name']) ? (string)$product['name'] : '') ?></div>
+                                        <div class="text-muted small"><code><?= htmlspecialchars(isset($product['slug']) ? (string)$product['slug'] : '') ?></code></div>
                                     </td>
                                     <td>
                                         <?php if ($product['category_name']): ?>
