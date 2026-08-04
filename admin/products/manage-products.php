@@ -101,7 +101,7 @@ try {
 $csrf_token = Session::csrfToken('delete_product');
 
 // Helper function to build pagination URLs preserving GET query parameters
-function build_page_url(int $targetPage, string $q, int $catId, int $perPage): string {
+function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $perPage = 10): string {
     $query = ['page' => max(1, $targetPage)];
     if ($q !== '') {
         $query['q'] = $q;
@@ -282,57 +282,49 @@ include __DIR__ . '/../header.php';
                     </tbody>
                 </table>
             </div>
-        <?php endif; ?>
-    </div>
 
-    <?php if (count($products) > 0): ?>
-        <!-- Pagination Footer Bar -->
-        <div class="card-footer bg-white border-top py-3">
-            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
-                <div class="text-muted small">
-                    Showing <span class="fw-bold text-dark"><?= $offset + 1 ?></span> to
-                    <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
-                    <span class="fw-bold text-dark"><?= $totalCount ?></span> products
-                    <?php if ($q !== '' || $catId > 0): ?>
-                        <span class="badge bg-secondary ms-1">Filtered</span>
-                    <?php endif; ?>
-                </div>
+            <!-- Custom styling for green active pagination -->
+            <style>
+            .pagination .page-item.active .page-link {
+                background-color: #28a745 !important;
+                border-color: #28a745 !important;
+                color: #ffffff !important;
+                font-weight: 600;
+            }
+            .pagination .page-link {
+                color: #28a745;
+            }
+            .pagination .page-link:hover {
+                color: #1e7e34;
+                background-color: #e8f5e9;
+            }
+            </style>
 
-                <?php if ($totalPages > 1): ?>
+            <!-- Pagination Bar -->
+            <?php if ($totalPages > 1): ?>
+                <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 mt-3 border-top">
+                    <div class="text-muted small mb-2 mb-md-0">
+                        Showing <span class="fw-bold text-dark"><?= $offset + 1 ?></span> to
+                        <span class="fw-bold text-dark"><?= min($totalCount, $offset + count($products)) ?></span> of
+                        <span class="fw-bold text-dark"><?= $totalCount ?></span> products
+                        <?php if ($q !== '' || $catId > 0): ?>
+                            <span class="badge bg-secondary ms-1">Filtered</span>
+                        <?php endif; ?>
+                    </div>
+
                     <nav aria-label="Products Pagination">
-                        <ul class="pagination pagination-sm mb-0">
+                        <ul class="pagination pagination-sm mb-0 flex-wrap">
                             <!-- Previous -->
                             <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
                                 <a class="page-link" href="<?= $page > 1 ? build_page_url($page - 1, $q, $catId, $perPage) : '#' ?>">Previous</a>
                             </li>
 
-                            <?php
-                            $startPage = max(1, $page - 2);
-                            $endPage   = min($totalPages, $page + 2);
-
-                            if ($startPage > 1): ?>
-                                <li class="page-item <?= $page === 1 ? 'active' : '' ?>">
-                                    <a class="page-link" href="<?= build_page_url(1, $q, $catId, $perPage) ?>">1</a>
-                                </li>
-                                <?php if ($startPage > 2): ?>
-                                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
-                                <?php endif; ?>
-                            <?php endif; ?>
-
-                            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                            <!-- Page Numbers 1, 2, 3... -->
+                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                                 <li class="page-item <?= $i === $page ? 'active' : '' ?>">
                                     <a class="page-link" href="<?= build_page_url($i, $q, $catId, $perPage) ?>"><?= $i ?></a>
                                 </li>
                             <?php endfor; ?>
-
-                            <?php if ($endPage < $totalPages): ?>
-                                <?php if ($endPage < $totalPages - 1): ?>
-                                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
-                                <?php endif; ?>
-                                <li class="page-item <?= $page === $totalPages ? 'active' : '' ?>">
-                                    <a class="page-link" href="<?= build_page_url($totalPages, $q, $catId, $perPage) ?>"><?= $totalPages ?></a>
-                                </li>
-                            <?php endif; ?>
 
                             <!-- Next -->
                             <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
@@ -340,10 +332,10 @@ include __DIR__ . '/../header.php';
                             </li>
                         </ul>
                     </nav>
-                <?php endif; ?>
-            </div>
-        </div>
-    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>
 
 <script>
