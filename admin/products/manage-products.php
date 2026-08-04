@@ -16,7 +16,7 @@ $activeCount = 0;
 
 // Helper functions (wrapped in function_exists guards to avoid redeclaration)
 if (!function_exists('unm_build_page_url')) {
-    function unm_build_page_url(int $targetPage, string $q = '', int $catId = 0, int $perPage = 10): string {
+    function unm_build_page_url($targetPage, $q = '', $catId = 0, $perPage = 10) {
         $query = ['page' => max(1, $targetPage)];
         if ($q !== '') {
             $query['q'] = $q;
@@ -32,10 +32,10 @@ if (!function_exists('unm_build_page_url')) {
 }
 
 if (!function_exists('unm_get_product_thumbnail')) {
-    function unm_get_product_thumbnail(array $product): string {
-        $img = trim($product['image'] ?? '');
-        $name = strtolower(trim($product['name'] ?? ''));
-        $slug = strtolower(trim($product['slug'] ?? ''));
+    function unm_get_product_thumbnail($product) {
+        $img = trim(isset($product['image']) ? $product['image'] : '');
+        $name = strtolower(trim(isset($product['name']) ? $product['name'] : ''));
+        $slug = strtolower(trim(isset($product['slug']) ? $product['slug'] : ''));
 
         if ($img !== '' && $img !== 'default.png') {
             $filename = basename($img);
@@ -69,7 +69,7 @@ if (!function_exists('unm_get_product_thumbnail')) {
 }
 
 if (!function_exists('unm_get_discount_percent')) {
-    function unm_get_discount_percent(float $mrp, float $price): int {
+    function unm_get_discount_percent($mrp, $price) {
         if ($mrp <= 0.001 || $mrp <= $price) {
             return 0;
         }
@@ -85,11 +85,11 @@ try {
 
     // Handle Delete POST Action
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
-        $csrf = $_POST['csrf_token'] ?? '';
+        $csrf = isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '';
         if (!Session::csrfVerify('delete_product', $csrf)) {
             $error = 'Security session expired. Please refresh the page and try again.';
         } else {
-            $id = (int) ($_POST['id'] ?? 0);
+            $id = (int) (isset($_POST['id']) ? $_POST['id'] : 0);
             $stmt = $pdo->prepare('SELECT id, name, image FROM products WHERE id = :id LIMIT 1');
             $stmt->execute(['id' => $id]);
             $productToDelete = $stmt->fetch();
@@ -120,10 +120,10 @@ try {
     }
 
     // Filter & Pagination parameters
-    $q = trim($_GET['q'] ?? '');
-    $catId = (int) ($_GET['category_id'] ?? 0);
-    $page = max(1, (int) ($_GET['page'] ?? 1));
-    $perPage = (int) ($_GET['per_page'] ?? 10);
+    $q = trim(isset($_GET['q']) ? $_GET['q'] : '');
+    $catId = (int) (isset($_GET['category_id']) ? $_GET['category_id'] : 0);
+    $page = max(1, (int) (isset($_GET['page']) ? $_GET['page'] : 1));
+    $perPage = (int) (isset($_GET['per_page']) ? $_GET['per_page'] : 10);
     if (!in_array($perPage, [10, 25, 50, 100], true)) {
         $perPage = 10;
     }
@@ -146,10 +146,12 @@ try {
     // Count totals
     $stmtCount = $pdo->prepare("SELECT COUNT(*) AS cnt FROM products p $whereClause");
     $stmtCount->execute($params);
-    $totalCount = (int) ($stmtCount->fetch()['cnt'] ?? 0);
+    $countRow = $stmtCount->fetch(PDO::FETCH_ASSOC);
+    $totalCount = $countRow ? (int) $countRow['cnt'] : 0;
 
     $stmtActive = $pdo->query("SELECT COUNT(*) AS cnt FROM products WHERE status = 'active'");
-    $activeCount = (int) ($stmtActive->fetch()['cnt'] ?? 0);
+    $activeRow = $stmtActive->fetch(PDO::FETCH_ASSOC);
+    $activeCount = $activeRow ? (int) $activeRow['cnt'] : 0;
 
     $totalPages = ($perPage > 0) ? max(1, (int) ceil($totalCount / $perPage)) : 1;
     $page = min($page, $totalPages);
@@ -167,7 +169,7 @@ try {
     $stmt->execute($params);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (\Throwable $e) {
+} catch (\Exception $e) {
     error_log('Manage products error: ' . $e->getMessage());
     $error = 'Database Notice: ' . htmlspecialchars($e->getMessage());
 }
@@ -435,10 +437,10 @@ include __DIR__ . '/../header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <div class="fw-semibold text-dark">&#8377;<?= number_format((float) ($product['price'] ?? 0), 2) ?></div>
+                                        <div class="fw-semibold text-dark">&#8377;<?= number_format((float) (isset($product['price']) ? $product['price'] : 0), 2) ?></div>
                                         <?php
-                                            $mrp = (float) ($product['mrp'] ?? 0);
-                                            $price = (float) ($product['price'] ?? 0);
+                                            $mrp = (float) (isset($product['mrp']) ? $product['mrp'] : 0);
+                                            $price = (float) (isset($product['price']) ? $product['price'] : 0);
                                             $discount = unm_get_discount_percent($mrp, $price);
                                             if ($discount > 0):
                                         ?>
@@ -449,11 +451,11 @@ include __DIR__ . '/../header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <span class="fw-semibold"><?= rtrim(rtrim(number_format((float) ($product['quantity'] ?? 0), 2), '0'), '.') ?></span>
-                                        <span class="text-muted small"><?= htmlspecialchars($product['unit'] ?? 'gram') ?></span>
+                                        <span class="fw-semibold"><?= rtrim(rtrim(number_format((float) (isset($product['quantity']) ? $product['quantity'] : 0), 2), '0'), '.') ?></span>
+                                        <span class="text-muted small"><?= htmlspecialchars(isset($product['unit']) ? $product['unit'] : 'gram') ?></span>
                                     </td>
                                     <td>
-                                        <?php if (($product['status'] ?? 'active') === 'active'): ?>
+                                        <?php if ((isset($product['status']) ? $product['status'] : 'active') === 'active'): ?>
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Active</span>
                                         <?php else: ?>
                                             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">Inactive</span>
@@ -465,17 +467,18 @@ include __DIR__ . '/../header.php';
                                                 class="btn btn-outline-primary" title="Edit Product">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="../../product.php?slug=<?= urlencode($product['slug'] ?? '') ?>" target="_blank"
+                                            <a href="../../product.php?slug=<?= urlencode(isset($product['slug']) ? $product['slug'] : '') ?>" target="_blank"
                                                 class="btn btn-outline-secondary" title="View Live Product Page">
                                                 <i class="fas fa-external-link-alt"></i>
                                             </a>
                                             <button type="button" class="btn btn-outline-danger btn-delete-product"
                                                 data-id="<?= (int) $product['id'] ?>"
-                                                data-name="<?= htmlspecialchars($product['name'] ?? '') ?>" title="Delete Product">
+                                                data-name="<?= htmlspecialchars(isset($product['name']) ? $product['name'] : '') ?>" title="Delete Product">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                     </td>
+
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
