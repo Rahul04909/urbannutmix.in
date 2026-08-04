@@ -115,7 +115,7 @@ function build_page_url(int $targetPage, string $q = '', int $catId = 0, int $pe
     return 'manage-products.php?' . http_build_query($query);
 }
 
-// Helper function to safely get product thumbnail URL with fallbacks
+// Helper function to safely get product thumbnail URL with fallbacks (PHP 7.x/8.x compatible)
 function get_product_thumbnail_url(array $product): string {
     $img = trim($product['image'] ?? '');
     $name = strtolower(trim($product['name'] ?? ''));
@@ -138,17 +138,17 @@ function get_product_thumbnail_url(array $product): string {
         }
     }
 
-    // Smart fallback by keyword from existing hero banner images
-    if (str_contains($name, 'almond') || str_contains($slug, 'almond') || str_contains($name, 'badam')) {
+    // Compatible strpos check for PHP 7.x and PHP 8.x
+    if (strpos($name, 'almond') !== false || strpos($slug, 'almond') !== false || strpos($name, 'badam') !== false) {
         return '../../assets/images/hero-banners/almonds.png';
     }
-    if (str_contains($name, 'cashew') || str_contains($slug, 'cashew') || str_contains($name, 'kaju')) {
+    if (strpos($name, 'cashew') !== false || strpos($slug, 'cashew') !== false || strpos($name, 'kaju') !== false) {
         return '../../assets/images/hero-banners/cashews.png';
     }
-    if (str_contains($name, 'pista') || str_contains($slug, 'pista') || str_contains($name, 'pistachio')) {
+    if (strpos($name, 'pista') !== false || strpos($slug, 'pista') !== false || strpos($name, 'pistachio') !== false) {
         return '../../assets/images/hero-banners/pista.png';
     }
-    if (str_contains($name, 'raisin') || str_contains($slug, 'raisin') || str_contains($name, 'kishmish')) {
+    if (strpos($name, 'raisin') !== false || strpos($slug, 'raisin') !== false || strpos($name, 'kishmish') !== false) {
         return '../../assets/images/hero-banners/raisins.png';
     }
 
