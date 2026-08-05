@@ -3,6 +3,14 @@
  * UrbanNutMix - Interactive & Mobile Responsive Header Component
  */
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$cart_count = 0;
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    $cart_count = array_sum($_SESSION['cart']);
+}
+
 // Calculate base URL dynamically to handle subfolders (e.g. localhost/urbannutmix.in/)
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 $domain = $_SERVER['HTTP_HOST'];
@@ -164,7 +172,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <path d="M16 10a4 4 0 0 1-8 0"></path>
                     </svg>
-                    <span class="unm-cart-badge">0</span>
+                    <span class="unm-cart-badge"><?php echo $cart_count; ?></span>
                 </a>
 
                 <!-- Hamburger (Mobile Only) -->

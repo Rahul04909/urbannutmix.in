@@ -739,17 +739,58 @@ function setRating(r) {
 
 function addToCart(productId) {
     const qty = parseInt(document.getElementById('pdpQtyInput').value) || 1;
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            icon: 'success',
-            title: 'Added to Cart!',
-            text: 'Product added to your cart successfully.',
-            confirmButtonColor: '#cf6e0c',
-            timer: 2000
-        });
-    } else {
-        alert('Added to cart!');
-    }
+    fetch('cart.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            action: 'add_ajax',
+            product_id: productId,
+            qty: qty
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("HTTP error " + res.status);
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.unm-cart-badge').forEach(badge => {
+                badge.textContent = data.cart_count;
+                badge.style.transform = 'scale(1.3)';
+                setTimeout(() => badge.style.transform = '', 300);
+            });
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Added to Cart!',
+                    text: data.message,
+                    confirmButtonColor: '#cf6e0c',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert('Added to cart!');
+            }
+        } else {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Stock Alert',
+                    text: data.message,
+                    confirmButtonColor: '#cf6e0c'
+                });
+            } else {
+                alert(data.message);
+            }
+        }
+    })
+    .catch(err => {
+        console.error("AJAX add to cart failed: ", err);
+    });
 }
 
 function buyNow(productId) {

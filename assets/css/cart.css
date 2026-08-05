@@ -1,0 +1,528 @@
+/* assets/css/cart.css - Premium Shopping Cart Styling */
+
+:root {
+    --primary-color: #cf6e0c;
+    --primary-dark: #b05c08;
+    --accent-color: #28a745;
+    --bg-light: #faf8f5;
+    --card-border: #f0ebe4;
+    --text-main: #2d2620;
+    --text-muted: #827870;
+    --shadow-subtle: 0 4px 20px rgba(45, 38, 32, 0.05);
+    --shadow-hover: 0 12px 30px rgba(45, 38, 32, 0.12);
+}
+
+.unm-cart-wrapper {
+    background-color: var(--bg-light);
+    padding: 50px 0;
+    min-height: 70vh;
+}
+
+.unm-cart-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header & Checkout Progress Tracker */
+.unm-cart-header-zone {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ebdccb;
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.unm-cart-page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.unm-checkout-steps {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.unm-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+}
+
+.unm-step.active {
+    opacity: 1;
+}
+
+.unm-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.unm-step.active .unm-step-num {
+    background-color: var(--primary-color);
+}
+
+.unm-step-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.unm-step-line {
+    width: 40px;
+    height: 2px;
+    background-color: #cbd5e1;
+}
+
+/* Empty State */
+.unm-cart-empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-subtle);
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+.unm-cart-empty-icon {
+    color: var(--text-muted);
+    margin-bottom: 24px;
+}
+
+.unm-cart-empty-state h2 {
+    font-size: 1.6rem;
+    color: var(--text-main);
+    margin-bottom: 12px;
+}
+
+.unm-cart-empty-state p {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+}
+
+.unm-cart-empty-btn {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    text-decoration: none;
+    padding: 14px 35px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-block;
+    transition: background-color 0.2s;
+    box-shadow: 0 4px 12px rgba(207, 110, 12, 0.2);
+}
+
+.unm-cart-empty-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Cart Grid Layout */
+.unm-cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 40px;
+    align-items: start;
+}
+
+/* Table styling */
+.unm-cart-table-card {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-subtle);
+}
+
+.unm-cart-table {
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+.unm-cart-table th {
+    background-color: #fcfbfa;
+    border-bottom: 1px solid var(--card-border);
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.unm-cart-row {
+    transition: all 0.3s;
+}
+
+.unm-cart-row.updating {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.unm-cart-row td {
+    padding: 24px 20px;
+    border-bottom: 1px solid #faf6f0;
+}
+
+.unm-cart-item-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.unm-cart-item-img {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.unm-cart-item-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.unm-cart-item-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.unm-cart-item-name a {
+    color: var(--text-main);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.unm-cart-item-name a:hover {
+    color: var(--primary-color);
+}
+
+.unm-cart-item-category {
+    font-size: 0.75rem;
+    align-self: start;
+}
+
+/* Quantity selector */
+.unm-cart-qty-picker {
+    display: inline-flex;
+    border: 1px solid #dcd3c9;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #ffffff;
+    align-items: center;
+}
+
+.unm-cart-qty-btn {
+    border: none;
+    background: none;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    outline: none;
+}
+
+.unm-cart-qty-btn:hover {
+    background-color: #faf6f0;
+    color: var(--primary-color);
+}
+
+.unm-cart-qty-input {
+    width: 40px;
+    border: none;
+    border-left: 1px solid #ebdccb;
+    border-right: 1px solid #ebdccb;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    outline: none;
+    padding: 0;
+}
+
+/* Remove trash can */
+.unm-cart-remove-btn {
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 4px;
+}
+
+.unm-cart-remove-btn:hover {
+    color: #ef4444;
+}
+
+/* Actions footer */
+.unm-cart-actions-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+}
+
+.unm-cart-back-btn {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.unm-cart-back-btn:hover {
+    color: var(--primary-color);
+}
+
+/* Sidebar Totals Card */
+.unm-cart-summary-card {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow-subtle);
+    position: sticky;
+    top: 100px;
+}
+
+.unm-summary-card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 24px;
+    border-bottom: 2px solid #ebdccb;
+    padding-bottom: 12px;
+}
+
+.unm-summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+}
+
+.unm-summary-row.grand-total-row {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Promo Code Box */
+.unm-promo-box {
+    background-color: #faf6f0;
+    border: 1px dashed #ebdccb;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.unm-promo-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.unm-promo-input {
+    flex: 1;
+    border: 1px solid #dcd3c9;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    outline: none;
+    background-color: #ffffff;
+}
+
+.unm-promo-input:focus {
+    border-color: var(--primary-color);
+}
+
+.unm-promo-apply-btn {
+    background-color: var(--text-main);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 0 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.unm-promo-apply-btn:hover {
+    background-color: #000000;
+}
+
+.unm-promo-applied-tag {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #15803d;
+    width: 100%;
+}
+
+.unm-promo-remove-link {
+    color: #b91c1c;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.unm-promo-remove-link:hover {
+    text-decoration: underline;
+}
+
+/* Free Shipping Meter Box */
+.unm-free-ship-meter {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* Checkout Button */
+.unm-checkout-btn {
+    width: 100%;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(207, 110, 12, 0.25);
+}
+
+.unm-checkout-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.unm-checkout-btn:active {
+    transform: translateY(0);
+}
+
+/* --- MOBILE RESPONSIVE ADAPTATIONS --- */
+@media (max-width: 991px) {
+    .unm-cart-layout {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .unm-cart-sidebar {
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 767px) {
+    .unm-cart-header-zone {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .unm-checkout-steps {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .unm-step-line {
+        flex: 1;
+        width: auto;
+    }
+
+    .unm-cart-row td {
+        padding: 16px 12px;
+    }
+
+    .unm-cart-item-img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .unm-cart-item-name {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .unm-cart-page-title {
+        font-size: 1.8rem;
+    }
+
+    .unm-cart-table th {
+        padding: 12px 10px;
+        font-size: 0.75rem;
+    }
+
+    .unm-cart-table th:nth-child(2),
+    .unm-cart-table td:nth-child(2) {
+        display: none; /* Hide unit price column on small mobile, keep total */
+    }
+
+    .unm-cart-row td {
+        padding: 12px 8px;
+    }
+
+    .unm-cart-item-img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .unm-cart-item-desc {
+        gap: 2px;
+    }
+
+    .unm-cart-item-name {
+        font-size: 0.85rem;
+    }
+
+    .unm-cart-qty-picker {
+        border-radius: 6px;
+    }
+
+    .unm-cart-qty-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 0.85rem;
+    }
+
+    .unm-cart-qty-input {
+        width: 30px;
+        font-size: 0.8rem;
+    }
+
+    .unm-cart-remove-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
