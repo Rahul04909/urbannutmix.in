@@ -1,7 +1,7 @@
 <?php
 /**
- * UrbanNutMix - Premium Shopping Cart Page
- * Features: Dynamic cart items list, AJAX real-time subtotal updates, Coupon discount code support, Progress tracker
+ * UrbanNutMix - Premium Shopping Cart Page (FirstCry Redesign)
+ * Features: Dynamic cart items list, AJAX real-time updates, FirstCry UI layouts, and bottom recommendations.
  */
 
 require_once __DIR__ . '/admin/config/database.php';
@@ -25,7 +25,7 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
     // AJAX Add to Cart
     if ($action === 'add_ajax') {
         header('Content-Type: application/json');
-        $productId = (int)($_POST['product_id'] ?? 0);
+        $productId = (int)$_POST['product_id'];
         $qty = (int)($_POST['qty'] ?? 1);
         if ($qty < 1) $qty = 1;
 
@@ -70,7 +70,7 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
     // AJAX Update Item Quantity
     if ($action === 'update_ajax') {
         header('Content-Type: application/json');
-        $productId = (int)($_POST['product_id'] ?? 0);
+        $productId = (int)$_POST['product_id'];
         $qty = (int)($_POST['qty'] ?? 1);
         $warning = null;
 
@@ -105,10 +105,9 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
                     }
                 }
 
-                $coupon = $_SESSION['coupon'] ?? '';
-                $discount = ($coupon === 'NUTMIX10') ? $subtotal * 0.10 : 0.0;
+                $discount = 0.0;
                 $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
-                $grandTotal = $subtotal - $discount + $shipping;
+                $grandTotal = $subtotal + $shipping;
 
                 echo json_encode([
                     'success' => true,
@@ -126,41 +125,6 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
         echo json_encode(['success' => false, 'message' => 'Invalid product parameters.']);
         exit;
     }
-
-
-}
-
-// --- Standard REDIRECT Requests Handler (PDP Buy Now / simple link actions) ---
-$addId = (int)($_GET['add'] ?? 0);
-if ($addId > 0) {
-    $qty = (int)($_GET['qty'] ?? 1);
-    if ($qty < 1) $qty = 1;
-
-    $stmt = $pdo->prepare('SELECT id, quantity FROM products WHERE id = :id AND status = "active" LIMIT 1');
-    $stmt->execute(['id' => $addId]);
-    $product = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($product) {
-        $cart = $_SESSION['cart'] ?? [];
-        $currentQty = $cart[$addId] ?? 0;
-        $newQty = $currentQty + $qty;
-        if ($newQty > (float)$product['quantity']) {
-            $newQty = (float)$product['quantity'];
-        }
-        $cart[$addId] = $newQty;
-        $_SESSION['cart'] = $cart;
-    }
-    header('Location: cart.php');
-    exit;
-}
-
-$removeId = (int)($_GET['remove'] ?? 0);
-if ($removeId > 0) {
-    if (isset($_SESSION['cart'][$removeId])) {
-        unset($_SESSION['cart'][$removeId]);
-    }
-    header('Location: cart.php');
-    exit;
 }
 
 // Prepare Cart List
@@ -203,6 +167,22 @@ $discount = 0.0;
 $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
 $grandTotal = $subtotal + $shipping;
 
+// Fetch Recommended Products (Trending Items slider at the bottom)
+$recProducts = [];
+try {
+    $recStmt = $pdo->prepare(
+        "SELECT p.id, p.name, p.slug, p.image, p.price, p.mrp, p.unit, p.quantity 
+         FROM products p 
+         WHERE p.status = 'active' 
+         ORDER BY p.id DESC 
+         LIMIT 5"
+    );
+    $recStmt->execute();
+    $recProducts = $recStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (\Throwable $e) {
+    error_log("Failed to fetch recommended items: " . $e->getMessage());
+}
+
 // Resolve product image source path
 if (!function_exists('get_product_img_src')) {
     function get_product_img_src(?string $imgName): string {
@@ -223,7 +203,7 @@ include_once 'includes/header.php';
 <main class="unm-cart-wrapper">
     <div class="unm-cart-container">
         
-        <!-- Cart Header & Progress Steps Banner -->
+        <!-- Cart Header & Progress Tracker -->
         <div class="unm-cart-header-zone">
             <h1 class="unm-cart-page-title">Shopping Cart</h1>
             
@@ -249,144 +229,251 @@ include_once 'includes/header.php';
             <!-- Empty Cart State -->
             <div class="unm-cart-empty-state">
                 <div class="unm-cart-empty-icon">
-                    <svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
                 </div>
                 <h2>Your Shopping Cart is Empty</h2>
-                <p>Add some premium nuts, seeds, dry fruits, or diwali hampers to get started!</p>
+                <p>Add some premium nuts, seeds, dry fruits, or hampers to get started!</p>
                 <a href="shop.php" class="unm-cart-empty-btn">Continue Shopping</a>
             </div>
         <?php else: ?>
             <!-- Cart Layout Grid -->
             <div class="unm-cart-layout">
                 
-                <!-- Left: Items list -->
+                <!-- Left Column: Pincode Check & Items list -->
                 <div class="unm-cart-main">
-                    <div class="unm-cart-table-card">
-                        <div class="table-responsive">
-                            <table class="table unm-cart-table">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th class="text-center" style="width:120px;">Price</th>
-                                        <th class="text-center" style="width:140px;">Quantity</th>
-                                        <th class="text-end" style="width:120px;">Total</th>
-                                        <th class="text-center" style="width:60px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($cartItems as $item): 
-                                        $imgUrl = get_product_img_src($item['image']);
-                                    ?>
-                                        <tr class="unm-cart-row" data-product-id="<?= $item['id'] ?>">
-                                            <!-- Product Details -->
-                                            <td>
-                                                <div class="unm-cart-item-info">
-                                                    <img src="<?= $imgUrl ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="unm-cart-item-img">
-                                                    <div class="unm-cart-item-desc">
-                                                        <h3 class="unm-cart-item-name">
-                                                            <a href="product.php?slug=<?= urlencode($item['slug']) ?>"><?= htmlspecialchars($item['name']) ?></a>
-                                                        </h3>
-                                                        <span class="unm-cart-item-category badge bg-light text-dark border"><?= htmlspecialchars($item['category_name'] ?? 'Dry Fruits') ?></span>
-                                                        <span class="unm-cart-item-unit ms-2 text-muted small"><?= htmlspecialchars(rtrim(rtrim(number_format((float)$item['quantity'], 2), '0'), '.') . ' ' . $item['unit']) ?></span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            
-                                            <!-- Unit Price -->
-                                            <td class="text-center align-middle font-monospace fw-semibold">
-                                                ₹<?= number_format((float)$item['price'], 2) ?>
-                                            </td>
-                                            
-                                            <!-- Quantity selector controls -->
-                                            <td class="text-center align-middle">
-                                                <div class="unm-cart-qty-picker">
-                                                    <button type="button" class="unm-cart-qty-btn" onclick="updateCartQty(<?= $item['id'] ?>, -1)">&minus;</button>
-                                                    <input type="number" class="unm-cart-qty-input" id="qtyInput_<?= $item['id'] ?>" value="<?= $item['cart_qty'] ?>" readonly>
-                                                    <button type="button" class="unm-cart-qty-btn" onclick="updateCartQty(<?= $item['id'] ?>, 1)">&plus;</button>
-                                                </div>
-                                            </td>
-                                            
-                                            <!-- Item Subtotal -->
-                                            <td class="text-end align-middle font-monospace fw-bold text-dark" id="itemSubtotal_<?= $item['id'] ?>" data-unit-price="<?= $item['price'] ?>">
-                                                ₹<?= number_format($item['item_subtotal'], 2) ?>
-                                            </td>
-                                            
-                                            <!-- Remove button -->
-                                            <td class="text-center align-middle">
-                                                <button type="button" class="unm-cart-remove-btn" onclick="removeCartItem(<?= $item['id'] ?>)" aria-label="Remove item">
-                                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                     
-                    <div class="unm-cart-actions-footer">
-                        <a href="shop.php" class="unm-cart-back-btn">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 5px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                            Continue Shopping
-                        </a>
+                    <!-- Pincode Check Card -->
+                    <div class="unm-pincode-card">
+                        <span class="pincode-label">
+                            <i class="fas fa-map-marker-alt"></i> Delivery Pincode:
+                        </span>
+                        <div class="pincode-input-group">
+                            <input type="text" id="pincodeCheckInput" placeholder="Enter Pincode" class="pincode-input" maxlength="6">
+                            <button type="button" class="pincode-btn" onclick="checkDeliveryPincode()">Apply</button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Right: Summary Sidebar -->
-                <div class="unm-cart-sidebar">
-                    <div class="unm-cart-summary-card">
-                        <h2 class="unm-summary-card-title">Order Summary</h2>
+                    <!-- Items container card -->
+                    <div class="unm-cart-items-card">
                         
-                        <div class="unm-summary-row">
-                            <span class="text-muted">Subtotal</span>
-                            <span class="font-monospace fw-semibold text-dark" id="summarySubtotal">₹<?= number_format($subtotal, 2) ?></span>
-                        </div>
-                        
-
-
-                        <div class="unm-summary-row">
-                            <span class="text-muted">Shipping Charges</span>
-                            <span class="font-monospace fw-semibold text-dark" id="summaryShipping">
-                                <?= $shipping > 0 ? '₹' . number_format($shipping, 2) : '<span class="text-success fw-bold">FREE</span>' ?>
-                            </span>
+                        <!-- Tabs line -->
+                        <div class="unm-cart-tabs-header">
+                            <div class="unm-cart-tab active">Shopping Cart (<?= array_sum($cart) ?>)</div>
+                            <div class="unm-cart-tab">My Shortlist</div>
                         </div>
 
-                        <hr class="my-3" style="border-color: #ebdccb;">
+                        <!-- Items list -->
+                        <?php foreach ($cartItems as $item): 
+                            $imgUrl = get_product_img_src($item['image']);
+                            $discountPct = ($item['mrp'] > $item['price']) ? (int)round((($item['mrp'] - $item['price']) / $item['mrp']) * 100) : 0;
+                        ?>
+                            <div class="unm-cart-row" data-product-id="<?= $item['id'] ?>">
+                                <!-- Image -->
+                                <div class="unm-cart-row-img-wrap">
+                                    <img src="<?= $imgUrl ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="unm-cart-row-img">
+                                </div>
 
-                        <div class="unm-summary-row grand-total-row">
-                            <span class="fw-bold text-dark fs-5">Grand Total</span>
-                            <span class="font-monospace fw-bold text-primary fs-5" id="summaryGrandTotal">₹<?= number_format($grandTotal, 2) ?></span>
-                        </div>
-                        
-                        <div class="unm-free-ship-meter">
-                            <span class="small text-muted" id="shipMeterText">
-                                <?php if ($subtotal >= 500): ?>
-                                    🎉 You qualify for <strong>FREE Express Shipping</strong>!
-                                <?php else: ?>
-                                    Add <strong>₹<?= number_format(500 - $subtotal, 2) ?></strong> more to get <strong>FREE Shipping</strong>!
-                                <?php endif; ?>
-                            </span>
-                        </div>
+                                <!-- Right layout column -->
+                                <div class="unm-cart-row-content">
+                                    
+                                    <!-- Left details -->
+                                    <div class="unm-cart-row-details">
+                                        <h3 class="unm-cart-row-name">
+                                            <a href="product.php?slug=<?= urlencode($item['slug']) ?>"><?= htmlspecialchars($item['name']) ?></a>
+                                        </h3>
+                                        <span class="unm-cart-row-category"><?= htmlspecialchars($item['category_name'] ?? 'Dry Fruits') ?></span>
+                                        <span class="unm-cart-row-unit">Pack Size: <?= htmlspecialchars(rtrim(rtrim(number_format((float)$item['quantity'], 2), '0'), '.') . ' ' . $item['unit']) ?></span>
+                                        
+                                        <!-- Quantity picker small -->
+                                        <div class="unm-cart-row-qty-box">
+                                            <span class="unm-cart-row-qty-label">Qty:</span>
+                                            <div class="unm-qty-picker-small">
+                                                <button type="button" class="unm-qty-btn-small" onclick="updateCartQty(<?= $item['id'] ?>, -1)">&minus;</button>
+                                                <input type="number" class="unm-qty-input-small" id="qtyInput_<?= $item['id'] ?>" value="<?= $item['cart_qty'] ?>" readonly>
+                                                <button type="button" class="unm-qty-btn-small" onclick="updateCartQty(<?= $item['id'] ?>, 1)">&plus;</button>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                        <button type="button" class="unm-checkout-btn" onclick="triggerCheckout()">
-                            Proceed to Checkout
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 8px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                    <!-- Right Pricing -->
+                                    <div class="unm-cart-row-pricing">
+                                        <span class="unm-cart-row-price" id="itemSubtotal_<?= $item['id'] ?>" data-unit-price="<?= $item['price'] ?>">
+                                            ₹<?= number_format($item['item_subtotal'], 2) ?>
+                                        </span>
+                                        <?php if ($discountPct > 0): ?>
+                                            <div class="unm-cart-row-mrp-row">
+                                                <span class="unm-cart-row-mrp">MRP ₹<?= number_format((float)$item['mrp'] * $item['cart_qty'], 2) ?></span>
+                                                <span class="unm-cart-row-discount"><?= $discountPct ?>% OFF</span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Action Links footer row -->
+                                    <div class="unm-cart-row-actions">
+                                        <div class="unm-cart-action-link" onclick="removeCartItem(<?= $item['id'] ?>)">
+                                            <i class="far fa-trash-alt"></i> REMOVE
+                                        </div>
+                                        <div class="unm-cart-action-link">
+                                            <i class="far fa-heart"></i> MOVE TO SHORTLIST
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+
+                    </div>
+
+                    <!-- Bottom Checkout Action Bar -->
+                    <div class="unm-cart-checkout-bar">
+                        <div class="unm-bar-price-box">
+                            Subtotal (<span id="totalItemsCount"><?= array_sum($cart) ?></span> Items): 
+                            <strong id="barGrandTotal">₹<?= number_format($subtotal, 2) ?></strong>
+                        </div>
+                        <button type="button" class="unm-btn-place-order" onclick="triggerCheckout()">
+                            PROCEED TO CHECKOUT
                         </button>
                     </div>
+
+                </div>
+
+                <!-- Right Column: Sidebar summaries -->
+                <div class="unm-cart-sidebar">
+                    
+                    <!-- Bank Offers Card -->
+                    <div class="unm-sidebar-card unm-bank-offers-card">
+                        <div class="bank-offer-header">
+                            <i class="fas fa-percent"></i> Payment Offers
+                        </div>
+                        <p class="bank-offer-text">Secure online payment via Razorpay. Pay via cards, UPI, or Netbanking securely.</p>
+                    </div>
+
+                    <!-- Shipping progress announcements -->
+                    <div class="unm-meter-card" id="shipProgressBanner">
+                        <i class="fas fa-truck"></i>
+                        <span id="shipProgressText">
+                            <?php if ($subtotal >= 500): ?>
+                                You qualify for <strong>FREE Express Shipping</strong>!
+                            <?php else: ?>
+                                Add <strong>₹<?= number_format(500 - $subtotal, 2) ?></strong> more for <strong>FREE Shipping</strong>!
+                            <?php endif; ?>
+                        </span>
+                    </div>
+
+                    <!-- Payment Information summary sheet -->
+                    <div class="unm-sidebar-card">
+                        <h3 class="unm-payment-title">Payment Information</h3>
+                        
+                        <div class="unm-payment-row">
+                            <span>Value of Product(s)</span>
+                            <span id="summarySubtotal" class="font-monospace fw-semibold">₹<?= number_format($subtotal, 2) ?></span>
+                        </div>
+
+                        <div class="unm-payment-row">
+                            <span>Shipping (+)</span>
+                            <span id="summaryShipping" class="font-monospace fw-semibold">
+                                <?= $shipping > 0 ? '₹' . number_format($shipping, 2) : 'FREE' ?>
+                            </span>
+                        </div>
+
+                        <div class="unm-payment-row grand-total">
+                            <span>Final Payment</span>
+                            <span id="summaryGrandTotal" class="font-monospace">₹<?= number_format($grandTotal, 2) ?></span>
+                        </div>
+                    </div>
+
+                    <!-- Trust Cards -->
+                    <div class="unm-sidebar-card">
+                        <div class="unm-trust-bar">
+                            <div class="unm-trust-item">
+                                <i class="fas fa-sync-alt"></i>
+                                Easy Returns
+                            </div>
+                            <div class="unm-trust-item">
+                                <i class="fas fa-shield-alt"></i>
+                                Secure Pay
+                            </div>
+                            <div class="unm-trust-item">
+                                <i class="fas fa-certificate"></i>
+                                Authentic
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
+
+            <!-- RECOMMENDED: Trending Items grid -->
+            <?php if (!empty($recProducts)): ?>
+                <div class="unm-trending-section">
+                    <h2 class="unm-trending-title">Trending Items</h2>
+                    
+                    <div class="unm-trending-grid">
+                        <?php foreach ($recProducts as $p): 
+                            $rImg = get_product_img_src($p['image']);
+                            $rDiscount = ($p['mrp'] > $p['price']) ? (int)round((($p['mrp'] - $p['price']) / $p['mrp']) * 100) : 0;
+                        ?>
+                            <a href="product.php?slug=<?= urlencode($p['slug']) ?>" class="unm-trending-card">
+                                <img src="<?= $rImg ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="unm-trending-img">
+                                <div class="unm-trending-info">
+                                    <h4 class="unm-trending-name"><?= htmlspecialchars($p['name']) ?></h4>
+                                    <span class="unm-trending-unit">Pack Size: <?= htmlspecialchars(rtrim(rtrim(number_format((float)$p['quantity'], 2), '0'), '.') . ' ' . $p['unit']) ?></span>
+                                    
+                                    <div class="unm-trending-pricing">
+                                        <span class="unm-trending-price">₹<?= number_format((float)$p['price'], 2) ?></span>
+                                        <?php if ($rDiscount > 0): ?>
+                                            <span class="unm-trending-mrp">₹<?= number_format((float)$p['mrp'], 2) ?></span>
+                                            <span class="unm-trending-discount"><?= $rDiscount ?>% OFF</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
         <?php endif; ?>
 
     </div>
 </main>
 
-<!-- Scripts for AJAX Cart items management -->
 <script>
+// Pincode client mock check
+function checkDeliveryPincode() {
+    const pincode = document.getElementById('pincodeCheckInput').value.trim();
+    if (!/^[0-9]{6}$/.test(pincode)) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Pincode',
+                text: 'Please enter a valid 6-digit numeric postal code.',
+                confirmButtonColor: '#ff5a3a'
+            });
+        } else {
+            alert('Please enter a valid 6-digit pincode.');
+        }
+        return;
+    }
+    
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Delivery Available!',
+            text: 'Express delivery is active for pincode ' + pincode + '. Delivery within 2-3 working days.',
+            confirmButtonColor: '#ff5a3a'
+        });
+    } else {
+        alert('Delivery available for pincode ' + pincode + '!');
+    }
+}
+
+// AJAX update quantities
 function updateCartQty(productId, delta) {
     const input = document.getElementById('qtyInput_' + productId);
     if (!input) return;
@@ -398,7 +485,6 @@ function updateCartQty(productId, delta) {
         return;
     }
 
-    // Disable picker buttons temporarily during fetch
     const row = document.querySelector(`.unm-cart-row[data-product-id="${productId}"]`);
     if (row) row.classList.add('updating');
 
@@ -433,7 +519,7 @@ function updateCartQty(productId, delta) {
                     icon: 'warning',
                     title: 'Stock Limit Reached',
                     text: data.warning,
-                    confirmButtonColor: '#cf6e0c'
+                    confirmButtonColor: '#ff5a3a'
                 });
             }
 
@@ -441,6 +527,9 @@ function updateCartQty(productId, delta) {
             document.querySelectorAll('.unm-cart-badge').forEach(badge => {
                 badge.textContent = data.cart_count;
             });
+            
+            const totalItemsCountEl = document.getElementById('totalItemsCount');
+            if (totalItemsCountEl) totalItemsCountEl.textContent = data.cart_count;
 
             // Update Summary Totals
             updateSummarySection(data);
@@ -450,7 +539,7 @@ function updateCartQty(productId, delta) {
                     icon: 'error',
                     title: 'Error',
                     text: data.message,
-                    confirmButtonColor: '#cf6e0c'
+                    confirmButtonColor: '#ff5a3a'
                 });
             }
         }
@@ -478,14 +567,12 @@ function removeCartItem(productId) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Animate and remove row
                 const row = document.querySelector(`.unm-cart-row[data-product-id="${productId}"]`);
                 if (row) {
                     row.style.opacity = '0';
                     row.style.transform = 'translateX(-20px)';
                     setTimeout(() => {
                         row.remove();
-                        // If empty, reload to show empty state
                         if (data.cart_count === 0) {
                             window.location.reload();
                         }
@@ -496,6 +583,9 @@ function removeCartItem(productId) {
                 document.querySelectorAll('.unm-cart-badge').forEach(badge => {
                     badge.textContent = data.cart_count;
                 });
+                
+                const totalItemsCountEl = document.getElementById('totalItemsCount');
+                if (totalItemsCountEl) totalItemsCountEl.textContent = data.cart_count;
 
                 // Update Summary
                 updateSummarySection(data);
@@ -512,7 +602,7 @@ function removeCartItem(productId) {
             text: 'Are you sure you want to remove this product from your shopping cart?',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
+            confirmButtonColor: '#ff5a3a',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Yes, remove it',
             cancelButtonText: 'Cancel'
@@ -528,32 +618,31 @@ function removeCartItem(productId) {
     }
 }
 
-
 function updateSummarySection(data) {
     const subtotalEl = document.getElementById('summarySubtotal');
     if (subtotalEl) subtotalEl.textContent = '₹' + data.subtotal;
 
-    const discountEl = document.getElementById('summaryDiscount');
-    if (discountEl) discountEl.textContent = '-₹' + data.discount;
+    const barGrandTotalEl = document.getElementById('barGrandTotal');
+    if (barGrandTotalEl) barGrandTotalEl.textContent = '₹' + data.subtotal;
 
     const shippingEl = document.getElementById('summaryShipping');
     if (shippingEl) {
         const shipVal = parseFloat(data.shipping) || 0;
-        shippingEl.innerHTML = shipVal > 0 ? '₹' + data.shipping : '<span class="text-success fw-bold">FREE</span>';
+        shippingEl.innerHTML = shipVal > 0 ? '₹' + data.shipping : 'FREE';
     }
 
     const grandTotalEl = document.getElementById('summaryGrandTotal');
     if (grandTotalEl) grandTotalEl.textContent = '₹' + data.grand_total;
 
-    // Update free shipping progress meter text
-    const meterEl = document.getElementById('shipMeterText');
-    if (meterEl) {
+    // Update free shipping meter
+    const bannerEl = document.getElementById('shipProgressText');
+    if (bannerEl) {
         const subNumeric = parseFloat(data.subtotal.replace(/,/g, '')) || 0;
         if (subNumeric >= 500) {
-            meterEl.innerHTML = '🎉 You qualify for <strong>FREE Express Shipping</strong>!';
+            bannerEl.innerHTML = 'You qualify for <strong>FREE Express Shipping</strong>!';
         } else {
             const needed = (500 - subNumeric).toFixed(2);
-            meterEl.innerHTML = `Add <strong>₹${needed}</strong> more to get <strong>FREE Shipping</strong>!`;
+            bannerEl.innerHTML = `Add <strong>₹${needed}</strong> more for <strong>FREE Shipping</strong>!`;
         }
     }
 }

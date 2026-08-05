@@ -311,6 +311,8 @@ if (!function_exists('get_product_img_src')) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Local Cart Stylesheet -->
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/cart.css">
+    <!-- Razorpay Payment Gateway SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
     <style>
         :root {
