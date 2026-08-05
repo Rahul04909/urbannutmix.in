@@ -177,12 +177,6 @@ foreach ($productSections as $secIdx => $section):
                         <span class="unm-product-badge-unit"><?php echo htmlspecialchars($bunit); ?></span>
                     </div>
 
-                    <!-- Discount Badge -->
-                    <?php if ($hasMrp && $discount >= 5): ?>
-                    <div class="unm-product-discount-badge" aria-hidden="true">
-                        <?php echo $discount; ?>% OFF
-                    </div>
-                    <?php endif; ?>
                 </div>
 
                 <!-- Card Body -->
@@ -197,6 +191,9 @@ foreach ($productSections as $secIdx => $section):
                         <span class="unm-product-price"><?php echo $priceStr; ?></span>
                         <?php if ($hasMrp): ?>
                         <span class="unm-product-mrp"><?php echo $mrpStr; ?></span>
+                        <?php if ($discount >= 5): ?>
+                        <span class="unm-product-discount-tag"><?php echo $discount; ?>% OFF</span>
+                        <?php endif; ?>
                         <?php endif; ?>
                         <span class="unm-product-tax">(Incl. all taxes)</span>
                     </div>

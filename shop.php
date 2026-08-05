@@ -302,9 +302,6 @@ include_once 'includes/header.php';
                                     <span class="unm-product-badge-num"><?= htmlspecialchars(rtrim(rtrim(number_format((float)$prod['quantity'], 2), '0'), '.')) ?></span>
                                     <span class="unm-product-badge-unit"><?= strtoupper(substr($prod['unit'], 0, 1)) ?></span>
                                 </div>
-                                <?php if ($hasMrp && $discount >= 5): ?>
-                                    <div class="unm-product-discount-tag"><?= $discount ?>% OFF</div>
-                                <?php endif; ?>
                             </div>
                             <div class="unm-product-body">
                                 <p class="unm-product-name">
@@ -316,6 +313,9 @@ include_once 'includes/header.php';
                                     <span class="unm-product-price">&#8377;<?= number_format($price, 2) ?></span>
                                     <?php if ($hasMrp): ?>
                                         <span class="unm-product-mrp">&#8377;<?= number_format($mrp, 2) ?></span>
+                                        <?php if ($discount >= 5): ?>
+                                            <span class="unm-product-discount-tag"><?= $discount ?>% OFF</span>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="unm-product-spacer"></div>

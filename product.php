@@ -646,6 +646,11 @@ include_once 'includes/header.php';
                     $rMrp    = (float)$rp['mrp'];
                     $rHasMrp = $rMrp > $rPrice;
                     $rBg     = $bgPalette[$rIdx % count($bgPalette)];
+                    
+                    $discount = 0;
+                    if ($rHasMrp && $rMrp > 0) {
+                        $discount = (int)round((($rMrp - $rPrice) / $rMrp) * 100);
+                    }
                 ?>
                 <li class="unm-product-card" data-bg="<?php echo $rBg; ?>">
                     <div class="unm-product-img-zone">
@@ -667,6 +672,9 @@ include_once 'includes/header.php';
                             <span class="unm-product-price">&#8377;<?php echo number_format($rPrice, 2); ?></span>
                             <?php if ($rHasMrp): ?>
                             <span class="unm-product-mrp">&#8377;<?php echo number_format($rMrp, 2); ?></span>
+                            <?php if ($discount >= 5): ?>
+                            <span class="unm-product-discount-tag"><?php echo $discount; ?>% OFF</span>
+                            <?php endif; ?>
                             <?php endif; ?>
                         </div>
                         <div class="unm-product-spacer"></div>
