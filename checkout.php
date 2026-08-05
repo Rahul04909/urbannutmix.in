@@ -22,8 +22,22 @@ $extra_css = ['assets/css/cart.css']; // Reuses the checkout trackers and summar
 
 try {
     $pdo = Database::getConnection();
+    
+    // Self-healing database schema: Ensure Razorpay columns exist on current database connection
+    $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_order_id'");
+    if (!$stmt->fetch()) {
+        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_order_id` VARCHAR(100) DEFAULT NULL AFTER `coupon_code`");
+    }
+    $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_payment_id'");
+    if (!$stmt->fetch()) {
+        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_payment_id` VARCHAR(100) DEFAULT NULL AFTER `razorpay_order_id`");
+    }
+    $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_signature'");
+    if (!$stmt->fetch()) {
+        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_signature` VARCHAR(255) DEFAULT NULL AFTER `razorpay_payment_id`");
+    }
 } catch (\Throwable $e) {
-    error_log("Checkout DB Connection Error: " . $e->getMessage());
+    error_log("Checkout DB Connection/Migration Error: " . $e->getMessage());
     die("A connection error occurred. Please try again later.");
 }
 
