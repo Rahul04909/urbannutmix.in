@@ -97,7 +97,7 @@ $address_line2 = '';
 $city = '';
 $state = '';
 $pincode = '';
-$payment_method = 'COD';
+$payment_method = 'Razorpay'; // COD completely removed
 
 $show_razorpay_modal = false;
 $razorpayOrderId = '';
@@ -109,7 +109,7 @@ if (isset($_GET['payment_error'])) {
     $payment_error_msg = Session::get('flash_error', 'Payment verification failed. Please try again.');
     Session::remove('flash_error');
 } elseif (isset($_GET['payment_cancelled'])) {
-    $payment_error_msg = 'Payment was cancelled. You can retry paying or choose Cash on Delivery.';
+    $payment_error_msg = 'Payment was cancelled. You can retry paying to complete your order.';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $city = trim($_POST['city'] ?? '');
     $state = trim($_POST['state'] ?? '');
     $pincode = trim($_POST['pincode'] ?? '');
-    $payment_method = trim($_POST['payment_method'] ?? 'COD');
+    $payment_method = 'Razorpay'; // Cash on Delivery completely disabled
 
     // Validation
     if ($customer_name === '') $errors['customer_name'] = 'Full Name is required';
@@ -238,43 +238,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
 
-            // Route based on payment choice
-            if ($payment_method === 'Razorpay') {
-                // Generate Razorpay Order
-                $api = new Api($_ENV['RAZORPAY_KEY_ID'], $_ENV['RAZORPAY_KEY_SECRET']);
-                $rzOrder = $api->order->create([
-                    'receipt'         => $orderNumber,
-                    'amount'          => (int)round($vGrandTotal * 100), // amount in paise
-                    'currency'        => 'INR',
-                    'payment_capture' => 1
-                ]);
-                
-                $razorpayOrderId = $rzOrder['id'];
-                
-                // Update orders table with the order ID
-                $updateRz = $pdo->prepare("UPDATE orders SET razorpay_order_id = :rz_id WHERE id = :id");
-                $updateRz->execute(['rz_id' => $razorpayOrderId, 'id' => $orderId]);
-                
-                $pdo->commit();
-                $show_razorpay_modal = true;
-            } else {
-                // COD - Complete instantly
-                $pdo->commit();
-                
-                // Clean Cart Sessions
-                unset($_SESSION['cart']);
-                unset($_SESSION['coupon']);
-                
-                // Redirect
-                header("Location: order-complete.php?order_number=" . urlencode($orderNumber));
-                exit;
-            }
+            // Generate Razorpay Order
+            $api = new Api($_ENV['RAZORPAY_KEY_ID'], $_ENV['RAZORPAY_KEY_SECRET']);
+            $rzOrder = $api->order->create([
+                'receipt'         => $orderNumber,
+                'amount'          => (int)round($vGrandTotal * 100), // amount in paise
+                'currency'        => 'INR',
+                'payment_capture' => 1
+            ]);
+            
+            $razorpayOrderId = $rzOrder['id'];
+            
+            // Update orders table with the order ID
+            $updateRz = $pdo->prepare("UPDATE orders SET razorpay_order_id = :rz_id WHERE id = :id");
+            $updateRz->execute(['rz_id' => $razorpayOrderId, 'id' => $orderId]);
+            
+            $pdo->commit();
+            $show_razorpay_modal = true;
 
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            $errors['transaction'] = $e->getMessage();
+            $errors['transaction'] = "Order generation error: " . $e->getMessage();
         }
     }
 }
@@ -295,6 +281,209 @@ if (!function_exists('get_product_img_src')) {
 
 include_once 'includes/header.php';
 ?>
+
+<style>
+/* ──────────────────────────────────────────────────────── */
+/* BRAND SPECIFIC PREMIUM CHECKOUT SYSTEM                   */
+/* ──────────────────────────────────────────────────────── */
+:root {
+    --brand-gold: #cf6e0c;
+    --brand-gold-dark: #b05c08;
+    --brand-cream: #faf8f5;
+    --border-beige: #ebdccb;
+    --text-charcoal: #2d2620;
+    --shadow-premium: 0 10px 40px rgba(45, 38, 32, 0.04);
+}
+
+body {
+    background-color: #fdfcfb;
+}
+
+.unm-cart-wrapper {
+    background-color: #fdfcfb;
+    padding: 50px 0;
+}
+
+.unm-checkout-card {
+    background: #ffffff !important;
+    border: 1px solid var(--border-beige) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-premium) !important;
+    padding: 35px !important;
+}
+
+.checkout-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-charcoal);
+    margin-top: 35px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1.5px solid var(--border-beige);
+    padding-bottom: 10px;
+    letter-spacing: -0.2px;
+}
+
+.checkout-section-title i {
+    color: var(--brand-gold);
+}
+
+/* Custom form labels */
+.form-label {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #827870 !important;
+    margin-bottom: 8px;
+}
+
+/* Input group addon styles */
+.input-group-text {
+    border: 1.5px solid var(--border-beige) !important;
+    border-radius: 12px 0 0 12px !important;
+    background-color: var(--brand-cream) !important;
+    color: #827870;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* Form fields customization */
+.form-control {
+    border: 1.5px solid var(--border-beige) !important;
+    border-radius: 12px !important;
+    background-color: #faf8f5 !important;
+    padding: 13px 18px !important;
+    font-size: 0.95rem !important;
+    color: var(--text-charcoal) !important;
+    transition: all 0.25s ease-in-out !important;
+    box-shadow: none !important;
+}
+
+.form-control.border-start-0 {
+    border-radius: 0 12px 12px 0 !important;
+}
+
+.form-control::placeholder {
+    color: #b0a49b;
+}
+
+.form-control:focus {
+    background-color: #ffffff !important;
+    border-color: var(--brand-gold) !important;
+    box-shadow: 0 0 0 4px rgba(207, 110, 12, 0.08) !important;
+}
+
+/* Invalid validations */
+.form-control.is-invalid {
+    border-color: #ef4444 !important;
+    background-color: #fffbfa !important;
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08) !important;
+}
+
+.invalid-feedback {
+    font-size: 0.8rem;
+    color: #ef4444;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+/* Secure Payment Display Box */
+.checkout-payment-info-box {
+    background-color: #faf6f0;
+    border: 1.5px dashed var(--brand-gold);
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 25px;
+}
+
+.checkout-payment-info-box strong {
+    color: var(--text-charcoal);
+    font-size: 0.95rem;
+}
+
+/* Sidebar Order Details */
+.sidebar-summary-card {
+    background: #ffffff !important;
+    border: 1.5px solid var(--border-beige) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-premium) !important;
+    padding: 30px !important;
+    position: sticky;
+    top: 40px;
+}
+
+/* CTA Checkout Button */
+.btn-pay-now {
+    background: linear-gradient(135deg, var(--brand-gold) 0%, #e67e15 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 18px 24px !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px;
+    color: #ffffff !important;
+    box-shadow: 0 6px 20px rgba(207, 110, 12, 0.22) !important;
+    transition: all 0.25s ease-in-out !important;
+}
+
+.btn-pay-now:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 30px rgba(207, 110, 12, 0.35) !important;
+}
+
+.btn-pay-now:active {
+    transform: translateY(0) !important;
+}
+
+/* Fullscreen Loader Cover Overlay */
+.payment-loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(253, 252, 250, 0.98);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+}
+
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid #ebdccb;
+    border-top: 5px solid var(--brand-gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 24px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader-text {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-charcoal);
+    margin-bottom: 8px;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+.loader-subtext {
+    font-size: 0.95rem;
+    color: #827870;
+}
+</style>
 
 <main class="unm-cart-wrapper">
     <div class="unm-cart-container">
@@ -338,17 +527,17 @@ include_once 'includes/header.php';
             
             <!-- Left: Shipping info form -->
             <div class="unm-cart-main">
-                <div class="card border rounded-4 shadow-sm p-4 p-md-5 bg-white">
+                <div class="unm-checkout-card">
                     <form method="POST" action="checkout.php" id="checkoutForm">
                         
                         <!-- SECTION 1: Contact Details -->
-                        <h3 class="checkout-section-title"><i class="fas fa-user-circle"></i> Contact Information</h3>
+                        <h3 class="checkout-section-title" style="margin-top:0;"><i class="fas fa-user-circle"></i> Contact Information</h3>
                         <div class="row g-3">
                             <!-- Name -->
                             <div class="col-md-6">
                                 <label for="customer_name" class="form-label">Full Name <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-user small"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-user small"></i></span>
                                     <input type="text" class="form-control border-start-0 <?= isset($errors['customer_name']) ? 'is-invalid' : '' ?>" id="customer_name" name="customer_name" value="<?= htmlspecialchars($customer_name) ?>" placeholder="e.g. Rahul Kumar">
                                     <?php if (isset($errors['customer_name'])): ?>
                                         <div class="invalid-feedback d-block w-100"><?= $errors['customer_name'] ?></div>
@@ -360,7 +549,7 @@ include_once 'includes/header.php';
                             <div class="col-md-6">
                                 <label for="customer_email" class="form-label">Email Address <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-envelope small"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-envelope small"></i></span>
                                     <input type="email" class="form-control border-start-0 <?= isset($errors['customer_email']) ? 'is-invalid' : '' ?>" id="customer_email" name="customer_email" value="<?= htmlspecialchars($customer_email) ?>" placeholder="e.g. customer@gmail.com">
                                     <?php if (isset($errors['customer_email'])): ?>
                                         <div class="invalid-feedback d-block w-100"><?= $errors['customer_email'] ?></div>
@@ -372,7 +561,7 @@ include_once 'includes/header.php';
                             <div class="col-md-12">
                                 <label for="customer_mobile" class="form-label">Mobile Number <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-phone small"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-phone small"></i></span>
                                     <input type="text" class="form-control border-start-0 <?= isset($errors['customer_mobile']) ? 'is-invalid' : '' ?>" id="customer_mobile" name="customer_mobile" value="<?= htmlspecialchars($customer_mobile) ?>" placeholder="10-digit mobile number">
                                     <?php if (isset($errors['customer_mobile'])): ?>
                                         <div class="invalid-feedback d-block w-100"><?= $errors['customer_mobile'] ?></div>
@@ -388,7 +577,7 @@ include_once 'includes/header.php';
                             <div class="col-12">
                                 <label for="address_line1" class="form-label">Flat/House No., Building, Street Name <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-home small"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-home small"></i></span>
                                     <input type="text" class="form-control border-start-0 <?= isset($errors['address_line1']) ? 'is-invalid' : '' ?>" id="address_line1" name="address_line1" value="<?= htmlspecialchars($address_line1) ?>" placeholder="Flat/House No., Street Name">
                                     <?php if (isset($errors['address_line1'])): ?>
                                         <div class="invalid-feedback d-block w-100"><?= $errors['address_line1'] ?></div>
@@ -400,7 +589,7 @@ include_once 'includes/header.php';
                             <div class="col-12">
                                 <label for="address_line2" class="form-label">Area, Sector, Locality (Optional)</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-map-signs small"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-map-signs small"></i></span>
                                     <input type="text" class="form-control border-start-0" id="address_line2" name="address_line2" value="<?= htmlspecialchars($address_line2) ?>" placeholder="Area, Sector, Locality">
                                 </div>
                             </div>
@@ -433,32 +622,19 @@ include_once 'includes/header.php';
                             </div>
                         </div>
 
-                        <!-- SECTION 3: Payment Method -->
-                        <h3 class="checkout-section-title"><i class="fas fa-credit-card"></i> Payment Method</h3>
-                        <div class="row g-3">
-                            <div class="col-sm-6">
-                                <div class="border rounded-3 p-3 d-flex align-items-center select-pay-opt">
-                                    <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_cod" value="COD" <?= $payment_method === 'COD' ? 'checked' : '' ?>>
-                                    <label class="form-check-label flex-grow-1" for="pay_cod">
-                                        <strong>Cash on Delivery (COD)</strong>
-                                        <span class="d-block small text-muted">Pay at your doorstep</span>
-                                    </label>
-                                </div>
+                        <!-- SECTION 3: Secure Online Payment Summary -->
+                        <h3 class="checkout-section-title"><i class="fas fa-shield-alt"></i> Secure Payment</h3>
+                        <div class="checkout-payment-info-box">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold"><i class="fas fa-lock text-success me-2"></i> Razorpay Payment Gateway</span>
+                                <span class="badge bg-success text-white px-2.5 py-1">Secure Connection</span>
                             </div>
-                            <div class="col-sm-6">
-                                <div class="border rounded-3 p-3 d-flex align-items-center select-pay-opt">
-                                    <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_rzp" value="Razorpay" <?= $payment_method === 'Razorpay' ? 'checked' : '' ?>>
-                                    <label class="form-check-label flex-grow-1" for="pay_rzp">
-                                        <strong>Online Payment (Razorpay)</strong>
-                                        <span class="d-block small text-muted">Pay via Cards, Netbanking, UPI</span>
-                                    </label>
-                                </div>
-                            </div>
+                            <p class="small text-muted mb-0">Payments are encrypted and processed securely. You can complete your order using Credit/Debit Cards, UPI, Netbanking, or mobile wallets via the secure Razorpay popup.</p>
                         </div>
 
                         <!-- CTA Place Order -->
                         <div class="mt-5 pt-3 border-top">
-                            <button type="submit" class="btn btn-warning w-100 rounded-3 px-5 py-3 fw-bold text-white fs-5 shadow-md">
+                            <button type="submit" class="btn btn-warning btn-pay-now w-100 rounded-3 px-5 py-3 fw-bold text-white fs-5 shadow-md">
                                 <i class="fas fa-lock me-2"></i> Pay &amp; Place Order
                             </button>
                             <div class="text-center mt-3">
@@ -466,7 +642,7 @@ include_once 'includes/header.php';
                             </div>
                             
                             <!-- Trust badges -->
-                            <div class="d-flex justify-content-center align-items-center gap-4 mt-4 pt-3 border-top text-muted small">
+                            <div class="d-flex justify-content-center align-items-center gap-4 mt-4 pt-3 border-top text-muted small flex-wrap">
                                 <div><i class="fas fa-shield-alt text-success me-1"></i> 256-Bit SSL Encryption</div>
                                 <div><i class="fas fa-undo text-success me-1"></i> Easy Return Policy</div>
                                 <div><i class="fas fa-award text-success me-1"></i> 100% Authentic Quality</div>
@@ -478,7 +654,7 @@ include_once 'includes/header.php';
 
             <!-- Right: Order Details items snapshot -->
             <div class="unm-cart-sidebar">
-                <div class="card rounded-4 border-0 p-4 shadow-sm bg-white">
+                <div class="sidebar-summary-card">
                     <h3 class="h5 fw-bold text-dark mb-4 border-bottom pb-2" style="font-family: 'Source Sans Pro', sans-serif;">Order Details</h3>
                     
                     <ul class="list-unstyled p-0 m-0 mb-4 overflow-y-auto" style="max-height: 320px;">
@@ -520,35 +696,15 @@ include_once 'includes/header.php';
     </div>
 </main>
 
-<style>
-.checkout-section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-top: 30px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1.5px solid #ebdccb;
-    padding-bottom: 8px;
-}
-.checkout-section-title i {
-    color: var(--primary-color);
-}
-.input-group-text {
-    border: 1.5px solid #ebdccb !important;
-    border-radius: 10px 0 0 10px !important;
-    background-color: #faf8f5 !important;
-    color: #827870;
-}
-.form-control.border-start-0 {
-    border-radius: 0 10px 10px 0 !important;
-}
-</style>
-
-<!-- ── RAZORPAY MODAL PAYMENT SCRIPT TRIGGERS ───────────────── -->
+<!-- ── RAZORPAY MODAL PAYMENT SCRIPT & LOADER OVERLAY ───────── -->
 <?php if ($show_razorpay_modal): ?>
+    <!-- Fullscreen Payment Loader -->
+    <div class="payment-loader-overlay" id="paymentLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Securing Connection...</div>
+        <div class="loader-subtext">Please do not reload this page or close the window.</div>
+    </div>
+
     <form action="verify-payment.php" method="POST" id="rzpSubmitForm" style="display:none;">
         <input type="hidden" name="razorpay_payment_id" id="rzp_payment_id">
         <input type="hidden" name="razorpay_order_id" id="rzp_order_id" value="<?= htmlspecialchars($razorpayOrderId) ?>">
@@ -579,6 +735,8 @@ include_once 'includes/header.php';
         },
         "modal": {
             "ondismiss": function(){
+                // Remove fullscreen loader and redirect back
+                document.getElementById('paymentLoader').style.display = 'none';
                 window.location.href = "checkout.php?payment_cancelled=1&order_number=<?= htmlspecialchars($orderNumber) ?>";
             }
         }
@@ -595,6 +753,7 @@ include_once 'includes/header.php';
             } catch (err) {
                 console.error("Razorpay open error: ", err);
                 alert("Could not load payment gateway: " + err.message);
+                document.getElementById('paymentLoader').style.display = 'none';
             }
         } else {
             // Retry script detection after 100ms
