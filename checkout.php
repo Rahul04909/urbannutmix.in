@@ -24,20 +24,24 @@ try {
     $pdo = Database::getConnection();
     
     // Self-healing database schema: Ensure Razorpay columns exist on current database connection
-    $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_order_id'");
-    if (!$stmt->fetch()) {
-        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_order_id` VARCHAR(100) DEFAULT NULL AFTER `coupon_code`");
-    }
-    $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_payment_id'");
-    if (!$stmt->fetch()) {
-        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_payment_id` VARCHAR(100) DEFAULT NULL AFTER `razorpay_order_id`");
-    }
-    $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_signature'");
-    if (!$stmt->fetch()) {
-        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_signature` VARCHAR(255) DEFAULT NULL AFTER `razorpay_payment_id`");
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_order_id'");
+        if (!$stmt->fetch()) {
+            $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_order_id` VARCHAR(100) DEFAULT NULL AFTER `coupon_code`");
+        }
+        $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_payment_id'");
+        if (!$stmt->fetch()) {
+            $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_payment_id` VARCHAR(100) DEFAULT NULL AFTER `razorpay_order_id`");
+        }
+        $stmt = $pdo->query("SHOW COLUMNS FROM `orders` LIKE 'razorpay_signature'");
+        if (!$stmt->fetch()) {
+            $pdo->exec("ALTER TABLE `orders` ADD COLUMN `razorpay_signature` VARCHAR(255) DEFAULT NULL AFTER `razorpay_payment_id`");
+        }
+    } catch (\Throwable $migrationError) {
+        error_log("Non-blocking DB Migration Notice: " . $migrationError->getMessage());
     }
 } catch (\Throwable $e) {
-    error_log("Checkout DB Connection/Migration Error: " . $e->getMessage());
+    error_log("Checkout DB Connection Error: " . $e->getMessage());
     die("A connection error occurred. Please try again later.");
 }
 
@@ -234,9 +238,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
 
+            // Route based on payment choice
             if ($payment_method === 'Razorpay') {
                 // Generate Razorpay Order
-                
                 $api = new Api($_ENV['RAZORPAY_KEY_ID'], $_ENV['RAZORPAY_KEY_SECRET']);
                 $rzOrder = $api->order->create([
                     'receipt'         => $orderNumber,
@@ -334,57 +338,77 @@ include_once 'includes/header.php';
             
             <!-- Left: Shipping info form -->
             <div class="unm-cart-main">
-                <div class="card border border-2 border-light rounded-4 shadow-sm p-4 bg-white">
-                    <h2 class="h4 text-dark fw-bold mb-4" style="font-family: 'Source Sans Pro', sans-serif;">Delivery Details</h2>
-                    
+                <div class="card border rounded-4 shadow-sm p-4 p-md-5 bg-white">
                     <form method="POST" action="checkout.php" id="checkoutForm">
+                        
+                        <!-- SECTION 1: Contact Details -->
+                        <h3 class="checkout-section-title"><i class="fas fa-user-circle"></i> Contact Information</h3>
                         <div class="row g-3">
                             <!-- Name -->
                             <div class="col-md-6">
-                                <label for="customer_name" class="form-label small fw-semibold text-muted">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 <?= isset($errors['customer_name']) ? 'is-invalid' : '' ?>" id="customer_name" name="customer_name" value="<?= htmlspecialchars($customer_name) ?>" placeholder="e.g. Rahul Kumar">
-                                <?php if (isset($errors['customer_name'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['customer_name'] ?></div>
-                                <?php endif; ?>
+                                <label for="customer_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-user small"></i></span>
+                                    <input type="text" class="form-control border-start-0 <?= isset($errors['customer_name']) ? 'is-invalid' : '' ?>" id="customer_name" name="customer_name" value="<?= htmlspecialchars($customer_name) ?>" placeholder="e.g. Rahul Kumar">
+                                    <?php if (isset($errors['customer_name'])): ?>
+                                        <div class="invalid-feedback d-block w-100"><?= $errors['customer_name'] ?></div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             
                             <!-- Email -->
                             <div class="col-md-6">
-                                <label for="customer_email" class="form-label small fw-semibold text-muted">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control rounded-3 <?= isset($errors['customer_email']) ? 'is-invalid' : '' ?>" id="customer_email" name="customer_email" value="<?= htmlspecialchars($customer_email) ?>" placeholder="e.g. customer@gmail.com">
-                                <?php if (isset($errors['customer_email'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['customer_email'] ?></div>
-                                <?php endif; ?>
+                                <label for="customer_email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-envelope small"></i></span>
+                                    <input type="email" class="form-control border-start-0 <?= isset($errors['customer_email']) ? 'is-invalid' : '' ?>" id="customer_email" name="customer_email" value="<?= htmlspecialchars($customer_email) ?>" placeholder="e.g. customer@gmail.com">
+                                    <?php if (isset($errors['customer_email'])): ?>
+                                        <div class="invalid-feedback d-block w-100"><?= $errors['customer_email'] ?></div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             
                             <!-- Phone -->
                             <div class="col-md-12">
-                                <label for="customer_mobile" class="form-label small fw-semibold text-muted">Mobile Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 <?= isset($errors['customer_mobile']) ? 'is-invalid' : '' ?>" id="customer_mobile" name="customer_mobile" value="<?= htmlspecialchars($customer_mobile) ?>" placeholder="10-digit mobile number">
-                                <?php if (isset($errors['customer_mobile'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['customer_mobile'] ?></div>
-                                <?php endif; ?>
+                                <label for="customer_mobile" class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-phone small"></i></span>
+                                    <input type="text" class="form-control border-start-0 <?= isset($errors['customer_mobile']) ? 'is-invalid' : '' ?>" id="customer_mobile" name="customer_mobile" value="<?= htmlspecialchars($customer_mobile) ?>" placeholder="10-digit mobile number">
+                                    <?php if (isset($errors['customer_mobile'])): ?>
+                                        <div class="invalid-feedback d-block w-100"><?= $errors['customer_mobile'] ?></div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
+                        </div>
 
+                        <!-- SECTION 2: Shipping Address -->
+                        <h3 class="checkout-section-title"><i class="fas fa-map-marker-alt"></i> Shipping Address</h3>
+                        <div class="row g-3">
                             <!-- Address line 1 -->
                             <div class="col-12">
-                                <label for="address_line1" class="form-label small fw-semibold text-muted">Flat/House No., Building, Street Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 <?= isset($errors['address_line1']) ? 'is-invalid' : '' ?>" id="address_line1" name="address_line1" value="<?= htmlspecialchars($address_line1) ?>" placeholder="Address Line 1">
-                                <?php if (isset($errors['address_line1'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['address_line1'] ?></div>
-                                <?php endif; ?>
+                                <label for="address_line1" class="form-label">Flat/House No., Building, Street Name <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-home small"></i></span>
+                                    <input type="text" class="form-control border-start-0 <?= isset($errors['address_line1']) ? 'is-invalid' : '' ?>" id="address_line1" name="address_line1" value="<?= htmlspecialchars($address_line1) ?>" placeholder="Flat/House No., Street Name">
+                                    <?php if (isset($errors['address_line1'])): ?>
+                                        <div class="invalid-feedback d-block w-100"><?= $errors['address_line1'] ?></div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
 
                             <!-- Address line 2 -->
                             <div class="col-12">
-                                <label for="address_line2" class="form-label small fw-semibold text-muted">Area, Sector, Locality (Optional)</label>
-                                <input type="text" class="form-control rounded-3" id="address_line2" name="address_line2" value="<?= htmlspecialchars($address_line2) ?>" placeholder="Address Line 2">
+                                <label for="address_line2" class="form-label">Area, Sector, Locality (Optional)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-map-signs small"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="address_line2" name="address_line2" value="<?= htmlspecialchars($address_line2) ?>" placeholder="Area, Sector, Locality">
+                                </div>
                             </div>
 
                             <!-- City -->
                             <div class="col-md-4">
-                                <label for="city" class="form-label small fw-semibold text-muted">City/District <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 <?= isset($errors['city']) ? 'is-invalid' : '' ?>" id="city" name="city" value="<?= htmlspecialchars($city) ?>" placeholder="City">
+                                <label for="city" class="form-label">City/District <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?= isset($errors['city']) ? 'is-invalid' : '' ?>" id="city" name="city" value="<?= htmlspecialchars($city) ?>" placeholder="City">
                                 <?php if (isset($errors['city'])): ?>
                                     <div class="invalid-feedback"><?= $errors['city'] ?></div>
                                 <?php endif; ?>
@@ -392,8 +416,8 @@ include_once 'includes/header.php';
 
                             <!-- State -->
                             <div class="col-md-4">
-                                <label for="state" class="form-label small fw-semibold text-muted">State <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 <?= isset($errors['state']) ? 'is-invalid' : '' ?>" id="state" name="state" value="<?= htmlspecialchars($state) ?>" placeholder="State">
+                                <label for="state" class="form-label">State <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?= isset($errors['state']) ? 'is-invalid' : '' ?>" id="state" name="state" value="<?= htmlspecialchars($state) ?>" placeholder="State">
                                 <?php if (isset($errors['state'])): ?>
                                     <div class="invalid-feedback"><?= $errors['state'] ?></div>
                                 <?php endif; ?>
@@ -401,42 +425,52 @@ include_once 'includes/header.php';
 
                             <!-- Pincode -->
                             <div class="col-md-4">
-                                <label for="pincode" class="form-label small fw-semibold text-muted">Pincode <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control rounded-3 <?= isset($errors['pincode']) ? 'is-invalid' : '' ?>" id="pincode" name="pincode" value="<?= htmlspecialchars($pincode) ?>" placeholder="6-digit PIN">
+                                <label for="pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?= isset($errors['pincode']) ? 'is-invalid' : '' ?>" id="pincode" name="pincode" value="<?= htmlspecialchars($pincode) ?>" placeholder="6-digit PIN">
                                 <?php if (isset($errors['pincode'])): ?>
                                     <div class="invalid-feedback"><?= $errors['pincode'] ?></div>
                                 <?php endif; ?>
                             </div>
+                        </div>
 
-                            <!-- Payment Options -->
-                            <div class="col-12 mt-4">
-                                <label class="form-label small fw-bold text-dark mb-2">Payment Method</label>
-                                <div class="row g-2">
-                                    <div class="col-sm-6">
-                                        <div class="border rounded-3 p-3 d-flex align-items-center cursor-pointer select-pay-opt">
-                                            <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_cod" value="COD" <?= $payment_method === 'COD' ? 'checked' : '' ?> style="accent-color:var(--primary-color);">
-                                            <label class="form-check-label flex-grow-1 cursor-pointer" for="pay_cod">
-                                                <strong>Cash on Delivery (COD)</strong>
-                                                <span class="d-block small text-muted">Pay at your doorstep</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <div class="border rounded-3 p-3 d-flex align-items-center cursor-pointer select-pay-opt">
-                                            <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_rzp" value="Razorpay" <?= $payment_method === 'Razorpay' ? 'checked' : '' ?> style="accent-color:var(--primary-color);">
-                                            <label class="form-check-label flex-grow-1 cursor-pointer" for="pay_rzp">
-                                                <strong>Online Payment (Razorpay)</strong>
-                                                <span class="d-block small text-muted">Pay via Cards, Netbanking, UPI</span>
-                                            </label>
-                                        </div>
-                                    </div>
+                        <!-- SECTION 3: Payment Method -->
+                        <h3 class="checkout-section-title"><i class="fas fa-credit-card"></i> Payment Method</h3>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="border rounded-3 p-3 d-flex align-items-center select-pay-opt">
+                                    <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_cod" value="COD" <?= $payment_method === 'COD' ? 'checked' : '' ?>>
+                                    <label class="form-check-label flex-grow-1" for="pay_cod">
+                                        <strong>Cash on Delivery (COD)</strong>
+                                        <span class="d-block small text-muted">Pay at your doorstep</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded-3 p-3 d-flex align-items-center select-pay-opt">
+                                    <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_rzp" value="Razorpay" <?= $payment_method === 'Razorpay' ? 'checked' : '' ?>>
+                                    <label class="form-check-label flex-grow-1" for="pay_rzp">
+                                        <strong>Online Payment (Razorpay)</strong>
+                                        <span class="d-block small text-muted">Pay via Cards, Netbanking, UPI</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-3 border-top d-flex justify-content-between">
-                            <a href="cart.php" class="btn btn-outline-secondary rounded-3 px-4 py-2"><i class="fas fa-chevron-left me-1"></i> Return to Cart</a>
-                            <button type="submit" class="btn btn-warning rounded-3 px-5 py-2 fw-semibold text-white" style="background-color: var(--primary-color); border-color: var(--primary-color);">Place Order</button>
+                        <!-- CTA Place Order -->
+                        <div class="mt-5 pt-3 border-top">
+                            <button type="submit" class="btn btn-warning w-100 rounded-3 px-5 py-3 fw-bold text-white fs-5 shadow-md">
+                                <i class="fas fa-lock me-2"></i> Pay &amp; Place Order
+                            </button>
+                            <div class="text-center mt-3">
+                                <a href="cart.php" class="btn btn-link text-decoration-none text-muted small"><i class="fas fa-chevron-left me-1"></i> Return to Shopping Cart</a>
+                            </div>
+                            
+                            <!-- Trust badges -->
+                            <div class="d-flex justify-content-center align-items-center gap-4 mt-4 pt-3 border-top text-muted small">
+                                <div><i class="fas fa-shield-alt text-success me-1"></i> 256-Bit SSL Encryption</div>
+                                <div><i class="fas fa-undo text-success me-1"></i> Easy Return Policy</div>
+                                <div><i class="fas fa-award text-success me-1"></i> 100% Authentic Quality</div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -487,20 +521,29 @@ include_once 'includes/header.php';
 </main>
 
 <style>
-.select-pay-opt {
-    transition: border-color 0.2s, background-color 0.2s;
-    cursor: pointer;
+.checkout-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-top: 30px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1.5px solid #ebdccb;
+    padding-bottom: 8px;
 }
-.select-pay-opt:hover {
-    border-color: var(--primary-color) !important;
-    background-color: #faf6f0;
+.checkout-section-title i {
+    color: var(--primary-color);
 }
-.select-pay-opt input:checked + label {
-    color: var(--primary-color) !important;
+.input-group-text {
+    border: 1.5px solid #ebdccb !important;
+    border-radius: 10px 0 0 10px !important;
+    background-color: #faf8f5 !important;
+    color: #827870;
 }
-.select-pay-opt:has(input:checked) {
-    border-color: var(--primary-color) !important;
-    background-color: #faf6f0;
+.form-control.border-start-0 {
+    border-radius: 0 10px 10px 0 !important;
 }
 </style>
 
@@ -540,12 +583,27 @@ include_once 'includes/header.php';
             }
         }
     };
-    var rzp1 = new Razorpay(options);
-    rzp1.on('payment.failed', function (response){
-        alert("Payment Failed: " + response.error.description);
-    });
+    
+    function openRazorpay() {
+        if (typeof Razorpay !== 'undefined') {
+            try {
+                var rzp1 = new Razorpay(options);
+                rzp1.on('payment.failed', function (response){
+                    alert("Payment Failed: " + response.error.description);
+                });
+                rzp1.open();
+            } catch (err) {
+                console.error("Razorpay open error: ", err);
+                alert("Could not load payment gateway: " + err.message);
+            }
+        } else {
+            // Retry script detection after 100ms
+            setTimeout(openRazorpay, 100);
+        }
+    }
+    
     window.onload = function() {
-        rzp1.open();
+        openRazorpay();
     };
     </script>
 <?php endif; ?>
