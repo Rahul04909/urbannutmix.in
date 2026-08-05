@@ -39,6 +39,13 @@ $menuItems = [
         ],
     ],
     [
+        "menuTitle" => "Orders",
+        "icon" => "fas fa-shopping-basket",
+        "pages" => [
+            ["title" => "Manage Orders", "url" => "orders/manage-orders.php"]
+        ],
+    ],
+    [
         "menuTitle" => "Settings",
         "icon" => "fas fa-cog",
         "pages" => [
