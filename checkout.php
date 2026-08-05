@@ -10,6 +10,28 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Razorpay\Api\Api;
 Session::start();
 
+// Calculate base URL dynamically to handle subfolders (e.g. localhost/urbannutmix.in/)
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+$domain = $_SERVER['HTTP_HOST'];
+$project_root = str_replace('\\', '/', dirname(__FILE__));
+$doc_root = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
+
+$project_root_normalized = strtolower($project_root);
+$doc_root_normalized = strtolower($doc_root);
+
+if (strpos($project_root_normalized, $doc_root_normalized) === 0) {
+    $relative_path = substr($project_root, strlen($doc_root));
+} else {
+    $relative_path = dirname($_SERVER['SCRIPT_NAME']);
+}
+
+$base_url = $protocol . $domain . '/' . ltrim($relative_path, '/');
+$base_url = rtrim($base_url, '/\\') . '/';
+
+if (!defined('BASE_URL')) {
+    define('BASE_URL', $base_url);
+}
+
 // Redirect to cart if empty
 $cart = $_SESSION['cart'] ?? [];
 if (empty($cart)) {
@@ -287,6 +309,8 @@ if (!function_exists('get_product_img_src')) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Local Cart Stylesheet -->
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/cart.css">
     
     <style>
         :root {
