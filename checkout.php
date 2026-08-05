@@ -1,7 +1,7 @@
 <?php
 /**
  * UrbanNutMix - Secure Checkout Page with Razorpay Payment Integration
- * Features: Stock checking inside transactions, customer details validations, Razorpay Order generation.
+ * Features: High-fidelity Shopify-style layout, stock checks, database transaction safety.
  */
 
 require_once __DIR__ . '/admin/config/database.php';
@@ -16,9 +16,6 @@ if (empty($cart)) {
     header('Location: cart.php');
     exit;
 }
-
-$page_title = "Secure Checkout | UrbanNutMix";
-$extra_css = ['assets/css/cart.css']; // Reuses the checkout trackers and summary box styles
 
 try {
     $pdo = Database::getConnection();
@@ -83,7 +80,7 @@ if (empty($cartItems)) {
     exit;
 }
 
-// Calculate Summary Totals (Coupons completely removed)
+// Calculate Summary Totals
 $discount = 0.0;
 $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
 $grandTotal = $subtotal + $shipping;
@@ -97,13 +94,13 @@ $address_line2 = '';
 $city = '';
 $state = '';
 $pincode = '';
-$payment_method = 'Razorpay'; // COD completely removed
+$payment_method = 'Razorpay';
 
 $show_razorpay_modal = false;
 $razorpayOrderId = '';
 $orderNumber = '';
 
-// Check for payment cancellations or errors from verify-payment.php redirect
+// Check for payment cancellations or errors
 $payment_error_msg = null;
 if (isset($_GET['payment_error'])) {
     $payment_error_msg = Session::get('flash_error', 'Payment verification failed. Please try again.');
@@ -121,7 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $city = trim($_POST['city'] ?? '');
     $state = trim($_POST['state'] ?? '');
     $pincode = trim($_POST['pincode'] ?? '');
-    $payment_method = 'Razorpay'; // Cash on Delivery completely disabled
 
     // Validation
     if ($customer_name === '') $errors['customer_name'] = 'Full Name is required';
@@ -241,9 +237,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Generate Razorpay Order
             $api = new Api($_ENV['RAZORPAY_KEY_ID'], $_ENV['RAZORPAY_KEY_SECRET']);
             $rzOrder = $api->order->create([
-                'receipt'         => $orderNumber,
                 'amount'          => (int)round($vGrandTotal * 100), // amount in paise
                 'currency'        => 'INR',
+                'receipt'         => $orderNumber,
                 'payment_capture' => 1
             ]);
             
@@ -265,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Resolve image
+// Resolve product image source path
 if (!function_exists('get_product_img_src')) {
     function get_product_img_src(?string $imgName): string {
         if (empty($imgName) || $imgName === 'default.png') {
@@ -278,493 +274,685 @@ if (!function_exists('get_product_img_src')) {
         return BASE_URL . 'assets/images/logo-bg.jpg';
     }
 }
-
-include_once 'includes/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout | UrbanNutMix</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gold: #cf6e0c;
+            --primary-gold-dark: #b05c08;
+            --text-charcoal: #2d2620;
+            --border-light: #e1d8cf;
+            --bg-cream: #faf6f0;
+        }
 
-<style>
-/* ──────────────────────────────────────────────────────── */
-/* BRAND SPECIFIC PREMIUM CHECKOUT SYSTEM                   */
-/* ──────────────────────────────────────────────────────── */
-:root {
-    --brand-gold: #cf6e0c;
-    --brand-gold-dark: #b05c08;
-    --brand-cream: #faf8f5;
-    --border-beige: #ebdccb;
-    --text-charcoal: #2d2620;
-    --shadow-premium: 0 10px 40px rgba(45, 38, 32, 0.04);
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: var(--text-charcoal);
+            margin: 0;
+            padding: 0;
+        }
 
-body {
-    background-color: #fdfcfb;
-}
+        /* Full page split layout */
+        .split-layout {
+            display: flex;
+            min-height: 100vh;
+        }
 
-.unm-cart-wrapper {
-    background-color: #fdfcfb;
-    padding: 50px 0;
-}
+        /* Left Side: Form Details */
+        .split-left {
+            flex: 1.25;
+            background-color: #ffffff;
+            padding: 50px 8% 50px 12%;
+            border-right: 1px solid var(--border-light);
+        }
 
-.unm-checkout-card {
-    background: #ffffff !important;
-    border: 1px solid var(--border-beige) !important;
-    border-radius: 20px !important;
-    box-shadow: var(--shadow-premium) !important;
-    padding: 35px !important;
-}
+        /* Right Side: Order Summary */
+        .split-right {
+            flex: 0.85;
+            background-color: #f4f6f8;
+            padding: 50px 12% 50px 5%;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
 
-.checkout-section-title {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--text-charcoal);
-    margin-top: 35px;
-    margin-bottom: 22px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 1.5px solid var(--border-beige);
-    padding-bottom: 10px;
-    letter-spacing: -0.2px;
-}
+        /* Brand & Security header bar */
+        .brand-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
 
-.checkout-section-title i {
-    color: var(--brand-gold);
-}
+        .checkout-logo {
+            height: 48px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
 
-/* Custom form labels */
-.form-label {
-    font-size: 0.8rem !important;
-    font-weight: 700 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #827870 !important;
-    margin-bottom: 8px;
-}
+        .trust-badges-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
 
-/* Input group addon styles */
-.input-group-text {
-    border: 1.5px solid var(--border-beige) !important;
-    border-radius: 12px 0 0 12px !important;
-    background-color: var(--brand-cream) !important;
-    color: #827870;
-    padding-left: 16px;
-    padding-right: 16px;
-}
+        .trust-badge-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #4b5563;
+            background-color: #f3f4f6;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
 
-/* Form fields customization */
-.form-control {
-    border: 1.5px solid var(--border-beige) !important;
-    border-radius: 12px !important;
-    background-color: #faf8f5 !important;
-    padding: 13px 18px !important;
-    font-size: 0.95rem !important;
-    color: var(--text-charcoal) !important;
-    transition: all 0.25s ease-in-out !important;
-    box-shadow: none !important;
-}
+        .trust-badge-pill i {
+            font-size: 0.85rem;
+        }
 
-.form-control.border-start-0 {
-    border-radius: 0 12px 12px 0 !important;
-}
+        /* Announcement banner */
+        .announcement-banner {
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #92400e;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.form-control::placeholder {
-    color: #b0a49b;
-}
+        /* Section Titles */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 18px;
+            margin-top: 15px;
+        }
 
-.form-control:focus {
-    background-color: #ffffff !important;
-    border-color: var(--brand-gold) !important;
-    box-shadow: 0 0 0 4px rgba(207, 110, 12, 0.08) !important;
-}
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-charcoal);
+            margin: 0;
+        }
 
-/* Invalid validations */
-.form-control.is-invalid {
-    border-color: #ef4444 !important;
-    background-color: #fffbfa !important;
-}
+        .section-header-link {
+            font-size: 0.85rem;
+            color: #4b5563;
+            text-decoration: none;
+            font-weight: 500;
+        }
 
-.form-control.is-invalid:focus {
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08) !important;
-}
+        .section-header-link:hover {
+            color: var(--primary-gold);
+            text-decoration: underline;
+        }
 
-.invalid-feedback {
-    font-size: 0.8rem;
-    color: #ef4444;
-    font-weight: 600;
-    margin-top: 5px;
-}
+        /* Input Styles */
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 6px;
+            display: block;
+        }
 
-/* Secure Payment Display Box */
-.checkout-payment-info-box {
-    background-color: #faf6f0;
-    border: 1.5px dashed var(--brand-gold);
-    border-radius: 14px;
-    padding: 24px;
-    margin-top: 25px;
-}
+        .form-control, .form-select {
+            border: 1.5px solid #d1d5db !important;
+            border-radius: 8px !important;
+            padding: 11px 14px !important;
+            font-size: 0.92rem !important;
+            background-color: #ffffff !important;
+            color: var(--text-charcoal) !important;
+            box-shadow: none !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
+        }
 
-.checkout-payment-info-box strong {
-    color: var(--text-charcoal);
-    font-size: 0.95rem;
-}
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-gold) !important;
+            box-shadow: 0 0 0 4px rgba(207, 110, 12, 0.08) !important;
+        }
 
-/* Sidebar Order Details */
-.sidebar-summary-card {
-    background: #ffffff !important;
-    border: 1.5px solid var(--border-beige) !important;
-    border-radius: 20px !important;
-    box-shadow: var(--shadow-premium) !important;
-    padding: 30px !important;
-    position: sticky;
-    top: 40px;
-}
+        .form-control.is-invalid {
+            border-color: #ef4444 !important;
+        }
 
-/* CTA Checkout Button */
-.btn-pay-now {
-    background: linear-gradient(135deg, var(--brand-gold) 0%, #e67e15 100%) !important;
-    border: none !important;
-    border-radius: 12px !important;
-    padding: 18px 24px !important;
-    font-size: 1.15rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.5px;
-    color: #ffffff !important;
-    box-shadow: 0 6px 20px rgba(207, 110, 12, 0.22) !important;
-    transition: all 0.25s ease-in-out !important;
-}
+        .invalid-feedback {
+            font-size: 0.8rem;
+            color: #ef4444;
+            font-weight: 600;
+            margin-top: 5px;
+        }
 
-.btn-pay-now:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 30px rgba(207, 110, 12, 0.35) !important;
-}
+        /* Checkbox */
+        .form-check-input {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--primary-gold) !important;
+            border: 1.5px solid #d1d5db;
+            border-radius: 4px;
+            margin-top: 3px;
+        }
 
-.btn-pay-now:active {
-    transform: translateY(0) !important;
-}
+        .form-check-label {
+            font-size: 0.85rem;
+            color: #4b5563;
+            user-select: none;
+            cursor: pointer;
+        }
 
-/* Fullscreen Loader Cover Overlay */
-.payment-loader-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(253, 252, 250, 0.98);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 999999;
-}
+        /* Right Summary design */
+        .summary-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-charcoal);
+            margin-bottom: 24px;
+        }
 
-.loader-spinner {
-    width: 60px;
-    height: 60px;
-    border: 5px solid #ebdccb;
-    border-top: 5px solid var(--brand-gold);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 24px;
-}
+        .summary-items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px 0;
+        }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+        .summary-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-.loader-text {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--text-charcoal);
-    margin-bottom: 8px;
-    font-family: 'Source Sans Pro', sans-serif;
-}
+        .summary-product-img-wrapper {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            margin-right: 16px;
+        }
 
-.loader-subtext {
-    font-size: 0.95rem;
-    color: #827870;
-}
-</style>
+        .summary-product-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
 
-<main class="unm-cart-wrapper">
-    <div class="unm-cart-container">
+        .summary-product-qty-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--primary-gold);
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-product-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-charcoal);
+            margin: 0;
+        }
+
+        .summary-product-unit {
+            font-size: 0.78rem;
+            color: #6b7280;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .summary-product-price {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-charcoal);
+        }
+
+        /* Calculation details */
+        .summary-divider {
+            border: 0;
+            border-top: 1px solid var(--border-light);
+            margin: 20px 0;
+        }
+
+        .summary-total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+
+        .summary-grand-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .summary-grand-label {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-charcoal);
+        }
+
+        .summary-grand-price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary-gold);
+        }
+
+        /* Pay now button */
+        .btn-pay-now {
+            background-color: var(--primary-gold) !important;
+            border: none !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 1.05rem !important;
+            padding: 16px 24px !important;
+            border-radius: 8px !important;
+            transition: background-color 0.2s, transform 0.1s !important;
+            box-shadow: 0 4px 12px rgba(207, 110, 12, 0.15) !important;
+        }
+
+        .btn-pay-now:hover {
+            background-color: var(--primary-gold-dark) !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-pay-now:active {
+            transform: translateY(0);
+        }
+
+        .secure-footer-text {
+            text-align: center;
+            font-size: 0.78rem;
+            color: #6b7280;
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Fullscreen processing loader overlay */
+        .payment-loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #ebdccb;
+            border-top: 4px solid var(--primary-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-charcoal);
+            margin-bottom: 6px;
+        }
+
+        .loader-subtext {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        /* Responsive styling */
+        @media (max-width: 991px) {
+            .split-layout {
+                flex-direction: column-reverse;
+            }
+
+            .split-left {
+                padding: 40px 20px;
+                border-right: none;
+            }
+
+            .split-right {
+                padding: 30px 20px;
+                height: auto;
+                position: static;
+                border-bottom: 1px solid var(--border-light);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="split-layout">
         
-        <!-- Tracker steps -->
-        <div class="unm-cart-header-zone">
-            <h1 class="unm-cart-page-title">Secure Checkout</h1>
-            <div class="unm-checkout-steps">
-                <div class="unm-step">
-                    <span class="unm-step-num">1</span>
-                    <span class="unm-step-label">Shopping Cart</span>
-                </div>
-                <div class="unm-step-line"></div>
-                <div class="unm-step active">
-                    <span class="unm-step-num">2</span>
-                    <span class="unm-step-label">Secure Checkout</span>
-                </div>
-                <div class="unm-step-line"></div>
-                <div class="unm-step">
-                    <span class="unm-step-num">3</span>
-                    <span class="unm-step-label">Order Confirmed</span>
-                </div>
-            </div>
-        </div>
-
-        <?php if ($payment_error_msg): ?>
-            <div class="alert alert-warning mb-4 rounded-3 shadow-sm alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i> <?= htmlspecialchars($payment_error_msg) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($errors['transaction'])): ?>
-            <div class="alert alert-danger mb-4 rounded-3 shadow-sm">
-                <i class="fas fa-exclamation-triangle me-2"></i> <?= htmlspecialchars($errors['transaction']) ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Checkout Form Grid -->
-        <div class="unm-cart-layout">
+        <!-- LEFT COLUMN: SHIPPING DETAILS FORM -->
+        <div class="split-left">
             
-            <!-- Left: Shipping info form -->
-            <div class="unm-cart-main">
-                <div class="unm-checkout-card">
-                    <form method="POST" action="checkout.php" id="checkoutForm">
-                        
-                        <!-- SECTION 1: Contact Details -->
-                        <h3 class="checkout-section-title" style="margin-top:0;"><i class="fas fa-user-circle"></i> Contact Information</h3>
-                        <div class="row g-3">
-                            <!-- Name -->
-                            <div class="col-md-6">
-                                <label for="customer_name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user small"></i></span>
-                                    <input type="text" class="form-control border-start-0 <?= isset($errors['customer_name']) ? 'is-invalid' : '' ?>" id="customer_name" name="customer_name" value="<?= htmlspecialchars($customer_name) ?>" placeholder="e.g. Rahul Kumar">
-                                    <?php if (isset($errors['customer_name'])): ?>
-                                        <div class="invalid-feedback d-block w-100"><?= $errors['customer_name'] ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            
-                            <!-- Email -->
-                            <div class="col-md-6">
-                                <label for="customer_email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-envelope small"></i></span>
-                                    <input type="email" class="form-control border-start-0 <?= isset($errors['customer_email']) ? 'is-invalid' : '' ?>" id="customer_email" name="customer_email" value="<?= htmlspecialchars($customer_email) ?>" placeholder="e.g. customer@gmail.com">
-                                    <?php if (isset($errors['customer_email'])): ?>
-                                        <div class="invalid-feedback d-block w-100"><?= $errors['customer_email'] ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            
-                            <!-- Phone -->
-                            <div class="col-md-12">
-                                <label for="customer_mobile" class="form-label">Mobile Number <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-phone small"></i></span>
-                                    <input type="text" class="form-control border-start-0 <?= isset($errors['customer_mobile']) ? 'is-invalid' : '' ?>" id="customer_mobile" name="customer_mobile" value="<?= htmlspecialchars($customer_mobile) ?>" placeholder="10-digit mobile number">
-                                    <?php if (isset($errors['customer_mobile'])): ?>
-                                        <div class="invalid-feedback d-block w-100"><?= $errors['customer_mobile'] ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- SECTION 2: Shipping Address -->
-                        <h3 class="checkout-section-title"><i class="fas fa-map-marker-alt"></i> Shipping Address</h3>
-                        <div class="row g-3">
-                            <!-- Address line 1 -->
-                            <div class="col-12">
-                                <label for="address_line1" class="form-label">Flat/House No., Building, Street Name <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-home small"></i></span>
-                                    <input type="text" class="form-control border-start-0 <?= isset($errors['address_line1']) ? 'is-invalid' : '' ?>" id="address_line1" name="address_line1" value="<?= htmlspecialchars($address_line1) ?>" placeholder="Flat/House No., Street Name">
-                                    <?php if (isset($errors['address_line1'])): ?>
-                                        <div class="invalid-feedback d-block w-100"><?= $errors['address_line1'] ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-
-                            <!-- Address line 2 -->
-                            <div class="col-12">
-                                <label for="address_line2" class="form-label">Area, Sector, Locality (Optional)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-map-signs small"></i></span>
-                                    <input type="text" class="form-control border-start-0" id="address_line2" name="address_line2" value="<?= htmlspecialchars($address_line2) ?>" placeholder="Area, Sector, Locality">
-                                </div>
-                            </div>
-
-                            <!-- City -->
-                            <div class="col-md-4">
-                                <label for="city" class="form-label">City/District <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control <?= isset($errors['city']) ? 'is-invalid' : '' ?>" id="city" name="city" value="<?= htmlspecialchars($city) ?>" placeholder="City">
-                                <?php if (isset($errors['city'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['city'] ?></div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- State -->
-                            <div class="col-md-4">
-                                <label for="state" class="form-label">State <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control <?= isset($errors['state']) ? 'is-invalid' : '' ?>" id="state" name="state" value="<?= htmlspecialchars($state) ?>" placeholder="State">
-                                <?php if (isset($errors['state'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['state'] ?></div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Pincode -->
-                            <div class="col-md-4">
-                                <label for="pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control <?= isset($errors['pincode']) ? 'is-invalid' : '' ?>" id="pincode" name="pincode" value="<?= htmlspecialchars($pincode) ?>" placeholder="6-digit PIN">
-                                <?php if (isset($errors['pincode'])): ?>
-                                    <div class="invalid-feedback"><?= $errors['pincode'] ?></div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- SECTION 3: Secure Online Payment Summary -->
-                        <h3 class="checkout-section-title"><i class="fas fa-shield-alt"></i> Secure Payment</h3>
-                        <div class="checkout-payment-info-box">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold"><i class="fas fa-lock text-success me-2"></i> Razorpay Payment Gateway</span>
-                                <span class="badge bg-success text-white px-2.5 py-1">Secure Connection</span>
-                            </div>
-                            <p class="small text-muted mb-0">Payments are encrypted and processed securely. You can complete your order using Credit/Debit Cards, UPI, Netbanking, or mobile wallets via the secure Razorpay popup.</p>
-                        </div>
-
-                        <!-- CTA Place Order -->
-                        <div class="mt-5 pt-3 border-top">
-                            <button type="submit" class="btn btn-warning btn-pay-now w-100 rounded-3 px-5 py-3 fw-bold text-white fs-5 shadow-md">
-                                <i class="fas fa-lock me-2"></i> Pay &amp; Place Order
-                            </button>
-                            <div class="text-center mt-3">
-                                <a href="cart.php" class="btn btn-link text-decoration-none text-muted small"><i class="fas fa-chevron-left me-1"></i> Return to Shopping Cart</a>
-                            </div>
-                            
-                            <!-- Trust badges -->
-                            <div class="d-flex justify-content-center align-items-center gap-4 mt-4 pt-3 border-top text-muted small flex-wrap">
-                                <div><i class="fas fa-shield-alt text-success me-1"></i> 256-Bit SSL Encryption</div>
-                                <div><i class="fas fa-undo text-success me-1"></i> Easy Return Policy</div>
-                                <div><i class="fas fa-award text-success me-1"></i> 100% Authentic Quality</div>
-                            </div>
-                        </div>
-                    </form>
+            <!-- Brand header row with secure badges -->
+            <div class="brand-header-row">
+                <a href="shop.php">
+                    <img src="<?= BASE_URL ?>assets/images/logo-bg.jpg" alt="UrbanNutMix" class="checkout-logo">
+                </a>
+                <div class="trust-badges-row">
+                    <div class="trust-badge-pill">
+                        <i class="fas fa-shield-alt text-success"></i> McAfee Secure
+                    </div>
+                    <div class="trust-badge-pill">
+                        <i class="fas fa-lock text-success"></i> SSL Encrypted
+                    </div>
                 </div>
             </div>
 
-            <!-- Right: Order Details items snapshot -->
-            <div class="unm-cart-sidebar">
-                <div class="sidebar-summary-card">
-                    <h3 class="h5 fw-bold text-dark mb-4 border-bottom pb-2" style="font-family: 'Source Sans Pro', sans-serif;">Order Details</h3>
-                    
-                    <ul class="list-unstyled p-0 m-0 mb-4 overflow-y-auto" style="max-height: 320px;">
-                        <?php foreach ($cartItems as $cItem): 
-                            $cImg = get_product_img_src($cItem['image']);
-                        ?>
-                            <li class="d-flex align-items-center mb-3">
-                                <img src="<?= $cImg ?>" alt="<?= htmlspecialchars($cItem['name']) ?>" class="rounded-3 border me-3" style="width: 55px; height: 55px; object-fit: cover;">
-                                <div class="flex-grow-1 min-w-0">
-                                    <h4 class="h6 text-truncate text-dark mb-0 fw-semibold" style="font-size: 0.9rem;"><?= htmlspecialchars($cItem['name']) ?></h4>
-                                    <span class="small text-muted"><?= $cItem['cart_qty'] ?> &times; ₹<?= number_format((float)$cItem['price'], 2) ?></span>
-                                </div>
-                                <span class="font-monospace fw-semibold text-dark text-end ms-2" style="font-size: 0.9rem;">₹<?= number_format($cItem['item_subtotal'], 2) ?></span>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
+            <!-- Announcement free shipping banner -->
+            <div class="announcement-banner">
+                <i class="fas fa-truck"></i> Your order qualifies for <strong>FREE Express Shipping</strong> today!
+            </div>
 
-                    <div class="unm-summary-row mt-2">
-                        <span class="text-muted">Subtotal</span>
-                        <span class="font-monospace text-dark">₹<?= number_format($subtotal, 2) ?></span>
+            <!-- Display payment errors or warning tags -->
+            <?php if ($payment_error_msg): ?>
+                <div class="alert alert-warning mb-4 rounded-3 shadow-sm alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i> <?= htmlspecialchars($payment_error_msg) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($errors['transaction'])): ?>
+                <div class="alert alert-danger mb-4 rounded-3 shadow-sm">
+                    <i class="fas fa-exclamation-triangle me-2"></i> <?= htmlspecialchars($errors['transaction']) ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="checkout.php" id="checkoutForm">
+                
+                <!-- Section 1: Contact Information -->
+                <div class="section-header">
+                    <h2 class="section-title">Contact Information</h2>
+                    <a href="javascript:void(0)" class="section-header-link">Already have an account? Login</a>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <!-- Email -->
+                    <div class="col-12">
+                        <label for="customer_email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control <?= isset($errors['customer_email']) ? 'is-invalid' : '' ?>" id="customer_email" name="customer_email" value="<?= htmlspecialchars($customer_email) ?>" placeholder="Email (e.g. name@domain.com)">
+                        <?php if (isset($errors['customer_email'])): ?>
+                            <div class="invalid-feedback"><?= $errors['customer_email'] ?></div>
+                        <?php endif; ?>
                     </div>
-
-                    <div class="unm-summary-row">
-                        <span class="text-muted">Shipping</span>
-                        <span class="font-monospace text-dark"><?= $shipping > 0 ? '₹' . number_format($shipping, 2) : '<span class="text-success fw-bold">FREE</span>' ?></span>
-                    </div>
-
-                    <hr class="my-3" style="border-color: #ebdccb;">
-
-                    <div class="unm-summary-row grand-total-row bg-light p-2 rounded-3">
-                        <span class="fw-bold text-dark fs-6">Grand Total</span>
-                        <span class="font-monospace fw-bold text-primary fs-6">₹<?= number_format($grandTotal, 2) ?></span>
+                    <!-- Subscribe check -->
+                    <div class="col-12 mt-2">
+                        <div class="form-check d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" id="subscribe_news" checked>
+                            <label class="form-check-label" for="subscribe_news">
+                                Keep me up to date on news and exclusive offers
+                            </label>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Section 2: Shipping Address -->
+                <div class="section-header mt-4">
+                    <h2 class="section-title">Shipping Address</h2>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Country Selector (Standard Shopify style) -->
+                    <div class="col-12">
+                        <label for="country" class="form-label">Country/Region</label>
+                        <select class="form-select" id="country" disabled>
+                            <option>India</option>
+                        </select>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div class="col-md-6">
+                        <label for="customer_name" class="form-label">Full Name *</label>
+                        <input type="text" class="form-control <?= isset($errors['customer_name']) ? 'is-invalid' : '' ?>" id="customer_name" name="customer_name" value="<?= htmlspecialchars($customer_name) ?>" placeholder="First and last name">
+                        <?php if (isset($errors['customer_name'])): ?>
+                            <div class="invalid-feedback"><?= $errors['customer_name'] ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Mobile Phone -->
+                    <div class="col-md-6">
+                        <label for="customer_mobile" class="form-label">Mobile Number *</label>
+                        <input type="text" class="form-control <?= isset($errors['customer_mobile']) ? 'is-invalid' : '' ?>" id="customer_mobile" name="customer_mobile" value="<?= htmlspecialchars($customer_mobile) ?>" placeholder="10-digit mobile number">
+                        <?php if (isset($errors['customer_mobile'])): ?>
+                            <div class="invalid-feedback"><?= $errors['customer_mobile'] ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Address Line 1 -->
+                    <div class="col-12">
+                        <label for="address_line1" class="form-label">Address Line 1 *</label>
+                        <input type="text" class="form-control <?= isset($errors['address_line1']) ? 'is-invalid' : '' ?>" id="address_line1" name="address_line1" value="<?= htmlspecialchars($address_line1) ?>" placeholder="Flat/House No., Building, Street Name">
+                        <?php if (isset($errors['address_line1'])): ?>
+                            <div class="invalid-feedback"><?= $errors['address_line1'] ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Address Line 2 -->
+                    <div class="col-12">
+                        <label for="address_line2" class="form-label">Area, Sector, Locality (Optional)</label>
+                        <input type="text" class="form-control" id="address_line2" name="address_line2" value="<?= htmlspecialchars($address_line2) ?>" placeholder="Apartment, suite, unit etc.">
+                    </div>
+
+                    <!-- City -->
+                    <div class="col-md-4">
+                        <label for="city" class="form-label">City *</label>
+                        <input type="text" class="form-control <?= isset($errors['city']) ? 'is-invalid' : '' ?>" id="city" name="city" value="<?= htmlspecialchars($city) ?>" placeholder="City">
+                        <?php if (isset($errors['city'])): ?>
+                            <div class="invalid-feedback"><?= $errors['city'] ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- State -->
+                    <div class="col-md-4">
+                        <label for="state" class="form-label">State *</label>
+                        <input type="text" class="form-control <?= isset($errors['state']) ? 'is-invalid' : '' ?>" id="state" name="state" value="<?= htmlspecialchars($state) ?>" placeholder="State">
+                        <?php if (isset($errors['state'])): ?>
+                            <div class="invalid-feedback"><?= $errors['state'] ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Pincode -->
+                    <div class="col-md-4">
+                        <label for="pincode" class="form-label">Pincode *</label>
+                        <input type="text" class="form-control <?= isset($errors['pincode']) ? 'is-invalid' : '' ?>" id="pincode" name="pincode" value="<?= htmlspecialchars($pincode) ?>" placeholder="6-digit ZIP">
+                        <?php if (isset($errors['pincode'])): ?>
+                            <div class="invalid-feedback"><?= $errors['pincode'] ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Submit Button Area -->
+                <div class="mt-5 pt-3 d-flex flex-column gap-2">
+                    <button type="submit" class="btn btn-warning btn-pay-now w-100 py-3 rounded-3 fw-bold">
+                        <i class="fas fa-lock me-2"></i> Pay &amp; Place Order
+                    </button>
+                    <div class="text-center mt-2">
+                        <a href="cart.php" class="text-decoration-none text-muted small"><i class="fas fa-chevron-left me-1"></i> Return to Shopping Cart</a>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Secure footer branding -->
+            <div class="secure-footer-text">
+                <i class="fas fa-shield-alt text-success"></i> 256-Bit SSL Encrypted &amp; Secured by Razorpay
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: ORDER SUMMARY SIDEBAR -->
+        <div class="split-right">
+            <h2 class="summary-title">Order Summary</h2>
+            
+            <ul class="summary-items-list">
+                <?php foreach ($cartItems as $cItem): 
+                    $cImg = get_product_img_src($cItem['image']);
+                ?>
+                    <li class="summary-item-row">
+                        <div class="d-flex align-items-center">
+                            <div class="summary-product-img-wrapper">
+                                <img src="<?= $cImg ?>" alt="<?= htmlspecialchars($cItem['name']) ?>" class="summary-product-img">
+                                <span class="summary-product-qty-badge"><?= $cItem['cart_qty'] ?></span>
+                            </div>
+                            <div>
+                                <h4 class="summary-product-title"><?= htmlspecialchars($cItem['name']) ?></h4>
+                                <span class="summary-product-unit"><?= htmlspecialchars(rtrim(rtrim(number_format((float)$cItem['quantity'], 2), '0'), '.') . ' ' . $cItem['unit']) ?></span>
+                            </div>
+                        </div>
+                        <span class="summary-product-price">₹<?= number_format($cItem['item_subtotal'], 2) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+
+            <hr class="summary-divider">
+
+            <!-- Subtotal -->
+            <div class="summary-total-row">
+                <span>Subtotal</span>
+                <span class="fw-semibold text-dark">₹<?= number_format($subtotal, 2) ?></span>
+            </div>
+
+            <!-- Shipping -->
+            <div class="summary-total-row">
+                <span>Shipping</span>
+                <span class="fw-semibold text-dark"><?= $shipping > 0 ? '₹' . number_format($shipping, 2) : 'FREE' ?></span>
+            </div>
+
+            <!-- Grand Total -->
+            <div class="summary-grand-row">
+                <span class="summary-grand-label">Grand Total</span>
+                <span class="summary-grand-price">₹<?= number_format($grandTotal, 2) ?></span>
             </div>
 
         </div>
 
     </div>
-</main>
 
-<!-- ── RAZORPAY MODAL PAYMENT SCRIPT & LOADER OVERLAY ───────── -->
-<?php if ($show_razorpay_modal): ?>
-    <!-- Fullscreen Payment Loader -->
-    <div class="payment-loader-overlay" id="paymentLoader">
-        <div class="loader-spinner"></div>
-        <div class="loader-text">Securing Connection...</div>
-        <div class="loader-subtext">Please do not reload this page or close the window.</div>
-    </div>
+    <!-- ── RAZORPAY MODAL PAYMENT SCRIPT & LOADER OVERLAY ───────── -->
+    <?php if ($show_razorpay_modal): ?>
+        <!-- Fullscreen Connection Loader -->
+        <div class="payment-loader-overlay" id="paymentLoader">
+            <div class="loader-spinner"></div>
+            <div class="loader-title">Opening Secure Gateway...</div>
+            <div class="loader-subtext">Please do not reload this page or close the window.</div>
+        </div>
 
-    <form action="verify-payment.php" method="POST" id="rzpSubmitForm" style="display:none;">
-        <input type="hidden" name="razorpay_payment_id" id="rzp_payment_id">
-        <input type="hidden" name="razorpay_order_id" id="rzp_order_id" value="<?= htmlspecialchars($razorpayOrderId) ?>">
-        <input type="hidden" name="razorpay_signature" id="rzp_signature">
-        <input type="hidden" name="order_number" value="<?= htmlspecialchars($orderNumber) ?>">
-    </form>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script>
-    var options = {
-        "key": "<?= htmlspecialchars($_ENV['RAZORPAY_KEY_ID']) ?>",
-        "amount": "<?= (int)round($vGrandTotal * 100) ?>",
-        "currency": "INR",
-        "name": "UrbanNutMix",
-        "description": "Secure payment for order #<?= htmlspecialchars($orderNumber) ?>",
-        "order_id": "<?= htmlspecialchars($razorpayOrderId) ?>",
-        "prefill": {
-            "name": "<?= htmlspecialchars($customer_name) ?>",
-            "email": "<?= htmlspecialchars($customer_email) ?>",
-            "contact": "<?= htmlspecialchars($customer_mobile) ?>"
-        },
-        "theme": {
-            "color": "#cf6e0c"
-        },
-        "handler": function (response){
-            document.getElementById('rzp_payment_id').value = response.razorpay_payment_id;
-            document.getElementById('rzp_signature').value = response.razorpay_signature;
-            document.getElementById('rzpSubmitForm').submit();
-        },
-        "modal": {
-            "ondismiss": function(){
-                // Remove fullscreen loader and redirect back
-                document.getElementById('paymentLoader').style.display = 'none';
-                window.location.href = "checkout.php?payment_cancelled=1&order_number=<?= htmlspecialchars($orderNumber) ?>";
+        <form action="verify-payment.php" method="POST" id="rzpSubmitForm" style="display:none;">
+            <input type="hidden" name="razorpay_payment_id" id="rzp_payment_id">
+            <input type="hidden" name="razorpay_order_id" id="rzp_order_id" value="<?= htmlspecialchars($razorpayOrderId) ?>">
+            <input type="hidden" name="razorpay_signature" id="rzp_signature">
+            <input type="hidden" name="order_number" value="<?= htmlspecialchars($orderNumber) ?>">
+        </form>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <script>
+        var options = {
+            "key": "<?= htmlspecialchars($_ENV['RAZORPAY_KEY_ID']) ?>",
+            "amount": "<?= (int)round($vGrandTotal * 100) ?>",
+            "currency": "INR",
+            "name": "UrbanNutMix",
+            "description": "Secure payment for order #<?= htmlspecialchars($orderNumber) ?>",
+            "order_id": "<?= htmlspecialchars($razorpayOrderId) ?>",
+            "prefill": {
+                "name": "<?= htmlspecialchars($customer_name) ?>",
+                "email": "<?= htmlspecialchars($customer_email) ?>",
+                "contact": "<?= htmlspecialchars($customer_mobile) ?>"
+            },
+            "theme": {
+                "color": "#cf6e0c"
+            },
+            "handler": function (response){
+                document.getElementById('rzp_payment_id').value = response.razorpay_payment_id;
+                document.getElementById('rzp_signature').value = response.razorpay_signature;
+                document.getElementById('rzpSubmitForm').submit();
+            },
+            "modal": {
+                "ondismiss": function(){
+                    document.getElementById('paymentLoader').style.display = 'none';
+                    window.location.href = "checkout.php?payment_cancelled=1&order_number=<?= htmlspecialchars($orderNumber) ?>";
+                }
+            }
+        };
+
+        var retryCount = 0;
+        function openRazorpay() {
+            if (typeof Razorpay !== 'undefined') {
+                try {
+                    var rzp1 = new Razorpay(options);
+                    rzp1.on('payment.failed', function (response){
+                        alert("Payment Failed: " + response.error.description);
+                    });
+                    rzp1.open();
+                } catch (err) {
+                    console.error("Razorpay open error: ", err);
+                    alert("Could not load payment gateway: " + err.message);
+                    document.getElementById('paymentLoader').style.display = 'none';
+                }
+            } else {
+                retryCount++;
+                if (retryCount > 60) {
+                    alert("Razorpay payment gateway script failed to load. Please check your internet connection, disable any ad-blockers, and refresh the page to retry.");
+                    document.getElementById('paymentLoader').style.display = 'none';
+                } else {
+                    setTimeout(openRazorpay, 100);
+                }
             }
         }
-    };
-    
-    function openRazorpay() {
-        if (typeof Razorpay !== 'undefined') {
-            try {
-                var rzp1 = new Razorpay(options);
-                rzp1.on('payment.failed', function (response){
-                    alert("Payment Failed: " + response.error.description);
-                });
-                rzp1.open();
-            } catch (err) {
-                console.error("Razorpay open error: ", err);
-                alert("Could not load payment gateway: " + err.message);
-                document.getElementById('paymentLoader').style.display = 'none';
-            }
-        } else {
-            // Retry script detection after 100ms
-            setTimeout(openRazorpay, 100);
-        }
-    }
-    
-    window.onload = function() {
+
         openRazorpay();
-    };
-    </script>
-<?php endif; ?>
+        </script>
+    <?php endif; ?>
 
-<?php include_once 'includes/footer.php'; ?>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
