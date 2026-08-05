@@ -127,73 +127,7 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
         exit;
     }
 
-    // AJAX Apply Coupon
-    if ($action === 'apply_coupon_ajax') {
-        header('Content-Type: application/json');
-        $code = strtoupper(trim($_POST['coupon'] ?? ''));
 
-        if ($code === 'NUTMIX10') {
-            $_SESSION['coupon'] = $code;
-
-            // Recalculate
-            $cart = $_SESSION['cart'] ?? [];
-            $subtotal = 0.0;
-            if (!empty($cart)) {
-                $productIds = array_keys($cart);
-                $inClause = implode(',', array_fill(0, count($productIds), '?'));
-                $tStmt = $pdo->prepare("SELECT id, price FROM products WHERE id IN ($inClause) AND status = 'active'");
-                $tStmt->execute($productIds);
-                foreach ($tStmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
-                    $subtotal += (float)$p['price'] * $cart[$p['id']];
-                }
-            }
-            $discount = $subtotal * 0.10;
-            $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
-            $grandTotal = $subtotal - $discount + $shipping;
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Coupon "NUTMIX10" (10% OFF) applied successfully!',
-                'discount' => number_format($discount, 2),
-                'grand_total' => number_format($grandTotal, 2)
-            ]);
-            exit;
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid promo code. Try "NUTMIX10" for 10% discount.'
-            ]);
-            exit;
-        }
-    }
-
-    // AJAX Remove Coupon
-    if ($action === 'remove_coupon_ajax') {
-        header('Content-Type: application/json');
-        unset($_SESSION['coupon']);
-
-        // Recalculate
-        $cart = $_SESSION['cart'] ?? [];
-        $subtotal = 0.0;
-        if (!empty($cart)) {
-            $productIds = array_keys($cart);
-            $inClause = implode(',', array_fill(0, count($productIds), '?'));
-            $tStmt = $pdo->prepare("SELECT id, price FROM products WHERE id IN ($inClause) AND status = 'active'");
-            $tStmt->execute($productIds);
-            foreach ($tStmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
-                $subtotal += (float)$p['price'] * $cart[$p['id']];
-            }
-        }
-        $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
-        $grandTotal = $subtotal + $shipping;
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Coupon removed.',
-            'grand_total' => number_format($grandTotal, 2)
-        ]);
-        exit;
-    }
 }
 
 // --- Standard REDIRECT Requests Handler (PDP Buy Now / simple link actions) ---
@@ -265,10 +199,9 @@ if (!empty($cart)) {
 }
 
 // Calculate Summary Totals
-$coupon = $_SESSION['coupon'] ?? '';
-$discount = ($coupon === 'NUTMIX10') ? $subtotal * 0.10 : 0.0;
+$discount = 0.0;
 $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
-$grandTotal = $subtotal - $discount + $shipping;
+$grandTotal = $subtotal + $shipping;
 
 // Resolve product image source path
 if (!function_exists('get_product_img_src')) {
@@ -413,22 +346,7 @@ include_once 'includes/header.php';
                             <span class="font-monospace fw-semibold text-dark" id="summarySubtotal">₹<?= number_format($subtotal, 2) ?></span>
                         </div>
                         
-                        <!-- Promo Code input -->
-                        <div class="unm-promo-box">
-                            <div class="unm-promo-input-group" id="promoInputSection" style="<?= $coupon !== '' ? 'display:none;' : '' ?>">
-                                <input type="text" id="promoCodeInput" placeholder="Enter Coupon Code (e.g. NUTMIX10)" class="unm-promo-input">
-                                <button type="button" class="unm-promo-apply-btn" onclick="applyPromo()">Apply</button>
-                            </div>
-                            <div class="unm-promo-applied-tag" id="promoAppliedSection" style="<?= $coupon === '' ? 'display:none;' : '' ?>">
-                                <span><i class="fas fa-tag me-1"></i> Coupon <strong id="appliedPromoCode"><?= htmlspecialchars($coupon) ?></strong> applied!</span>
-                                <a href="javascript:void(0)" class="unm-promo-remove-link" onclick="removePromo()">Remove</a>
-                            </div>
-                        </div>
 
-                        <div class="unm-summary-row" id="discountRow" style="<?= $coupon === '' ? 'display:none;' : '' ?>">
-                            <span class="text-success fw-semibold">Coupon Discount</span>
-                            <span class="font-monospace fw-semibold text-success" id="summaryDiscount">-₹<?= number_format($discount, 2) ?></span>
-                        </div>
 
                         <div class="unm-summary-row">
                             <span class="text-muted">Shipping Charges</span>
@@ -610,99 +528,6 @@ function removeCartItem(productId) {
     }
 }
 
-function applyPromo() {
-    const input = document.getElementById('promoCodeInput');
-    if (!input) return;
-    const val = input.value.trim();
-    if (val === '') return;
-
-    fetch('cart.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
-            action: 'apply_coupon_ajax',
-            coupon: val
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // Apply tags toggle
-            document.getElementById('promoInputSection').style.display = 'none';
-            document.getElementById('promoAppliedSection').style.display = 'flex';
-            document.getElementById('appliedPromoCode').textContent = val;
-            
-            document.getElementById('discountRow').style.display = 'flex';
-            document.getElementById('summaryDiscount').textContent = '-₹' + data.discount;
-            document.getElementById('summaryGrandTotal').textContent = '₹' + data.grand_total;
-
-            input.value = '';
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Coupon Applied!',
-                    text: data.message,
-                    confirmButtonColor: '#cf6e0c',
-                    timer: 1500
-                });
-            }
-        } else {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Coupon',
-                    text: data.message,
-                    confirmButtonColor: '#cf6e0c'
-                });
-            } else {
-                alert(data.message);
-            }
-        }
-    })
-    .catch(err => {
-        console.error("AJAX apply coupon failed: ", err);
-    });
-}
-
-function removePromo() {
-    fetch('cart.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: new URLSearchParams({
-            action: 'remove_coupon_ajax'
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('promoAppliedSection').style.display = 'none';
-            document.getElementById('promoInputSection').style.display = 'flex';
-            
-            document.getElementById('discountRow').style.display = 'none';
-            document.getElementById('summaryGrandTotal').textContent = '₹' + data.grand_total;
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Coupon Removed',
-                    text: data.message,
-                    confirmButtonColor: '#cf6e0c',
-                    timer: 1200
-                });
-            }
-        }
-    })
-    .catch(err => {
-        console.error("AJAX remove coupon failed: ", err);
-    });
-}
 
 function updateSummarySection(data) {
     const subtotalEl = document.getElementById('summarySubtotal');
@@ -734,37 +559,7 @@ function updateSummarySection(data) {
 }
 
 function triggerCheckout() {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'Proceed to Checkout?',
-            text: 'You will be redirected to the secure order details page to fill in shipping details.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#cf6e0c',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, proceed',
-            cancelButtonText: 'Cancel'
-        }).then(result => {
-            if (result.isConfirmed) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Order Confirmed!',
-                    html: '<p>Thank you for choosing UrbanNutMix! Your demo order has been logged.</p><strong>Fictional Order ID: UNM-ORD-' + Math.floor(Math.random() * 900000 + 100000) + '</strong>',
-                    confirmButtonColor: '#cf6e0c'
-                }).then(() => {
-                    // Empty the session cart demo-wise
-                    fetch('cart.php', {
-                        method: 'POST',
-                        body: new URLSearchParams({ action: 'remove_coupon_ajax' }) // clean coupon
-                    }).then(() => {
-                        window.location.href = 'shop.php';
-                    });
-                });
-            }
-        });
-    } else {
-        alert('Proceeding to checkout...');
-    }
+    window.location.href = 'checkout.php';
 }
 </script>
 

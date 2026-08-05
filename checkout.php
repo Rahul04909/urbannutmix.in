@@ -1,11 +1,13 @@
 <?php
 /**
- * UrbanNutMix - Secure Checkout Page
- * Features: Stock checking inside transactions, customer details validations, payment options selection, cart details summary.
+ * UrbanNutMix - Secure Checkout Page with Razorpay Payment Integration
+ * Features: Stock checking inside transactions, customer details validations, Razorpay Order generation.
  */
 
 require_once __DIR__ . '/admin/config/database.php';
 require_once __DIR__ . '/admin/config/session.php';
+require_once __DIR__ . '/vendor/autoload.php';
+use Razorpay\Api\Api;
 Session::start();
 
 // Redirect to cart if empty
@@ -63,11 +65,10 @@ if (empty($cartItems)) {
     exit;
 }
 
-// Calculate Summary Totals
-$coupon = $_SESSION['coupon'] ?? '';
-$discount = ($coupon === 'NUTMIX10') ? $subtotal * 0.10 : 0.0;
+// Calculate Summary Totals (Coupons completely removed)
+$discount = 0.0;
 $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
-$grandTotal = $subtotal - $discount + $shipping;
+$grandTotal = $subtotal + $shipping;
 
 $errors = [];
 $customer_name = '';
@@ -79,6 +80,19 @@ $city = '';
 $state = '';
 $pincode = '';
 $payment_method = 'COD';
+
+$show_razorpay_modal = false;
+$razorpayOrderId = '';
+$orderNumber = '';
+
+// Check for payment cancellations or errors from verify-payment.php redirect
+$payment_error_msg = null;
+if (isset($_GET['payment_error'])) {
+    $payment_error_msg = Session::get('flash_error', 'Payment verification failed. Please try again.');
+    Session::remove('flash_error');
+} elseif (isset($_GET['payment_cancelled'])) {
+    $payment_error_msg = 'Payment was cancelled. You can retry paying or choose Cash on Delivery.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $customer_name = trim($_POST['customer_name'] ?? '');
@@ -124,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $prod = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$prod) {
-                    throw new Exception("Product '" . htmlspecialchars($prod['name']) . "' is no longer available.");
+                    throw new Exception("Product is no longer available.");
                 }
 
                 if ((float)$prod['quantity'] < $qty) {
@@ -141,13 +155,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($verifiedItems as $vItem) {
                 $vSubtotal += $vItem['item_subtotal'];
             }
-            $vDiscount = ($coupon === 'NUTMIX10') ? $vSubtotal * 0.10 : 0.0;
             $vShipping = ($vSubtotal > 0 && $vSubtotal < 500) ? 50.00 : 0.0;
-            $vGrandTotal = $vSubtotal - $vDiscount + $vShipping;
+            $vGrandTotal = $vSubtotal + $vShipping;
 
             // Generate Order Details
             $orderNumber = 'UNM-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
-            $paymentStatus = ($payment_method === 'COD') ? 'pending' : 'paid';
+            $paymentStatus = 'pending';
 
             // Insert into orders table
             $orderQuery = $pdo->prepare(
@@ -158,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (:order_number, :customer_name, :customer_email, :customer_mobile, 
                          :address_line1, :address_line2, :city, :state, :pincode, 
                          :payment_method, :payment_status, 'pending', 
-                         :subtotal, :discount, :shipping, :grand_total, :coupon_code)"
+                         :subtotal, 0.00, :shipping, :grand_total, NULL)"
             );
 
             $orderQuery->execute([
@@ -174,10 +187,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'payment_method' => $payment_method,
                 'payment_status' => $paymentStatus,
                 'subtotal' => $vSubtotal,
-                'discount' => $vDiscount,
                 'shipping' => $vShipping,
-                'grand_total' => $vGrandTotal,
-                'coupon_code' => $coupon ?: null
+                'grand_total' => $vGrandTotal
             ]);
 
             $orderId = $pdo->lastInsertId();
@@ -209,15 +220,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
 
-            $pdo->commit();
-
-            // Clean Cart Sessions
-            unset($_SESSION['cart']);
-            unset($_SESSION['coupon']);
-
-            // Redirect
-            header("Location: order-complete.php?order_number=" . urlencode($orderNumber));
-            exit;
+            if ($payment_method === 'Razorpay') {
+                // Generate Razorpay Order
+                
+                $api = new Api($_ENV['RAZORPAY_KEY_ID'], $_ENV['RAZORPAY_KEY_SECRET']);
+                $rzOrder = $api->order->create([
+                    'receipt'         => $orderNumber,
+                    'amount'          => (int)round($vGrandTotal * 100), // amount in paise
+                    'currency'        => 'INR',
+                    'payment_capture' => 1
+                ]);
+                
+                $razorpayOrderId = $rzOrder['id'];
+                
+                // Update orders table with the order ID
+                $updateRz = $pdo->prepare("UPDATE orders SET razorpay_order_id = :rz_id WHERE id = :id");
+                $updateRz->execute(['rz_id' => $razorpayOrderId, 'id' => $orderId]);
+                
+                $pdo->commit();
+                $show_razorpay_modal = true;
+            } else {
+                // COD - Complete instantly
+                $pdo->commit();
+                
+                // Clean Cart Sessions
+                unset($_SESSION['cart']);
+                unset($_SESSION['coupon']);
+                
+                // Redirect
+                header("Location: order-complete.php?order_number=" . urlencode($orderNumber));
+                exit;
+            }
 
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
@@ -268,6 +301,13 @@ include_once 'includes/header.php';
                 </div>
             </div>
         </div>
+
+        <?php if ($payment_error_msg): ?>
+            <div class="alert alert-warning mb-4 rounded-3 shadow-sm alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i> <?= htmlspecialchars($payment_error_msg) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
         <?php if (isset($errors['transaction'])): ?>
             <div class="alert alert-danger mb-4 rounded-3 shadow-sm">
@@ -369,10 +409,10 @@ include_once 'includes/header.php';
                                     </div>
                                     <div class="col-sm-6">
                                         <div class="border rounded-3 p-3 d-flex align-items-center cursor-pointer select-pay-opt">
-                                            <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_card" value="Card" <?= $payment_method === 'Card' ? 'checked' : '' ?> style="accent-color:var(--primary-color);">
-                                            <label class="form-check-label flex-grow-1 cursor-pointer" for="pay_card">
-                                                <strong>Online Demo Payment</strong>
-                                                <span class="d-block small text-muted">Simulate instant card/UPI</span>
+                                            <input class="form-check-input me-3" type="radio" name="payment_method" id="pay_rzp" value="Razorpay" <?= $payment_method === 'Razorpay' ? 'checked' : '' ?> style="accent-color:var(--primary-color);">
+                                            <label class="form-check-label flex-grow-1 cursor-pointer" for="pay_rzp">
+                                                <strong>Online Payment (Razorpay)</strong>
+                                                <span class="d-block small text-muted">Pay via Cards, Netbanking, UPI</span>
                                             </label>
                                         </div>
                                     </div>
@@ -413,13 +453,6 @@ include_once 'includes/header.php';
                         <span class="font-monospace text-dark">₹<?= number_format($subtotal, 2) ?></span>
                     </div>
 
-                    <?php if ($coupon !== ''): ?>
-                        <div class="unm-summary-row text-success">
-                            <span>Discount (NUTMIX10)</span>
-                            <span class="font-monospace">-₹<?= number_format($discount, 2) ?></span>
-                        </div>
-                    <?php endif; ?>
-
                     <div class="unm-summary-row">
                         <span class="text-muted">Shipping</span>
                         <span class="font-monospace text-dark"><?= $shipping > 0 ? '₹' . number_format($shipping, 2) : '<span class="text-success fw-bold">FREE</span>' ?></span>
@@ -456,5 +489,51 @@ include_once 'includes/header.php';
     background-color: #faf6f0;
 }
 </style>
+
+<!-- ── RAZORPAY MODAL PAYMENT SCRIPT TRIGGERS ───────────────── -->
+<?php if ($show_razorpay_modal): ?>
+    <form action="verify-payment.php" method="POST" id="rzpSubmitForm" style="display:none;">
+        <input type="hidden" name="razorpay_payment_id" id="rzp_payment_id">
+        <input type="hidden" name="razorpay_order_id" id="rzp_order_id" value="<?= htmlspecialchars($razorpayOrderId) ?>">
+        <input type="hidden" name="razorpay_signature" id="rzp_signature">
+        <input type="hidden" name="order_number" value="<?= htmlspecialchars($orderNumber) ?>">
+    </form>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+    var options = {
+        "key": "<?= htmlspecialchars($_ENV['RAZORPAY_KEY_ID']) ?>",
+        "amount": "<?= (int)round($vGrandTotal * 100) ?>",
+        "currency": "INR",
+        "name": "UrbanNutMix",
+        "description": "Secure payment for order #<?= htmlspecialchars($orderNumber) ?>",
+        "order_id": "<?= htmlspecialchars($razorpayOrderId) ?>",
+        "prefill": {
+            "name": "<?= htmlspecialchars($customer_name) ?>",
+            "email": "<?= htmlspecialchars($customer_email) ?>",
+            "contact": "<?= htmlspecialchars($customer_mobile) ?>"
+        },
+        "theme": {
+            "color": "#cf6e0c"
+        },
+        "handler": function (response){
+            document.getElementById('rzp_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('rzp_signature').value = response.razorpay_signature;
+            document.getElementById('rzpSubmitForm').submit();
+        },
+        "modal": {
+            "ondismiss": function(){
+                window.location.href = "checkout.php?payment_cancelled=1&order_number=<?= htmlspecialchars($orderNumber) ?>";
+            }
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    rzp1.on('payment.failed', function (response){
+        alert("Payment Failed: " + response.error.description);
+    });
+    window.onload = function() {
+        rzp1.open();
+    };
+    </script>
+<?php endif; ?>
 
 <?php include_once 'includes/footer.php'; ?>
