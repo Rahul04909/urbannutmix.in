@@ -158,7 +158,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </button>
 
                 <!-- Account -->
-                <a href="<?php echo BASE_URL; ?>account.php" class="unm-action-btn" aria-label="User Account">
+                <a href="<?php echo BASE_URL; ?>user/index.php" class="unm-action-btn" aria-label="User Account">
                     <svg class="unm-action-icon" viewBox="0 0 24 24">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>

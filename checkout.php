@@ -118,6 +118,27 @@ $state = '';
 $pincode = '';
 $payment_method = 'Razorpay';
 
+// Prefill from user session if logged in
+if (isset($_SESSION['user_id']) && isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) {
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $_SESSION['user_id']]);
+        $loggedUser = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($loggedUser) {
+            $customer_name = $loggedUser['name'];
+            $customer_email = $loggedUser['email'];
+            $customer_mobile = $loggedUser['mobile'];
+            $address_line1 = $loggedUser['address_line1'] ?? '';
+            $address_line2 = $loggedUser['address_line2'] ?? '';
+            $city = $loggedUser['city'] ?? '';
+            $state = $loggedUser['state'] ?? '';
+            $pincode = $loggedUser['pincode'] ?? '';
+        }
+    } catch (\Throwable $prefillError) {
+        error_log("Non-blocking checkout prefill warning: " . $prefillError->getMessage());
+    }
+}
+
 $show_razorpay_modal = false;
 $razorpayOrderId = '';
 $orderNumber = '';
@@ -737,10 +758,13 @@ if (!function_exists('get_product_img_src')) {
 
             <form method="POST" action="checkout.php" id="checkoutForm">
                 
-                <!-- Section 1: Contact Information -->
                 <div class="section-header">
                     <h2 class="section-title">Contact Information</h2>
-                    <a href="javascript:void(0)" class="section-header-link">Already have an account? Login</a>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <a href="<?= BASE_URL ?>user/index.php" class="section-header-link"><i class="fas fa-user-circle"></i> Go to Dashboard</a>
+                    <?php else: ?>
+                        <a href="<?= BASE_URL ?>user/login.php" class="section-header-link">Already have an account? Login</a>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="row g-3 mb-4">
