@@ -18,6 +18,40 @@ try {
     die("A connection error occurred. Please try again later.");
 }
 
+// --- Handle direct Add from GET parameter (e.g. Buy Now) ---
+if (isset($_GET['add'])) {
+    $productId = (int)$_GET['add'];
+    $qty = (int)$_GET['qty'] ?? 1;
+    if ($qty < 1) $qty = 1;
+
+    if ($productId > 0) {
+        try {
+            $stmt = $pdo->prepare('SELECT id, quantity, name FROM products WHERE id = :id AND status = "active" LIMIT 1');
+            $stmt->execute(['id' => $productId]);
+            $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($product) {
+                $cart = $_SESSION['cart'] ?? [];
+                $currentQty = $cart[$productId] ?? 0;
+                $newQty = $currentQty + $qty;
+
+                // Cap at available stock
+                if ($newQty > (float)$product['quantity']) {
+                    $newQty = (int)floor((float)$product['quantity']);
+                }
+
+                if ($newQty > 0) {
+                    $_SESSION['cart'][$productId] = $newQty;
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log("Cart direct add error: " . $e->getMessage());
+        }
+    }
+    header('Location: cart.php');
+    exit;
+}
+
 // --- AJAX Requests Handler ---
 if (isset($_POST['action']) || isset($_GET['action'])) {
     $action = $_POST['action'] ?? $_GET['action'] ?? '';
