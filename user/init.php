@@ -15,6 +15,28 @@ require_once $project_root . '/admin/config/session.php';
 // Start Session
 Session::start();
 
+// Calculate base URL dynamically to handle subfolders (e.g. localhost/urbannutmix.in/)
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+$domain = $_SERVER['HTTP_HOST'];
+$doc_root = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
+
+$project_root_normalized = strtolower(str_replace('\\', '/', $project_root));
+$doc_root_normalized = strtolower($doc_root);
+
+if (strpos($project_root_normalized, $doc_root_normalized) === 0) {
+    $relative_path = substr(str_replace('\\', '/', $project_root), strlen($doc_root));
+} else {
+    $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+    $relative_path = preg_replace('/\/user$/i', '', $script_dir);
+}
+
+$base_url = $protocol . $domain . '/' . ltrim($relative_path, '/');
+$base_url = rtrim($base_url, '/\\') . '/';
+
+if (!defined('BASE_URL')) {
+    define('BASE_URL', $base_url);
+}
+
 // Database Connection
 try {
     $pdo = Database::getConnection();
