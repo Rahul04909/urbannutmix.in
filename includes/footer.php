@@ -104,10 +104,10 @@
             <div class="unm-footer-col">
                 <h3 class="unm-footer-col-heading">Information</h3>
                 <ul class="unm-footer-col-list">
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Return &amp; Refund Policy</a></li>
-                    <li><a href="#">Shipping &amp; Delivery Policy</a></li>
-                    <li><a href="#">Terms &amp; Conditions</a></li>
+                    <li><a href="privacy-policy.php">Privacy Policy</a></li>
+                    <li><a href="return-refund-policy.php">Return &amp; Refund Policy</a></li>
+                    <li><a href="shipping-delivery-policy.php">Shipping &amp; Delivery Policy</a></li>
+                    <li><a href="terms-conditions.php">Terms &amp; Conditions</a></li>
                 </ul>
             </div>
 
