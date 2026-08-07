@@ -142,8 +142,8 @@ include_once 'includes/header.php';
                         <h4>Contact Helpdesk for Returns</h4>
                         <p>Need help with your refund or return? Get in touch with our operations team:</p>
                         <div class="unm-info-contact-links">
-                            <a href="mailto:support@urbannutmix.in" class="unm-info-contact-link"><i class="fas fa-envelope"></i> support@urbannutmix.in</a>
-                            <a href="tel:+919876543210" class="unm-info-contact-link"><i class="fas fa-phone"></i> +91-9876543210</a>
+                            <a href="mailto:urbannutmix@gmail.com" class="unm-info-contact-link"><i class="fas fa-envelope"></i> urbannutmix@gmail.com</a>
+                            <a href="tel:+918700792154" class="unm-info-contact-link"><i class="fas fa-phone"></i> +91-8700792154</a>
                         </div>
                     </div>
                 </div>

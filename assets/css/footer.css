@@ -1,39 +1,35 @@
-/* UrbanNutMix - Professional Footer CSS */
+/* UrbanNutMix - Premium Brand Redesigned Footer CSS */
 
-/* === ROOT COLOURS for footer === */
 :root {
-    --footer-bg:        #111827;
-    --footer-top-bg:    #0f1623;
-    --footer-border:    rgba(255,255,255,0.08);
-    --footer-text:      #94a3b8;
-    --footer-heading:   #e2e8f0;
-    --footer-link:      #94a3b8;
-    --footer-link-hover:#cf6e0c;
+    --footer-bg:        #15110d; /* Luxurious chocolate-espresso dark color */
+    --footer-border:    rgba(207, 110, 12, 0.15); /* Soft brand orange line */
+    --footer-text:      #d2c7bd; /* Soft cream text */
+    --footer-heading:   #ffffff; /* Stark white headings */
+    --footer-link:      #aba096; /* Warm grey/cream links */
+    --footer-link-hover:#cf6e0c; /* Warm orange highlight */
     --footer-accent:    #cf6e0c;
-    --footer-bottom-bg: #0d1220;
+    --footer-bottom-bg: #0e0b08; /* Deeper ground coffee color for footer copyright */
 }
 
-/* ===========================
-   OUTER WRAPPER
-   =========================== */
+/* Outer Footer Wrapper with warm top-glow gradient */
 .unm-footer {
     font-family: 'Montserrat', sans-serif;
     background-color: var(--footer-bg);
+    background-image: radial-gradient(circle at 50% 0%, rgba(207, 110, 12, 0.08) 0%, transparent 60%);
     color: var(--footer-text);
     width: 100%;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
     box-sizing: border-box;
+    border-top: 2px solid rgba(207, 110, 12, 0.25);
 }
 
-/* ===========================
-   PAYMENT GATEWAYS BAND (reused newsletter wrapper class name)
-   =========================== */
+/* ── 1. PAYMENT GATEWAYS BAND ── */
 .unm-footer-newsletter {
-    background-color: #ffffff; /* White background matching About Us component */
-    border-bottom: 1.5px solid var(--border-color);
-    padding: 24px clamp(16px, 4vw, 40px);
+    background: #faf6f0; /* Soft warm cream background */
+    border-bottom: 1px solid rgba(207, 110, 12, 0.1);
+    padding: 20px clamp(16px, 4vw, 40px);
 }
 
 .unm-footer-newsletter-inner {
@@ -46,120 +42,137 @@
 
 .unm-footer-payment-img {
     max-width: 100%;
-    max-height: 38px; /* Clean standard size for payment icons */
+    max-height: 38px;
     height: auto;
     width: auto;
     object-fit: contain;
     display: block;
     pointer-events: none;
     user-select: none;
-    -webkit-user-drag: none;
 }
 
-/* ===========================
-   TOP SECTION (logo + contact + FSSAI)
-   =========================== */
+/* ── 2. LOGO / CONTACT / TRUST CARD ── */
 .unm-footer-top {
     border-bottom: 1px solid var(--footer-border);
-    padding: 32px clamp(16px, 4vw, 40px);
+    padding: 45px clamp(16px, 4vw, 40px);
 }
 
 .unm-footer-top-inner {
     max-width: 1280px;
     margin: 0 auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 32px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 240px 1fr 280px;
+    align-items: start;
+    gap: 40px;
 }
 
 /* Logo */
 .unm-footer-logo-wrap {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    flex-shrink: 0;
+    gap: 15px;
 }
 
 .unm-footer-logo-img {
-    height: 58px;
+    height: 52px;
     width: auto;
     object-fit: contain;
     display: block;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
 }
 
-/* Contact list */
+.unm-footer-brand-tagline {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #a3968b;
+    margin: 0;
+}
+
+/* Contact List */
 .unm-footer-contact-list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    flex: 1;
-    min-width: 240px;
+    gap: 14px;
 }
 
 .unm-footer-contact-item {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    font-size: 0.82rem;
+    gap: 12px;
+    font-size: 0.85rem;
     color: var(--footer-text);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .unm-footer-contact-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 3px;
     fill: none;
     stroke: var(--footer-accent);
-    stroke-width: 2;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition: transform 0.2s ease;
+}
+
+.unm-footer-contact-item:hover .unm-footer-contact-icon {
+    transform: scale(1.1);
 }
 
 .unm-footer-contact-item a {
     color: var(--footer-text);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color 0.25s ease;
+    font-weight: 500;
 }
 
 .unm-footer-contact-item a:hover {
     color: var(--footer-accent);
 }
 
-/* FSSAI / certs block */
+/* FSSAI Trust Card */
 .unm-footer-fssai {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(207, 110, 12, 0.2);
+    border-radius: 10px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    align-items: flex-end;
-    font-size: 0.78rem;
-    color: var(--footer-text);
-    flex-shrink: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(5px);
 }
 
 .unm-footer-fssai-tag {
-    display: inline-block;
-    border: 1px solid var(--footer-border);
-    border-radius: 4px;
-    padding: 4px 10px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    color: #e2e8f0;
-    background: rgba(255,255,255,0.05);
+    font-weight: 700;
+    color: var(--footer-accent);
+    font-size: 0.8rem;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* ===========================
-   MAIN LINKS GRID
-   =========================== */
+.unm-footer-fssai-tag i {
+    font-size: 0.9rem;
+}
+
+.unm-footer-fssai span:not(.unm-footer-fssai-tag) {
+    font-size: 0.78rem;
+    color: #b1a396;
+    line-height: 1.4;
+}
+
+/* ── 3. LINKS GRID ── */
 .unm-footer-links {
-    padding: 36px clamp(16px, 4vw, 40px);
+    padding: 45px clamp(16px, 4vw, 40px);
     border-bottom: 1px solid var(--footer-border);
 }
 
@@ -168,16 +181,39 @@
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 36px 28px;
+    gap: 40px 24px;
+}
+
+.unm-footer-col {
+    display: flex;
+    flex-direction: column;
 }
 
 .unm-footer-col-heading {
-    font-size: 0.82rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--footer-heading);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0 0 14px;
+    letter-spacing: 1px;
+    margin: 0 0 20px;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 6px;
+}
+
+.unm-footer-col-heading::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 24px;
+    height: 2px;
+    background-color: var(--footer-accent);
+    transition: width 0.3s ease;
+}
+
+.unm-footer-col:hover .unm-footer-col-heading::after {
+    width: 45px;
 }
 
 .unm-footer-col-list {
@@ -186,26 +222,24 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 10px;
 }
 
 .unm-footer-col-list a {
-    font-size: 0.8rem;
+    font-size: 0.84rem;
     color: var(--footer-link);
     text-decoration: none;
-    transition: color 0.2s ease, padding-left 0.2s ease;
+    transition: all 0.25s ease;
     display: inline-block;
     line-height: 1.4;
 }
 
 .unm-footer-col-list a:hover {
     color: var(--footer-link-hover);
-    padding-left: 4px;
+    transform: translateX(5px);
 }
 
-/* ===========================
-   SOCIAL + BOTTOM BAR
-   =========================== */
+/* ── 4. SOCIAL BAR ── */
 .unm-footer-social-bar {
     padding: 20px clamp(16px, 4vw, 40px);
     border-bottom: 1px solid var(--footer-border);
@@ -217,53 +251,59 @@
     margin: 0 auto;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
 .unm-footer-social-label {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--footer-heading);
-    margin-right: 6px;
+    letter-spacing: 0.5px;
+}
+
+.unm-footer-social-links-wrap {
+    display: flex;
+    gap: 12px;
 }
 
 .unm-footer-social-link {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.18);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.01);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--footer-text);
+    color: #aba096;
     text-decoration: none;
-    transition: all 0.25s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .unm-footer-social-link:hover {
     border-color: var(--footer-accent);
-    color: var(--footer-accent);
-    background: rgba(207,110,12,0.12);
-    transform: translateY(-2px);
+    color: #ffffff;
+    background-color: var(--footer-accent);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(207, 110, 12, 0.3);
 }
 
 .unm-footer-social-icon {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 2;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-/* ===========================
-   COPYRIGHT BAR
-   =========================== */
+/* ── 5. COPYRIGHT BAR ── */
 .unm-footer-copyright {
     background-color: var(--footer-bottom-bg);
-    padding: 18px clamp(16px, 4vw, 40px);
+    padding: 24px clamp(16px, 4vw, 40px);
     text-align: center;
 }
 
@@ -273,75 +313,74 @@
 }
 
 .unm-footer-copyright p {
-    margin: 0 0 6px;
-    font-size: 0.76rem;
-    color: rgba(148,163,184,0.7);
+    margin: 0 0 10px;
+    font-size: 0.78rem;
+    color: #8c8176;
     line-height: 1.6;
+    letter-spacing: 0.2px;
 }
 
-.unm-footer-copyright p:last-child { margin-bottom: 0; }
+.unm-footer-copyright p:last-child { 
+    margin-bottom: 0; 
+}
 
 .unm-footer-copyright a {
     color: var(--footer-accent);
     text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
 }
 
 .unm-footer-copyright a:hover {
+    color: #a85604;
     text-decoration: underline;
 }
 
-/* ===========================
-   RESPONSIVE
-   =========================== */
+/* ── RESPONSIVE DESIGN ── */
 @media (max-width: 1024px) {
+    .unm-footer-top-inner {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    
+    .unm-footer-fssai {
+        grid-column: span 2;
+        max-width: 100%;
+        align-items: center;
+    }
+
     .unm-footer-links-inner {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 768px) {
-    .unm-footer-newsletter {
-        padding: 22px 24px;
+    .unm-footer-top-inner {
+        grid-template-columns: 1fr;
     }
-    .unm-footer-top {
-        padding: 24px;
+    
+    .unm-footer-fssai {
+        grid-column: span 1;
     }
-    .unm-footer-links {
-        padding: 28px 24px;
-    }
+
     .unm-footer-links-inner {
         grid-template-columns: repeat(2, 1fr);
-        gap: 28px 20px;
+        gap: 30px 16px;
     }
-    .unm-footer-social-bar,
-    .unm-footer-copyright {
-        padding: 16px 24px;
-    }
-    .unm-footer-fssai {
-        align-items: flex-start;
+
+    .unm-footer-social-bar-inner {
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
     }
 }
 
 @media (max-width: 480px) {
     .unm-footer-links-inner {
-        grid-template-columns: 1fr 1fr;
-        gap: 24px 16px;
-    }
-    .unm-footer-top-inner {
-        flex-direction: column;
-        gap: 20px;
-    }
-    .unm-footer-fssai {
-        align-items: flex-start;
-        width: 100%;
-    }
-    .unm-footer-social-bar-inner {
-        justify-content: center;
-    }
-}
-
-@media (max-width: 360px) {
-    .unm-footer-links-inner {
         grid-template-columns: 1fr;
+    }
+    
+    .unm-footer-newsletter-inner {
+        text-align: center;
     }
 }

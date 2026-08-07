@@ -279,18 +279,18 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="unm-mobile-drawer-footer">
             <div class="unm-mobile-contact">
                 <span class="unm-contact-label-title">Need Assistance?</span>
-                <a href="tel:+919876543210" class="unm-contact-item-link">
+                <a href="tel:+918700792154" class="unm-contact-item-link">
                     <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 5.72 5.72l.92-.93a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
                     </svg>
-                    +91 98765 43210
+                    +91 87007 92154
                 </a>
-                <a href="mailto:support@urbannutmix.in" class="unm-contact-item-link">
+                <a href="mailto:urbannutmix@gmail.com" class="unm-contact-item-link">
                     <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                         <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
-                    support@urbannutmix.in
+                    urbannutmix@gmail.com
                 </a>
             </div>
         </div>

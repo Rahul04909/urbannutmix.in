@@ -82,7 +82,7 @@ include_once 'includes/header.php';
             <section class="unm-info-section" id="liability">
                 <h2><i class="fas fa-gavel"></i> 5. Limitation of Liability &amp; Governing Law</h2>
                 <p>UrbanNutMix shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or the inability to use our website, products, or logistics partners. We do not guarantee that the site will be error-free or uninterrupted.</p>
-                <p>These terms and conditions are governed by and construed in accordance with the laws of India. Any legal actions, disputes, or claims arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts located in Noida, Uttar Pradesh, India.</p>
+                <p>These terms and conditions are governed by and construed in accordance with the laws of India. Any legal actions, disputes, or claims arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts located in Faridabad, Haryana, India.</p>
 
                 <!-- Contact Widget -->
                 <div class="unm-info-contact-card">
@@ -93,8 +93,8 @@ include_once 'includes/header.php';
                         <h4>Contact Legal Department</h4>
                         <p>For questions or formal clarifications regarding our Terms &amp; Conditions, contact us:</p>
                         <div class="unm-info-contact-links">
-                            <a href="mailto:support@urbannutmix.in" class="unm-info-contact-link"><i class="fas fa-envelope"></i> support@urbannutmix.in</a>
-                            <a href="tel:+919876543210" class="unm-info-contact-link"><i class="fas fa-phone"></i> +91-9876543210</a>
+                            <a href="mailto:urbannutmix@gmail.com" class="unm-info-contact-link"><i class="fas fa-envelope"></i> urbannutmix@gmail.com</a>
+                            <a href="tel:+918700792154" class="unm-info-contact-link"><i class="fas fa-phone"></i> +91-8700792154</a>
                         </div>
                     </div>
                 </div>

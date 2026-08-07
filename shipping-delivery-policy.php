@@ -66,7 +66,7 @@ include_once 'includes/header.php';
             <!-- Section 2: Delivery Timelines -->
             <section class="unm-info-section" id="timelines">
                 <h2><i class="fas fa-shipping-fast"></i> 2. Processing &amp; Delivery Timelines</h2>
-                <p>All orders placed on our website are dispatched from our warehouse in Noida, Uttar Pradesh. Our processing and delivery timelines are as follows:</p>
+                <p>All orders placed on our website are dispatched from our warehouse in Faridabad, Haryana. Our processing and delivery timelines are as follows:</p>
                 <ul>
                     <li><strong>Order Processing:</strong> Orders placed before 2:00 PM are processed and handed over to couriers on the same working day. Orders placed after 2:00 PM are dispatched on the next working day. We do not dispatch orders on Sundays or National Holidays.</li>
                     <li><strong>Transit Times:</strong>
@@ -93,7 +93,7 @@ include_once 'includes/header.php';
                 <ol>
                     <li>Do not accept delivery from the courier agent.</li>
                     <li>Take a picture of the damaged box.</li>
-                    <li>Contact us immediately at support@urbannutmix.in with your order number.</li>
+                    <li>Contact us immediately at urbannutmix@gmail.com with your order number.</li>
                 </ol>
                 <p>We will immediately dispatch a fresh replacement package to you at no extra cost, while we handle the dispute with the courier partner.</p>
             </section>
@@ -118,8 +118,8 @@ include_once 'includes/header.php';
                         <h4>Contact Delivery Desk</h4>
                         <p>Need support tracking your parcel, or have delivery feedback? Get in touch with us:</p>
                         <div class="unm-info-contact-links">
-                            <a href="mailto:support@urbannutmix.in" class="unm-info-contact-link"><i class="fas fa-envelope"></i> support@urbannutmix.in</a>
-                            <a href="tel:+919876543210" class="unm-info-contact-link"><i class="fas fa-phone"></i> +91-9876543210</a>
+                            <a href="mailto:urbannutmix@gmail.com" class="unm-info-contact-link"><i class="fas fa-envelope"></i> urbannutmix@gmail.com</a>
+                            <a href="tel:+918700792154" class="unm-info-contact-link"><i class="fas fa-phone"></i> +91-8700792154</a>
                         </div>
                     </div>
                 </div>
