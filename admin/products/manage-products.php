@@ -84,19 +84,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Load stats (Total, Active, Inactive, Low Stock)
+// Load stats (Total, Active, Inactive, Active Categories)
 $stats = [
     'total' => 0,
     'active' => 0,
     'inactive' => 0,
-    'low_stock' => 0
+    'categories' => 0
 ];
 
 try {
     $stats['total'] = (int)$pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
     $stats['active'] = (int)$pdo->query("SELECT COUNT(*) FROM products WHERE status = 'active'")->fetchColumn();
     $stats['inactive'] = (int)$pdo->query("SELECT COUNT(*) FROM products WHERE status = 'inactive'")->fetchColumn();
-    $stats['low_stock'] = (int)$pdo->query('SELECT COUNT(*) FROM products WHERE quantity < 10')->fetchColumn();
+    $stats['categories'] = (int)$pdo->query("SELECT COUNT(*) FROM product_categories WHERE status = 'active'")->fetchColumn();
 } catch (\Throwable $e) {
     error_log('manage-products load stats error: ' . $e->getMessage());
 }
@@ -201,11 +201,11 @@ include __DIR__ . '/../header.php';
     <div class="col-lg-3 col-6">
         <div class="small-box bg-warning text-dark">
             <div class="inner text-white">
-                <h3 class="text-white"><?= $stats['low_stock'] ?></h3>
-                <p class="text-white">Low Stock Items (< 10)</p>
+                <h3 class="text-white"><?= $stats['categories'] ?></h3>
+                <p class="text-white">Active Categories</p>
             </div>
             <div class="icon">
-                <i class="fas fa-exclamation-triangle"></i>
+                <i class="fas fa-tags"></i>
             </div>
         </div>
     </div>
@@ -313,7 +313,7 @@ include __DIR__ . '/../header.php';
                             <th style="width: 80px;">Thumbnail</th>
                             <th class="text-start">Product Details</th>
                             <th style="width: 140px;">Pricing (INR)</th>
-                            <th style="width: 140px;">Stock</th>
+                            <th style="width: 140px;">Pack Size</th>
                             <th style="width: 100px;">Status</th>
                             <th style="width: 120px;">Created</th>
                             <th style="width: 140px;">Actions</th>
@@ -357,11 +357,7 @@ include __DIR__ . '/../header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center font-monospace text-sm">
-                                    <?php if ((float)$prod['quantity'] <= 0): ?>
-                                        <span class="text-danger fw-bold"><i class="fas fa-times-circle"></i> Out of Stock</span>
-                                    <?php else: ?>
-                                        <?= (float)$prod['quantity'] ?> <?= htmlspecialchars($prod['unit']) ?>
-                                    <?php endif; ?>
+                                    <?= rtrim(rtrim(number_format((float)$prod['quantity'], 2), '0'), '.') ?> <?= htmlspecialchars($prod['unit']) ?>
                                 </td>
                                 <td class="text-center">
                                     <?php if ($prod['status'] === 'active'): ?>

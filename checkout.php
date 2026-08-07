@@ -80,10 +80,6 @@ try {
 
     foreach ($dbProducts as $p) {
         $qty = (int)$cart[$p['id']];
-        if ($qty > (float)$p['quantity']) {
-            $qty = (int)floor((float)$p['quantity']);
-            $_SESSION['cart'][$p['id']] = $qty; // auto-correct session
-        }
         if ($qty > 0) {
             $p['cart_qty'] = $qty;
             $p['item_subtotal'] = (float)$p['price'] * $qty;
@@ -102,9 +98,27 @@ if (empty($cartItems)) {
     exit;
 }
 
-// Calculate Summary Totals
+// Calculate Summary Totals and total weight in kg
+$totalWeightKg = 0.0;
+foreach ($cartItems as $item) {
+    $itemWeight = (float)$item['quantity'];
+    $itemUnit = strtolower($item['unit']);
+    if ($itemUnit === 'kg') {
+        $totalWeightKg += $itemWeight * $item['cart_qty'];
+    } else {
+        $totalWeightKg += ($itemWeight / 1000.0) * $item['cart_qty'];
+    }
+}
+
 $discount = 0.0;
-$shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
+$shipping = 0.0;
+if ($subtotal > 0) {
+    if ($totalWeightKg >= 5.0) {
+        $shipping = 0.0;
+    } else {
+        $shipping = 90.00;
+    }
+}
 $grandTotal = $subtotal + $shipping;
 
 $errors = [];
@@ -187,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            // Lock and re-validate stock for each item
+            // Fetch product details for verification
             $verifiedItems = [];
             foreach ($cart as $productId => $qty) {
                 $checkStmt = $pdo->prepare("SELECT id, name, price, quantity, unit FROM products WHERE id = :id AND status = 'active' FOR UPDATE");
@@ -198,21 +212,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("Product is no longer available.");
                 }
 
-                if ((float)$prod['quantity'] < $qty) {
-                    throw new Exception("Sorry, '" . htmlspecialchars($prod['name']) . "' has only " . (int)$prod['quantity'] . " units in stock. Please adjust your cart.");
-                }
-
                 $prod['cart_qty'] = $qty;
                 $prod['item_subtotal'] = (float)$prod['price'] * $qty;
                 $verifiedItems[] = $prod;
             }
 
-            // Calculations verification
+            // Calculations verification and total weight in kg
             $vSubtotal = 0.0;
+            $vTotalWeightKg = 0.0;
             foreach ($verifiedItems as $vItem) {
                 $vSubtotal += $vItem['item_subtotal'];
+                $itemWeight = (float)$vItem['quantity'];
+                $itemUnit = strtolower($vItem['unit']);
+                if ($itemUnit === 'kg') {
+                    $vTotalWeightKg += $itemWeight * $vItem['cart_qty'];
+                } else {
+                    $vTotalWeightKg += ($itemWeight / 1000.0) * $vItem['cart_qty'];
+                }
             }
-            $vShipping = ($vSubtotal > 0 && $vSubtotal < 500) ? 50.00 : 0.0;
+            $vShipping = 0.0;
+            if ($vSubtotal > 0) {
+                if ($vTotalWeightKg >= 5.0) {
+                    $vShipping = 0.0;
+                } else {
+                    $vShipping = 90.00;
+                }
+            }
             $vGrandTotal = $vSubtotal + $vShipping;
 
             // Generate Order Details
@@ -250,14 +275,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $orderId = $pdo->lastInsertId();
 
-            // Insert Order Items and update product stock
+            // Insert Order Items
             $itemQuery = $pdo->prepare(
                 "INSERT INTO order_items (order_id, product_id, product_name, price, quantity, unit, total_price)
                  VALUES (:order_id, :product_id, :product_name, :price, :quantity, :unit, :total_price)"
-            );
-
-            $stockQuery = $pdo->prepare(
-                "UPDATE products SET quantity = quantity - :qty WHERE id = :id"
             );
 
             foreach ($verifiedItems as $vItem) {
@@ -269,11 +290,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'quantity' => $vItem['cart_qty'],
                     'unit' => $vItem['unit'],
                     'total_price' => $vItem['item_subtotal']
-                ]);
-
-                $stockQuery->execute([
-                    'qty' => $vItem['cart_qty'],
-                    'id' => $vItem['id']
                 ]);
             }
 
@@ -738,8 +754,13 @@ if (!function_exists('get_product_img_src')) {
             </div>
 
             <!-- Announcement free shipping banner -->
-            <div class="announcement-banner">
-                <i class="fas fa-truck"></i> Your order qualifies for <strong>FREE Express Shipping</strong> today!
+            <div class="announcement-banner" style="<?= $totalWeightKg >= 5.0 ? 'background-color: #dcfce7; border-color: #bbf7d0; color: #15803d;' : '' ?>">
+                <i class="fas fa-truck"></i> 
+                <?php if ($totalWeightKg >= 5.0): ?>
+                    Your order qualifies for <strong>FREE Shipping</strong> today! (Total Weight: <strong><?= number_format($totalWeightKg, 2) ?> kg</strong>)
+                <?php else: ?>
+                    Add <strong><?= number_format(5.0 - $totalWeightKg, 2) ?> kg</strong> more for <strong>FREE Shipping</strong>! (Current Weight: <strong><?= number_format($totalWeightKg, 2) ?> kg</strong>)
+                <?php endif; ?>
             </div>
 
             <!-- Display payment errors or warning tags -->

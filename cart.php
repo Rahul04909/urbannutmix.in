@@ -35,11 +35,6 @@ if (isset($_GET['add'])) {
                 $currentQty = $cart[$productId] ?? 0;
                 $newQty = $currentQty + $qty;
 
-                // Cap at available stock
-                if ($newQty > (float)$product['quantity']) {
-                    $newQty = (int)floor((float)$product['quantity']);
-                }
-
                 if ($newQty > 0) {
                     $_SESSION['cart'][$productId] = $newQty;
                 }
@@ -72,15 +67,6 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
                 $cart = $_SESSION['cart'] ?? [];
                 $currentQty = $cart[$productId] ?? 0;
                 $newQty = $currentQty + $qty;
-
-                if ($newQty > (float)$product['quantity']) {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => "Only " . (int)$product['quantity'] . " units of " . htmlspecialchars($product['name']) . " are available.",
-                        'cart_count' => array_sum($cart)
-                    ]);
-                    exit;
-                }
 
                 $cart[$productId] = $newQty;
                 $_SESSION['cart'] = $cart;
@@ -117,41 +103,56 @@ if (isset($_POST['action']) || isset($_GET['action'])) {
                 if ($qty <= 0) {
                     unset($_SESSION['cart'][$productId]);
                 } else {
-                    if ($qty > (float)$product['quantity']) {
-                        $qty = (int)floor((float)$product['quantity']);
-                        $warning = "Only " . $qty . " units of " . htmlspecialchars($product['name']) . " are available in stock.";
-                    }
                     $_SESSION['cart'][$productId] = $qty;
                 }
 
                 // Re-calculate totals
                 $cart = $_SESSION['cart'] ?? [];
                 $subtotal = 0.0;
+                $totalWeightKg = 0.0;
                 $cartCount = array_sum($cart);
 
                 if (!empty($cart)) {
                     $productIds = array_keys($cart);
                     $inClause = implode(',', array_fill(0, count($productIds), '?'));
-                    $tStmt = $pdo->prepare("SELECT id, price FROM products WHERE id IN ($inClause) AND status = 'active'");
+                    $tStmt = $pdo->prepare("SELECT id, price, quantity, unit FROM products WHERE id IN ($inClause) AND status = 'active'");
                     $tStmt->execute($productIds);
                     foreach ($tStmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
-                        $subtotal += (float)$p['price'] * $cart[$p['id']];
+                        $itemQty = $cart[$p['id']];
+                        $subtotal += (float)$p['price'] * $itemQty;
+                        $itemWeight = (float)$p['quantity'];
+                        $itemUnit = strtolower($p['unit']);
+                        if ($itemUnit === 'kg') {
+                            $totalWeightKg += $itemWeight * $itemQty;
+                        } else {
+                            $totalWeightKg += ($itemWeight / 1000.0) * $itemQty;
+                        }
                     }
                 }
 
                 $discount = 0.0;
-                $shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
+                $shipping = 0.0;
+                if ($subtotal > 0) {
+                    if ($totalWeightKg >= 5.0) {
+                        $shipping = 0.0;
+                    } else {
+                        $shipping = 90.00;
+                    }
+                }
                 $grandTotal = $subtotal + $shipping;
+                $weightNeeded = max(0.0, 5.0 - $totalWeightKg);
 
                 echo json_encode([
                     'success' => true,
                     'qty' => $qty,
-                    'warning' => $warning,
+                    'warning' => null,
                     'cart_count' => $cartCount,
                     'subtotal' => number_format($subtotal, 2),
                     'discount' => number_format($discount, 2),
                     'shipping' => number_format($shipping, 2),
-                    'grand_total' => number_format($grandTotal, 2)
+                    'grand_total' => number_format($grandTotal, 2),
+                    'total_weight' => number_format($totalWeightKg, 2),
+                    'weight_needed' => number_format($weightNeeded, 2)
                 ]);
                 exit;
             }
@@ -180,11 +181,6 @@ if (!empty($cart)) {
 
     foreach ($dbProducts as $p) {
         $qty = (int)$cart[$p['id']];
-        // Verify stock boundaries
-        if ($qty > (float)$p['quantity']) {
-            $qty = (int)floor((float)$p['quantity']);
-            $_SESSION['cart'][$p['id']] = $qty; // auto-correct session
-        }
         if ($qty > 0) {
             $p['cart_qty'] = $qty;
             $p['item_subtotal'] = (float)$p['price'] * $qty;
@@ -197,8 +193,26 @@ if (!empty($cart)) {
 }
 
 // Calculate Summary Totals
+$totalWeightKg = 0.0;
+foreach ($cartItems as $item) {
+    $itemWeight = (float)$item['quantity'];
+    $itemUnit = strtolower($item['unit']);
+    if ($itemUnit === 'kg') {
+        $totalWeightKg += $itemWeight * $item['cart_qty'];
+    } else {
+        $totalWeightKg += ($itemWeight / 1000.0) * $item['cart_qty'];
+    }
+}
+
 $discount = 0.0;
-$shipping = ($subtotal > 0 && $subtotal < 500) ? 50.00 : 0.0;
+$shipping = 0.0;
+if ($subtotal > 0) {
+    if ($totalWeightKg >= 5.0) {
+        $shipping = 0.0;
+    } else {
+        $shipping = 90.00;
+    }
+}
 $grandTotal = $subtotal + $shipping;
 
 // Fetch Recommended Products (Trending Items slider at the bottom)
@@ -390,10 +404,10 @@ include_once 'includes/header.php';
                     <div class="unm-meter-card" id="shipProgressBanner">
                         <i class="fas fa-truck"></i>
                         <span id="shipProgressText">
-                            <?php if ($subtotal >= 500): ?>
-                                You qualify for <strong>FREE Express Shipping</strong>!
+                            <?php if ($totalWeightKg >= 5.0): ?>
+                                You qualify for <strong>FREE Shipping</strong>! (Total Weight: <strong><?= number_format($totalWeightKg, 2) ?> kg</strong>)
                             <?php else: ?>
-                                Add <strong>₹<?= number_format(500 - $subtotal, 2) ?></strong> more for <strong>FREE Shipping</strong>!
+                                Add <strong><?= number_format(5.0 - $totalWeightKg, 2) ?> kg</strong> more for <strong>FREE Shipping</strong>! (Current Weight: <strong><?= number_format($totalWeightKg, 2) ?> kg</strong>)
                             <?php endif; ?>
                         </span>
                     </div>
@@ -671,12 +685,12 @@ function updateSummarySection(data) {
     // Update free shipping meter
     const bannerEl = document.getElementById('shipProgressText');
     if (bannerEl) {
-        const subNumeric = parseFloat(data.subtotal.replace(/,/g, '')) || 0;
-        if (subNumeric >= 500) {
-            bannerEl.innerHTML = 'You qualify for <strong>FREE Express Shipping</strong>!';
+        const totalWeight = parseFloat(data.total_weight) || 0;
+        const weightNeeded = parseFloat(data.weight_needed) || 0;
+        if (totalWeight >= 5.0) {
+            bannerEl.innerHTML = `You qualify for <strong>FREE Shipping</strong>! (Total Weight: <strong>${totalWeight.toFixed(2)} kg</strong>)`;
         } else {
-            const needed = (500 - subNumeric).toFixed(2);
-            bannerEl.innerHTML = `Add <strong>₹${needed}</strong> more for <strong>FREE Shipping</strong>!`;
+            bannerEl.innerHTML = `Add <strong>${weightNeeded.toFixed(2)} kg</strong> more for <strong>FREE Shipping</strong>! (Current Weight: <strong>${totalWeight.toFixed(2)} kg</strong>)`;
         }
     }
 }

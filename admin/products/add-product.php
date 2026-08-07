@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'description' => trim($_POST['description'] ?? ''),
     'price' => trim($_POST['price'] ?? ''),
     'mrp' => trim($_POST['mrp'] ?? ''),
-    'unit' => in_array($_POST['unit'] ?? '', ['gram', 'kg', 'piece', 'packet', 'box'], true) ? $_POST['unit'] : 'gram',
+    'unit' => in_array($_POST['unit'] ?? '', ['gram', 'kg'], true) ? $_POST['unit'] : 'gram',
             'quantity' => trim($_POST['quantity'] ?? ''),
             'status' => ($_POST['status'] ?? 'active') === 'inactive' ? 'inactive' : 'active',
             'meta_title' => trim($_POST['meta_title'] ?? ''),
@@ -318,7 +318,7 @@ include __DIR__ . '/../header.php';
                                     <div class="mb-3">
                                         <label for="unit" class="form-label">Unit</label>
                                         <select class="form-select" id="unit" name="unit">
-                                            <?php foreach (['gram', 'kg', 'piece', 'packet', 'box'] as $unit): ?>
+                                            <?php foreach (['gram', 'kg'] as $unit): ?>
                                                 <option value="<?= $unit ?>" <?= $form['unit'] === $unit ? 'selected' : '' ?>><?= $unit ?></option>
                                             <?php endforeach; ?>
                                         </select>
@@ -326,10 +326,10 @@ include __DIR__ . '/../header.php';
                                 </div>
                                 <div class="col-md-3">
                                     <div class="mb-3">
-                                        <label for="quantity" class="form-label">Quantity / Stock <span class="text-danger">*</span></label>
+                                        <label for="quantity" class="form-label">Quantity (Pack Weight/Size) <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control" id="quantity" name="quantity" required
                                             step="0.01" min="0" value="<?= htmlspecialchars($form['quantity']) ?>" placeholder="500">
-                                        <small class="text-muted">Stock quantity for the selected unit (e.g. 500 gram, 2 kg).</small>
+                                        <small class="text-muted">Weight/size of a single pack (e.g. 500 for 500 gram, 1 for 1 kg).</small>
                                     </div>
                                 </div>
                             </div>
